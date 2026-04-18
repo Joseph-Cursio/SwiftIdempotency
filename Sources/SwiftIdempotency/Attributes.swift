@@ -10,22 +10,17 @@
 /// (or both, if consistent) is treated identically by `idempotencyViolation`
 /// and `nonIdempotentInRetryContext`.
 ///
-/// ## Current behaviour
+/// ## Test generation
 ///
-/// The macro currently expands to no generated code — it exists as a
-/// recognisable attribute name the linter can scan. A future expansion
-/// (Phase 3 of the macros plan) will generate a companion test function
-/// that calls the annotated function twice with identical arguments and
-/// asserts observable equivalence.
-/// Peer-macro name kind: `arbitrary` allows CamelCase-uppercased peer
-/// names (`testIdempotencyOfPureMultiplier`) that match Swift naming
-/// conventions. The constraint — `arbitrary`-named peers are only
-/// allowed at type-member scope — means `@Idempotent` must be placed
-/// on a method inside a type or extension, NOT on a top-level function.
-/// Round-7 validation surfaced this; it's documented in the macros
-/// plan's follow-on list as "peer-macro test generation scoped to
-/// type-member contexts."
-@attached(peer, names: arbitrary)
+/// Marker-only since the round-8 peer-macro redesign. Test generation is
+/// handled by `@IdempotencyTests` at the enclosing `@Suite` type — it
+/// scans members and emits `@Test` methods in an extension for every
+/// `@Idempotent`-marked zero-argument function. See Finding 4 in
+/// `docs/phase5-round-7/trial-findings.md` for the empirical reason the
+/// original peer-macro design couldn't ship, and
+/// `docs/phase5-round-8/trial-findings.md` for the extension-role
+/// redesign that did ship.
+@attached(peer)
 public macro Idempotent() = #externalMacro(
     module: "SwiftIdempotencyMacros",
     type: "IdempotentMacro"
@@ -69,3 +64,22 @@ public macro ExternallyIdempotent(by keyParameterName: String = "") =
         module: "SwiftIdempotencyMacros",
         type: "ExternallyIdempotentMacro"
     )
+
+/// Candidate A — member-macro redesign attached to a `@Suite` type.
+/// Scans the attached type's members for `@Idempotent`-marked
+/// zero-argument functions and emits one `@Test` method per match.
+///
+///     @Suite
+///     @IdempotencyTests
+///     struct IdempotencyChecks {
+///         @Idempotent
+///         func currentSystemStatus() -> Int { 200 }
+///     }
+///
+/// See `IdempotencyTestsMacro` for the empirical constraints this shape
+/// was redesigned around (round-8 spike).
+@attached(extension, names: arbitrary)
+public macro IdempotencyTests() = #externalMacro(
+    module: "SwiftIdempotencyMacros",
+    type: "IdempotencyTestsMacro"
+)
