@@ -1,0 +1,11 @@
+excluded:
+  - .build
+  - .swiftpm
+  - DerivedData
+  - Package.resolved
+
+# Match the linting posture of SwiftProjectLint — the companion repo — so
+# the two packages have consistent code-style expectations.
+included:
+  - Sources
+  - Tests
