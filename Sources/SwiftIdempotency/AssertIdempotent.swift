@@ -68,6 +68,23 @@ public func __idempotencyAssertRunTwice<Result: Equatable>(
     return first
 }
 
+/// Runtime helper the `@IdempotencyTests(for:)` member-macro expansion
+/// (Candidate A) calls into. Takes a zero-argument closure, invokes it
+/// twice, returns both results as a tuple. `async rethrows` lets sync,
+/// async, throwing, and non-throwing closures all flow through — the
+/// macro emits a `try await` call-site unconditionally and Swift's
+/// implicit conversions absorb the effect polymorphism.
+///
+/// Not intended for direct use.
+@inlinable
+public func __idempotencyInvokeTwice<Result: Equatable>(
+    _ body: () async throws -> Result
+) async rethrows -> (Result, Result) {
+    let first = try await body()
+    let second = try await body()
+    return (first, second)
+}
+
 // swiftlint:enable identifier_name
 
 // Async variant is deferred to a follow-on slice. Swift's effect-polymorphic

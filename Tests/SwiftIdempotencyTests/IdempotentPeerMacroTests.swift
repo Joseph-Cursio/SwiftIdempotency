@@ -4,11 +4,20 @@ import SwiftSyntaxMacrosTestSupport
 import Testing
 @testable import SwiftIdempotencyMacros
 
-/// Expansion-verification tests for the `@Idempotent` peer macro. Uses
-/// `assertMacroExpansion` to check the exact textual output rather than
-/// observing compile-and-run behaviour — this way the tests stay
-/// deterministic regardless of whether the host module has `import Testing`
-/// wired up.
+/// Expansion-verification tests for the `@Idempotent` peer macro.
+///
+/// Since the round-8 redesign, `@Idempotent` is marker-only — the peer
+/// macro expands to zero declarations regardless of what it's attached
+/// to. Test generation moved to `@IdempotencyTests` (extension macro on
+/// the enclosing `@Suite` type). The assertion shape here is the same as
+/// the other marker peer macros (`@NonIdempotent`, `@Observational`,
+/// `@ExternallyIdempotent`).
+///
+/// The previously-shipped tests asserting peer-emitted `@Test func
+/// testIdempotencyOf<Name>()` bodies were correct against the round-7
+/// design but not the round-8 shape — they're gone. See
+/// `IdempotencyTestsMacroTests` for the current test-generation
+/// expansion surface.
 @Suite
 struct IdempotentPeerMacroTests {
 
@@ -16,90 +25,8 @@ struct IdempotentPeerMacroTests {
         "Idempotent": IdempotentMacro.self
     ]
 
-    // MARK: - Zero-argument function shapes — peer generated
-
     @Test
-    func zeroArgVoid_generatesPeerTest_noTryNoAwait() {
-        assertMacroExpansion(
-            """
-            @Idempotent
-            func flush() {}
-            """,
-            expandedSource: """
-            func flush() {}
-
-            @Test
-            func testIdempotencyOfFlush() {
-                flush()
-                flush()
-            }
-            """,
-            macros: testMacros
-        )
-    }
-
-    @Test
-    func zeroArgAsync_generatesAsyncPeer_awaitOnly() {
-        assertMacroExpansion(
-            """
-            @Idempotent
-            func sync() async {}
-            """,
-            expandedSource: """
-            func sync() async {}
-
-            @Test
-            func testIdempotencyOfSync() async {
-                await sync()
-                await sync()
-            }
-            """,
-            macros: testMacros
-        )
-    }
-
-    @Test
-    func zeroArgThrows_generatesThrowingPeer_tryOnly() {
-        assertMacroExpansion(
-            """
-            @Idempotent
-            func validate() throws {}
-            """,
-            expandedSource: """
-            func validate() throws {}
-
-            @Test
-            func testIdempotencyOfValidate() throws {
-                try validate()
-                try validate()
-            }
-            """,
-            macros: testMacros
-        )
-    }
-
-    @Test
-    func zeroArgAsyncThrows_generatesAsyncThrowingPeer_tryAwait() {
-        assertMacroExpansion(
-            """
-            @Idempotent
-            func upload() async throws {}
-            """,
-            expandedSource: """
-            func upload() async throws {}
-
-            @Test
-            func testIdempotencyOfUpload() async throws {
-                try await upload()
-                try await upload()
-            }
-            """,
-            macros: testMacros
-        )
-    }
-
-    @Test
-    func zeroArgWithReturn_generatesEqualityAssertion() {
+    func zeroArgFunction_producesNoPeer() {
         assertMacroExpansion(
             """
             @Idempotent
@@ -107,20 +34,13 @@ struct IdempotentPeerMacroTests {
             """,
             expandedSource: """
             func compute() -> Int { 42 }
-
-            @Test
-            func testIdempotencyOfCompute() {
-                let firstResult = compute()
-                let secondResult = compute()
-                #expect(firstResult == secondResult)
-            }
             """,
             macros: testMacros
         )
     }
 
     @Test
-    func zeroArgAsyncThrowsReturn_generatesFullCeremony() {
+    func asyncThrowsFunction_producesNoPeer() {
         assertMacroExpansion(
             """
             @Idempotent
@@ -128,85 +48,13 @@ struct IdempotentPeerMacroTests {
             """,
             expandedSource: """
             func fetchValue() async throws -> String { "" }
-
-            @Test
-            func testIdempotencyOfFetchValue() async throws {
-                let firstResult = try await fetchValue()
-                let secondResult = try await fetchValue()
-                #expect(firstResult == secondResult)
-            }
-            """,
-            macros: testMacros
-        )
-    }
-
-    // MARK: - Test-name casing
-    //
-    // The emitted name is a bare concatenation `testIdempotencyOf<name>`
-    // — no uppercase-first-letter conversion — because Swift peer macro
-    // `prefixed(X)` name-coverage requires exact concatenation.
-    // CamelCasing the suffix would produce a name not covered by the
-    // macro's declared names, and the compiler would reject the
-    // expansion. Documented as a round-7 finding.
-
-    @Test
-    func lowercaseFunctionName_concatenatedDirectly() {
-        assertMacroExpansion(
-            """
-            @Idempotent
-            func x() {}
-            """,
-            expandedSource: """
-            func x() {}
-
-            @Test
-            func testIdempotencyOfX() {
-                x()
-                x()
-            }
             """,
             macros: testMacros
         )
     }
 
     @Test
-    func camelCaseFunctionName_preservesFirstLetterLowercase() {
-        assertMacroExpansion(
-            """
-            @Idempotent
-            func upsertRow() {}
-            """,
-            expandedSource: """
-            func upsertRow() {}
-
-            @Test
-            func testIdempotencyOfUpsertRow() {
-                upsertRow()
-                upsertRow()
-            }
-            """,
-            macros: testMacros
-        )
-    }
-
-    // MARK: - Parameterised functions — no peer generated
-
-    @Test
-    func oneArgFunction_producesNoPeer() {
-        assertMacroExpansion(
-            """
-            @Idempotent
-            func upsert(id: Int) {}
-            """,
-            expandedSource: """
-            func upsert(id: Int) {}
-            """,
-            macros: testMacros
-        )
-    }
-
-    @Test
-    func multiArgFunction_producesNoPeer() {
+    func parameterisedFunction_producesNoPeer() {
         assertMacroExpansion(
             """
             @Idempotent
@@ -218,8 +66,6 @@ struct IdempotentPeerMacroTests {
             macros: testMacros
         )
     }
-
-    // MARK: - Non-function declarations — no peer generated
 
     @Test
     func varDeclWithIdempotent_producesNoPeer() {
