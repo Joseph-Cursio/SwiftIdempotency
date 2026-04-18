@@ -21,7 +21,7 @@ func chargeCard(amount: Int, idempotencyKey: IdempotencyKey) async throws { ... 
 chargeCard(amount: 100, idempotencyKey: UUID())
 
 // ✅ Works: key derived from a stable webhook event id
-chargeCard(amount: 100, idempotencyKey: IdempotencyKey(from: webhookEvent))
+chargeCard(amount: 100, idempotencyKey: IdempotencyKey(fromEntity: webhookEvent))
 
 // ✅ Works but auditable: explicit label signals "I checked this"
 chargeCard(amount: 100, idempotencyKey: IdempotencyKey(fromAuditedString: "stripe-charge-2026-q2"))

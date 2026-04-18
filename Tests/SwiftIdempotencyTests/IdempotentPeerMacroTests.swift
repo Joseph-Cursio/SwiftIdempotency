@@ -141,9 +141,16 @@ struct IdempotentPeerMacroTests {
     }
 
     // MARK: - Test-name casing
+    //
+    // The emitted name is a bare concatenation `testIdempotencyOf<name>`
+    // — no uppercase-first-letter conversion — because Swift peer macro
+    // `prefixed(X)` name-coverage requires exact concatenation.
+    // CamelCasing the suffix would produce a name not covered by the
+    // macro's declared names, and the compiler would reject the
+    // expansion. Documented as a round-7 finding.
 
     @Test
-    func lowercaseFunctionName_getsCapitalisedInTestName() {
+    func lowercaseFunctionName_concatenatedDirectly() {
         assertMacroExpansion(
             """
             @Idempotent
@@ -163,7 +170,7 @@ struct IdempotentPeerMacroTests {
     }
 
     @Test
-    func camelCaseFunctionName_preservesInternalCasing() {
+    func camelCaseFunctionName_preservesFirstLetterLowercase() {
         assertMacroExpansion(
             """
             @Idempotent

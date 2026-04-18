@@ -48,8 +48,13 @@ public struct IdempotentMacro: PeerMacro {
         }
 
         let functionName = function.name.text
-        let testName = "testIdempotencyOf" +
-            functionName.prefix(1).uppercased() + functionName.dropFirst()
+        // CamelCased peer name — matches `names: arbitrary` in the macro
+        // declaration. Requires `@Idempotent` to be used at type-member
+        // scope (inside a struct/class/actor/extension), since
+        // arbitrary-named peers aren't allowed at global scope.
+        let testName = "testIdempotencyOf"
+            + functionName.prefix(1).uppercased()
+            + functionName.dropFirst()
 
         let isAsync = function.signature.effectSpecifiers?.asyncSpecifier != nil
         let canThrow = function.signature.effectSpecifiers?.throwsClause != nil
@@ -74,6 +79,24 @@ public struct IdempotentMacro: PeerMacro {
             """
         }
 
+        // The expansion emits a Swift Testing `@Test` function directly.
+        // Two Swift-macro constraints ruled out the alternatives surfaced
+        // during the round-7 validation trial:
+        //
+        //   1. Macros cannot emit `import` statements — the compiler
+        //      rejects macro-introduced imports (`macro expansion cannot
+        //      introduce import` error).
+        //   2. Wrapping the peer in `#if canImport(Testing)` breaks the
+        //      name-coverage check — declarations inside an
+        //      `IfConfigDeclSyntax` don't satisfy `prefixed(testIdempotencyOf)`
+        //      so the compiler rejects the expansion.
+        //
+        // Consequence: `@Idempotent` requires the enclosing file to have
+        // `import Testing` at file scope. This constrains the annotation
+        // to test-target usage — annotating a production-module function
+        // that doesn't depend on Testing produces a `no macro named
+        // 'expect'` compile error, which is a useful signal (the
+        // annotation belongs in a test target, not production code).
         let testDecl: DeclSyntax = """
             @Test
             func \(raw: testName)() \(raw: asyncKeyword)\(raw: throwsKeyword){

@@ -20,7 +20,7 @@ struct IdempotencyKeyTypeTests {
         }
         let fixedUUID = UUID(uuidString: "11111111-2222-3333-4444-555555555555")!
         let event = Event(id: fixedUUID)
-        let key = IdempotencyKey(from: event)
+        let key = IdempotencyKey(fromEntity: event)
         #expect(key.rawValue == "11111111-2222-3333-4444-555555555555")
     }
 
@@ -29,7 +29,7 @@ struct IdempotencyKeyTypeTests {
         struct Row: Identifiable {
             let id: Int
         }
-        let key = IdempotencyKey(from: Row(id: 42))
+        let key = IdempotencyKey(fromEntity: Row(id: 42))
         #expect(key.rawValue == "42")
     }
 
@@ -38,7 +38,7 @@ struct IdempotencyKeyTypeTests {
         struct Message: Identifiable {
             let id: String
         }
-        let key = IdempotencyKey(from: Message(id: "evt_abc123"))
+        let key = IdempotencyKey(fromEntity: Message(id: "evt_abc123"))
         #expect(key.rawValue == "evt_abc123")
     }
 
@@ -135,7 +135,7 @@ struct IdempotencyKeyTypeTests {
             let id: CustomerID
         }
         let customer = Customer(id: CustomerID(value: "cust_42"))
-        let key = IdempotencyKey(from: customer)
+        let key = IdempotencyKey(fromEntity: customer)
         #expect(key.rawValue == "cust_42")
     }
 }

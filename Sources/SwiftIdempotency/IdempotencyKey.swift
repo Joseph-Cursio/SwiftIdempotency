@@ -60,7 +60,14 @@ public struct IdempotencyKey: Hashable, Sendable {
     /// reaching for `String(describing:)` manually. Most real-world stable
     /// IDs (`UUID`, `Int`, `String`, typed wrappers around those) satisfy
     /// this out of the box.
-    public init<E: Identifiable>(from entity: E) where E.ID: CustomStringConvertible {
+    ///
+    /// The label `fromEntity` (rather than `from`) avoids collision with
+    /// `Codable`'s `init(from decoder: Decoder)` at call sites. The
+    /// collision surfaced during the round-7 validation trial when a
+    /// consumer module's `IdempotencyKey(from: gift)` call was resolved
+    /// to the Codable initialiser instead of this one, producing a
+    /// "Gift does not conform to Decoder" error.
+    public init<E: Identifiable>(fromEntity entity: E) where E.ID: CustomStringConvertible {
         self.rawValue = String(describing: entity.id)
     }
 

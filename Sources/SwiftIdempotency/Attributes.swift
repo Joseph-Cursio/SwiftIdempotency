@@ -17,6 +17,14 @@
 /// (Phase 3 of the macros plan) will generate a companion test function
 /// that calls the annotated function twice with identical arguments and
 /// asserts observable equivalence.
+/// Peer-macro name kind: `arbitrary` allows CamelCase-uppercased peer
+/// names (`testIdempotencyOfPureMultiplier`) that match Swift naming
+/// conventions. The constraint — `arbitrary`-named peers are only
+/// allowed at type-member scope — means `@Idempotent` must be placed
+/// on a method inside a type or extension, NOT on a top-level function.
+/// Round-7 validation surfaced this; it's documented in the macros
+/// plan's follow-on list as "peer-macro test generation scoped to
+/// type-member contexts."
 @attached(peer, names: arbitrary)
 public macro Idempotent() = #externalMacro(
     module: "SwiftIdempotencyMacros",
