@@ -192,6 +192,23 @@ targets: [
 
 Swift 5.10+; requires Swift Testing for `@Test`-based peer expansion.
 
+**Vapor adopters using Swift Testing**: import `VaporTesting` rather
+than `XCTVapor`. XCTVapor's `app.test(...)` silently drops failures
+when invoked from a Swift Testing `@Suite` — Vapor itself warns at
+runtime if you try — and `VaporTesting` is the Swift Testing-native
+counterpart exposing the same API shape.
+
+**AWS Lambda adopters**: `swift-aws-lambda-events` event types
+(`SQSEvent.Message`, `SNSEvent.Record`, etc.) are `Decodable`-only —
+they expose no public memberwise initialiser, so tests can't
+synthesise synthetic events via struct initialisation. Factor your
+per-event business logic into functions that take the specific
+primitive fields they need (`messageId: String, body: String, ...`)
+and unwrap the event envelope at the framework boundary. That shape
+also lets `@ExternallyIdempotent(by: "messageId")` point at a real
+parameter label — the dotted-path form `by: "message.messageId"` is
+rejected at macro-expansion time.
+
 ## Design boundaries
 
 **What this package does:**
