@@ -67,22 +67,21 @@ distinct in its architecture that its surface is not shared
 with other adopters. See [`trial-findings.md`](trial-findings.md)
 for per-cluster fix verdicts.
 
-Two cross-adopter patterns DID surface as potentially slice-worthy:
+Two cross-adopter patterns surfaced; one has since shipped:
 
-1. **`update*` prefix for non-Fluent DB surfaces.** pointfreeco's
-   `database.updateGiftStatus(...)` and `updateStripeSubscription(...)`
-   are genuinely non-idempotent but not caught in replayable mode
-   — the Fluent gate (PR #11) doesn't apply (no `import FluentKit`).
-   The camelCase prefix-match list excludes `update` specifically
-   because of Fluent-motivated ambiguity concerns, but non-Fluent
-   adopters see the gap as missing signal.
+1. **`update*` prefix for non-Fluent DB surfaces** — **landed
+   as PR #15.** `update` moved out of the Fluent-only gate into
+   the bare `nonIdempotentNames` list. `Set.update(with:)` added
+   to `StdlibExclusions` to preserve set-idempotent semantics.
+   Remeasurement: 2 new catches in replayable mode
+   (`updateGiftStatus` + `updateStripeSubscription`), matching
+   prediction exactly.
 2. **Escape-wrapper recognition** (`fireAndForget` and cousins).
-   The pattern exists across ecosystems under different names;
-   a per-framework whitelist of known escape wrappers could
-   reduce strict-mode noise without false silencing.
-
-Both are named in the findings doc's "Next-slice candidates"
-section. Neither is pointfreeco-specific.
+   Still open. The pattern exists across ecosystems under
+   different names; a per-framework whitelist of known escape
+   wrappers could reduce strict-mode noise without false
+   silencing. Deferred pending cross-adopter evidence on more
+   ecosystems than just pointfreeco.
 
 ## What would have changed the outcome
 
@@ -137,9 +136,10 @@ Per [`../road_test_plan.md`](../road_test_plan.md):
   (TCA / swift-dependencies — but pointfreeco *uses* swift-
   dependencies, so arguably covered).
 - **Adoption-gap stability** (criterion #1) — this round named
-  **two new cross-adopter slice candidates** (`update*` prefix,
-  escape-wrapper recognition). That's non-zero new slice
-  candidates, so the three-round-plateau clock restarts here.
+  two cross-adopter slice candidates; one landed (`update*`
+  prefix → PR #15), one remains open (escape-wrapper recognition).
+  The three-round-plateau clock restarts here — open slices will
+  need to plateau across future rounds.
 - **Macro-form** (criterion #3) — ticked on todos-fluent (supplement);
   not exercised here.
 
