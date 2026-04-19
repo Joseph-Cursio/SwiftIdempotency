@@ -114,8 +114,8 @@ noise.
 
 **Hold until a second adopter surfaces the same pattern** — the
 current evidence is pointfreeco-specific. An AWS Lambda adopter
-round would be the natural cross-adopter data point. Shape would
-mirror PR #14's `idempotentReceiverMethodsByFramework`.
+round (see slot 9) would be the natural cross-adopter data point.
+Shape would mirror PR #14's `idempotentReceiverMethodsByFramework`.
 
 ## Deeper work (bigger slices)
 
@@ -146,6 +146,31 @@ is the canonical idempotency-key carrier. Two paths:
   into production changes.
 
 Start with the sample; the adopter integration is its own project.
+
+### 9. AWS Lambda adopter road-test
+
+Fifth adopter round, targeting `apple/swift-aws-lambda-runtime`.
+The original CLAUDE.md validation recommendation: every SQS/SNS
+handler is objectively `@lint.context replayable`, so annotation
+correctness is unambiguous — no judgement calls about what the
+context should be.
+
+Value per session:
+
+- **Cross-adopter evidence for slot 4.** If Lambda's
+  `detach` / `runInBackground`-shape escape wrappers surface the
+  same pattern pointfreeco's `fireAndForget` did, slot 4 lights up
+  with two independent data points and can ship.
+- **Cross-framework validation of PR #18.** Does the
+  `@lint.framework` whitelist infrastructure generalize cleanly to
+  a second framework, or does it need shape changes first?
+- **Natural adopter for `IdempotencyKey` integration.** SQS message
+  IDs are the canonical `@ExternallyIdempotent(by:)` case and tie
+  slot 6's macro sample to a real adopter target down the line.
+
+Produces: transcripts + retrospective under
+`docs/swift-aws-lambda-runtime/`. Session-cost: 1-2 sessions,
+similar to the TCA round.
 
 ## Follow-ups on what we found
 

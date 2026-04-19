@@ -217,3 +217,67 @@ using the `return .run { ... }` idiom now see diagnostics they
 previously missed. The remaining `send` and dependency-client
 noise is real work, but it's precision-engineering on top of a
 now-functional baseline rather than a blocking visibility gap.
+
+## Post-PR-#18 session measurement (2026-04-19)
+
+SwiftProjectLint PR #18 (composableArchitecture framework whitelist
+with bare-name `send` override) and PR #19 (closure-typed stored
+properties become effect declarations) were both developed against
+this round's findings. PR #18's effect is verified directly; PR #19's
+effect is set up but pending verification until merge.
+
+Measurement was run against the PR #18 branch of SwiftProjectLint,
+same scan roots as the post-PR-#17 remeasurement:
+
+- **Replayable**: 7 → **1 diagnostic**. Transcript:
+  [`trial-transcripts/replayable-post-pr18.txt`](trial-transcripts/replayable-post-pr18.txt).
+  The 6-of-6 `send`-on-closure-parameter cluster (cluster 1 in
+  `trial-findings.md`) is fully silenced. Only the positive
+  control (`trialSendNotification` via `trialHandleMoveEffect`)
+  remains — which is the expected ground-truth fire.
+- **Strict**: 22 → **16 diagnostics**. Transcript:
+  [`trial-transcripts/strict-replayable-post-pr18.txt`](trial-transcripts/strict-replayable-post-pr18.txt).
+  Same 6 `send` fires dropped; the 15 strict-only unannotated-callee
+  fires and the positive control survive unchanged. Breakdown:
+  `sleep` (3), `Duration` constructors (3), enum case / `Result`
+  constructors (6), `weatherClient.search` / `weatherClient.forecast` /
+  `factClient.fetch` (3), positive control (1).
+
+**Cluster status after PR #18:**
+
+- Cluster 1 (`send`-on-closure-parameter) — **closed**. Framework
+  whitelist + bare-name override handles every instance.
+- Cluster 4 (dependency-client method dispatch) — **closed
+  conditional on adopter annotating**. PR #19 provides the
+  mechanism (closure-typed stored properties become effect
+  declarations via `EffectSymbolTable.merge(source:)`). The
+  annotation work is now in place: `trial-tca` branch of
+  `/tmp/swift-composable-architecture` carries
+  `/// @lint.effect idempotent` on `WeatherClient.forecast`,
+  `WeatherClient.search`, and `FactClient.fetch` (commits
+  `d326f80` + `02ba3e0` on top of `7517cc3`). When PR #19 lands,
+  re-running the strict scan against annotated trial-tca should
+  drop the 3 dependency-client fires, yielding **13 diagnostics**.
+- Clusters 2, 3, 5 (enum case constructors, `Duration` constructors,
+  `ContinuousClock.sleep`) — unchanged. Still tracked as
+  independent slice candidates in `next_steps.md`.
+
+**Findings.md not rewritten.** Per the PR #17 precedent, the
+canonical `trial-findings.md` is rewritten when the upstream PR
+merges to SwiftProjectLint `main`. PR #18 and PR #19 are still
+open; this section records the measurement but leaves the
+per-diagnostic verdict table in its post-PR-#17 form. Follow-up
+work on the PR-#18/#19 merge should:
+
+1. Re-run the scan against merged `main` + annotated `trial-tca`.
+2. Confirm replayable = 1 and strict = 13.
+3. Rewrite `trial-findings.md` with the new numbers (old version
+   preserved in git history at this commit).
+4. Consolidate the `-post-pr18` transcripts into the canonical
+   `replayable.txt` / `strict-replayable.txt` names.
+
+**Trial branch durability caveat.** The `trial-tca` branch lives
+on a `/tmp` clone and is not pushed to any remote. Macs don't
+wipe `/tmp` on every reboot, but they can. If the verification
+run above is blocked by a lost branch, the annotations are
+trivially replayable from the instructions in this addendum.
