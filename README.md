@@ -58,26 +58,52 @@ idiom that fits your codebase, or mix and match. Linter's
 `idempotencyViolation` and `nonIdempotentInRetryContext` rules fire
 identically for either form.
 
-### 3. Test scaffolding via `@Idempotent` and `#assertIdempotent`
+### 3. Test scaffolding via `@IdempotencyTests` and `#assertIdempotent`
 
-For **zero-argument functions**, the `@Idempotent` attribute also
-generates a companion Swift Testing test:
+For **zero-argument functions**, attach `@IdempotencyTests` to the
+enclosing `@Suite` type. For each `@Idempotent`-marked zero-argument
+member, the macro emits one `@Test` method in a generated extension:
 
 ```swift
-@Idempotent
-func flushCaches() async throws { ... }
+@Suite
+@IdempotencyTests
+struct MaintenanceChecks {
+    @Idempotent
+    func currentSystemStatus() -> Int { 200 }
 
-// Macro-generated peer:
-// @Test func testIdempotencyOfFlushCaches() async throws {
-//     try await flushCaches()
-//     try await flushCaches()
+    @Idempotent
+    func flushCaches() async throws { ... }
+}
+
+// Macro-generated:
+// extension MaintenanceChecks {
+//     @Test func testIdempotencyOfCurrentSystemStatus() async throws {
+//         let (first, second) = await SwiftIdempotency.__idempotencyInvokeTwice {
+//             currentSystemStatus()
+//         }
+//         #expect(first == second)
+//     }
+//     @Test func testIdempotencyOfFlushCaches() async throws {
+//         let (first, second) = try await SwiftIdempotency.__idempotencyInvokeTwice {
+//             try await flushCaches()
+//         }
+//         #expect(first == second)
+//     }
 // }
 ```
 
+The expansion is effect-aware — `try` and `await` appear only when the
+target's signature requires them, so non-throwing targets don't
+produce spurious `"no calls to throwing functions occur within 'try'
+expression"` warnings.
+
 For parameterised functions, use the freestanding `#assertIdempotent`
-expression macro at a specific call site:
+expression macro at a specific call site. The macro has sync and async
+overloads; Swift's overload resolution picks the right one based on the
+closure's effects, so callers just write what their closure needs:
 
 ```swift
+// Sync — no `await` in the body, compiles without it at the call site.
 @Test func chargeIsIdempotent() throws {
     let event = StripeEvent(id: "evt_abc123")
     let result = try #assertIdempotent {
@@ -85,12 +111,60 @@ expression macro at a specific call site:
     }
     #expect(result.status == .succeeded)
 }
+
+// Async — `await` in the body forces the async overload.
+@Test func webhookIsIdempotent() async throws {
+    let payload = WebhookPayload(eventId: "evt_abc123", amount: 250)
+    let result = try await #assertIdempotent {
+        try await handleWebhook(payload: payload, store: store)
+    }
+    #expect(result.status == "succeeded")
+}
 ```
 
-The macro expands to a call to a runtime helper that invokes the closure
-twice, asserts identical return values via `precondition`, and returns
-the first result. If the closure isn't idempotent, the second
-invocation's result differs and the test fails.
+Both overloads invoke the closure twice, compare return values via
+`Equatable`, abort via `precondition` on mismatch, and return the first
+result.
+
+#### Comparing structured responses
+
+`#assertIdempotent` compares return values via `Equatable`, so its
+answer is only as sharp as the type's `==`. For primitives and typed
+models with synthesised `Equatable`, that's exactly right. For **raw
+response bytes** — `Data` buffers of JSON, encoded protobufs, etc. —
+`Equatable` is on the byte sequence, and that's not guaranteed stable:
+`JSONEncoder` key ordering and most framework response encoders are
+non-deterministic, so two semantically-identical responses can diverge
+on the wire.
+
+**Decode before comparing:**
+
+```swift
+@Test func webhookReplaySafe() async throws {
+    try await app.test(.router) { client in
+        let result = try await #assertIdempotent {
+            try await client.execute(
+                uri: "/webhook",
+                method: .post,
+                headers: [.contentType: "application/json"],
+                body: ByteBuffer(data: requestBody)
+            ) { response -> ChargeResult in
+                try JSONDecoder().decode(
+                    ChargeResult.self,
+                    from: Data(buffer: response.body)
+                )
+            }
+        }
+        #expect(result.status == "succeeded")
+    }
+}
+```
+
+The closure returns the *decoded* `ChargeResult`, whose synthesised
+`Equatable` compares field-by-field. The assertion is stable regardless
+of the encoder's key ordering. The same caveat and fix apply to the
+`@IdempotencyTests` auto-generated tests — prefer a typed return over
+raw bytes in the target function.
 
 ## Installation
 
@@ -124,22 +198,23 @@ Swift 5.10+; requires Swift Testing for `@Test`-based peer expansion.
 - Compile-time type enforcement via `IdempotencyKey`
 - Recognisable attribute names for hand-written and linter-consumed
   annotations
-- Test-time scaffolding via `@Idempotent` peer-macro expansion (zero-arg
-  functions) and `#assertIdempotent` expression macro
+- Test-time scaffolding via `@IdempotencyTests` extension-macro
+  expansion (zero-arg `@Idempotent`-marked members) and
+  `#assertIdempotent` expression macro (sync + async overloads)
 
 **What this package does NOT do:**
 - **Production-runtime instrumentation.** Macros cannot inject into every
   call site silently. Runtime safety is covered by compile-time (types),
   test-time (generated / explicit tests), and lint-time (SwiftProjectLint
   rules) — not production AOP.
-- **Auto-generated mocks or dependency injection.** The
-  `@Idempotent`-generated test for a zero-arg function calls it literally
-  twice. If your function touches the filesystem or a real database,
-  you're responsible for test isolation.
-- **Parameterised `@Idempotent` expansion.** Only zero-argument functions
-  get auto-generated tests. Parameterised functions can either use
-  `#assertIdempotent` at test sites, or wait for a future slice that
-  introduces an `IdempotencyTestArgs` protocol.
+- **Auto-generated mocks or dependency injection.** The test that
+  `@IdempotencyTests` generates for a zero-arg function calls it
+  literally twice. If your function touches the filesystem or a real
+  database, you're responsible for test isolation.
+- **Parameterised `@IdempotencyTests` expansion.** Only zero-argument
+  `@Idempotent`-marked members get auto-generated tests. Parameterised
+  functions can either use `#assertIdempotent` at test sites, or wait
+  for a future slice that introduces an `IdempotencyTestArgs` protocol.
 - **Dynamic observable-equivalence checking.** The current
   implementation uses Option C semantics — same return value + no throw
   on second call. It doesn't capture side effects via mocks. Genuinely
@@ -161,6 +236,13 @@ additive:
   they disagree (e.g. `/// @lint.effect idempotent` + `@NonIdempotent`),
   the linter withdraws the entry (collision policy) — matching how two
   conflicting `@lint.effect` declarations across files are handled.
+- **The tiers layer, they don't overlap wastefully.** Once a callee
+  takes `IdempotencyKey` directly, the compile-time type check rejects
+  `UUID()` / `Date()` at call sites *before* the linter's
+  `MissingIdempotencyKey` rule would have flagged them. That rule's
+  value concentrates on un-migrated call sites where the key is still
+  typed as `String`. Both tiers carry their weight: the type catches
+  what it can earliest; the linter catches the string-typed remainder.
 
 If your project doesn't use SwiftProjectLint yet, this package is still
 useful on its own — `IdempotencyKey` and the generated tests provide
@@ -168,12 +250,15 @@ value independent of static analysis.
 
 ## Status
 
-Early release. Annotation attributes, `IdempotencyKey`, zero-arg
-`@Idempotent` expansion, and `#assertIdempotent` are implemented and
-tested. Deferred for future work:
+Early release. Annotation attributes (`@Idempotent`, `@NonIdempotent`,
+`@Observational`, `@ExternallyIdempotent`), `IdempotencyKey`, zero-arg
+`@IdempotencyTests` extension expansion, and `#assertIdempotent` (sync +
+async) are implemented and tested. Deferred for future work:
 
-- Parameterised `@Idempotent` expansion (needs `IdempotencyTestArgs`
-  protocol design)
+- Parameterised `@IdempotencyTests` expansion — today only zero-arg
+  `@Idempotent`-marked members get auto-generated tests; extending to
+  parameterised members needs an `IdempotencyTestArgs` protocol design
+  so the macro has a stable way to synthesise arguments
 - Option A / B observable-equivalence (dependency-injected mocks)
 - Framework-specific integrations (Vapor, Hummingbird, SwiftNIO)
 
