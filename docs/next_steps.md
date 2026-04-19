@@ -5,14 +5,12 @@ value-per-effort, top to bottom.
 
 ## Where things stand
 
-- **Linter** (`Joseph-Cursio/SwiftProjectLint`): main at PR #16 tip.
-  Seven slices shipped so far: Fluent save/update/delete (PR #11),
-  drop nil-imports backcompat (#12), Fluent query-builder reads (#13),
-  Hummingbird primitives (#14), move `update` to bare prefix (#15),
-  wall-clock budget on the fixed-point loop (#16). PR #17 (walk
-  CodeBlockItem trivia for prefix-statement annotations) is **open
-  and awaiting review** — closes the `return-trailing-annotation`
-  correctness slice surfaced on the TCA round.
+- **Linter** (`Joseph-Cursio/SwiftProjectLint`): main at PR #17 tip
+  (`4c8623f`). Seven slices shipped: Fluent save/update/delete
+  (PR #11), drop nil-imports backcompat (#12), Fluent query-builder
+  reads (#13), Hummingbird primitives (#14), move `update` to bare
+  prefix (#15), wall-clock budget on the fixed-point loop (#16),
+  walk CodeBlockItem trivia for prefix-statement annotations (#17).
 - **Macros** (this repo): shipped; unchanged this past session.
   `@Idempotent`, `@NonIdempotent`, `@Observational`,
   `@ExternallyIdempotent(by:)`, `@IdempotencyTests`,
@@ -21,12 +19,13 @@ value-per-effort, top to bottom.
   `pointfreeco/`, `swift-nio/`, `swift-composable-architecture/`.
   Framework-coverage criterion (Vapor / Hummingbird / SwiftNIO /
   Point-Free) is now met. pointfreeco round surfaced 4 probable
-  Stripe-retry duplicate-email shapes in production code (see
-  caveats in that retrospective). TCA round surfaced the
-  `return-trailing-annotation` correctness slice, now shipping as
-  PR #17. Post-fix re-validation against the TCA examples confirms
-  all 6 annotated `.run { send in ... }` sites fire — replayable
-  produces 7 diagnostics (1 control + 6 real), strict produces 22.
+  Stripe-retry duplicate-email shapes in production code. TCA round
+  surfaced `return-trailing-annotation` (closed as PR #17); the
+  post-fix remeasurement is now committed and surfaced **two new
+  adoption-gap candidates**: `send`-on-closure-parameter (6 fires)
+  and dependency-client method dispatch via `@Dependency` property
+  wrappers (3 fires on `weatherClient.search/forecast`,
+  `factClient.fetch`).
 - **Macro-form end-to-end validation**: ticked on `todos-fluent`
   via the attribute-form A/B supplement. Three macros still
   un-exercised on adopter code: `@IdempotencyTests`,
@@ -34,30 +33,7 @@ value-per-effort, top to bottom.
 
 ## Immediate candidates (small, concrete)
 
-### 1. Land PR #17 and remeasure TCA
-
-PR #17 on SwiftProjectLint closes the `return-trailing-annotation`
-slice (10 new tests, 2229/275 green). Merge, pull main locally,
-rebuild the release CLI, then re-run the TCA round against the
-fix in place. Replace
-`docs/swift-composable-architecture/trial-transcripts/*.txt` with
-the post-fix output and note in the findings doc that the gap
-is closed (don't delete the pre-fix findings — they're the audit
-trail that justified the slice).
-
-Expected outcome from validation done this session:
-
-- replayable — 7 diagnostics (1 positive control + 6 inferred-`send`
-  fires inside the `.run { }` closures)
-- strict_replayable — 22 diagnostics (same 7 + 15 unannotated-callee
-  fires on stdlib/TCA surface: `sleep`, `seconds`, `milliseconds`,
-  `Result`, `fetch`, `search`, `forecast`, `searchResponse`,
-  `forecastResponse`, `numberFactResponse`)
-
-The `send` heuristic fire inside TCA effect closures is a
-separate adoption-gap candidate — see slot 2 below.
-
-### 2. `send`-on-closure-parameter false-positive
+### 1. `send`-on-closure-parameter false-positive
 
 Surfaced by the TCA post-fix re-run. `await send(.action)` inside
 TCA effects dispatches an action via the `Send<Action>` closure
@@ -80,8 +56,34 @@ Fix directions (not mutually exclusive):
   Hummingbird/Fluent approach. Cheaper than receiver-type work
   but specific to TCA.
 
-Prevalence: 6 of 6 TCA effect closures fire on `send`. Would be
-the natural next adopter-driven slice once PR #17 lands.
+Prevalence: 6 of 6 TCA effect closures fire on `send`. Natural
+next adopter-driven slice.
+
+### 2. Dependency-client receiver resolution via property wrappers
+
+New from the TCA post-fix remeasurement. 3 strict-mode fires on
+`weatherClient.search`, `weatherClient.forecast`, `factClient.fetch`
+— calls via `@Dependency(\.foo)` property wrappers. Linter reads
+`self.weatherClient.search(query:)` but cannot classify the
+receiver because property-wrapper projection hides the real type
+from syntactic analysis.
+
+Generalises beyond TCA: SwiftUI `@Environment(\.foo)`,
+`@EnvironmentObject`, `@State` all have the same shape. A
+property-wrapper-aware receiver resolver would unlock classification
+for the whole class of DI-style access patterns.
+
+Fix direction: teach `ReceiverTypeResolver` to look up
+`@propertyWrapper var foo: Wrapper<T>` declarations in scope and
+resolve `self.foo.method()` through the wrapper's
+`wrappedValue` type. Scope may need either a targeted TCA/`Dependency`
+whitelist or a generic wrapper-aware path; start with the generic
+approach since it delivers SwiftUI coverage too.
+
+See
+[`swift-composable-architecture/trial-findings.md`](swift-composable-architecture/trial-findings.md)
+§"Decomposition into named slice clusters" cluster 4 for the
+full scope.
 
 ### 3. Escape-wrapper recognition slice
 
@@ -173,9 +175,18 @@ audit trail). Docs and simple tweaks go straight to main.
 
 ## Recommended next-session opener
 
-"Merge SwiftProjectLint PR #17 and remeasure TCA." Slot (1) above.
-After the remeasurement artefact lands, decide between slot (2)
-(`send`-on-closure-parameter slice — TCA-specific but the natural
-follow-on from the re-run) and a fresh adopter round on a
-non-Point-Free target to accumulate toward the three-round
-adoption-gap plateau.
+Two good options, pick based on appetite:
+
+- **Slot 1: `send`-on-closure-parameter slice.** Small, TCA-specific.
+  Either receiver-type resolution on closure parameters, or a
+  `composableArchitecture` framework whitelist. Whichever path, the
+  slice ships as PR #18.
+- **Slot 2: property-wrapper-aware receiver resolution.** Larger,
+  generalises across TCA + SwiftUI + any `@propertyWrapper` DSL.
+  Probably 1-2 sessions. Doing this first would also catch the
+  `@Dependency` case for free on the next adopter round.
+
+The TCA round will likely produce stronger follow-on evidence if
+slot 2 lands first (more classifications mean more ground truth
+for the heuristic to evaluate). Slot 1 is the lower-risk,
+quicker-feedback choice.

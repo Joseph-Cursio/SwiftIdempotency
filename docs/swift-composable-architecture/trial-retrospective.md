@@ -169,11 +169,51 @@ Per [`../road_test_plan.md`](../road_test_plan.md):
 ## Data committed
 
 - `docs/swift-composable-architecture/trial-scope.md`
-- `docs/swift-composable-architecture/trial-findings.md`
+- `docs/swift-composable-architecture/trial-findings.md` — **rewritten
+  post-fix** with the remeasurement numbers; pre-fix version lives in
+  git history at commit `065a90c`
 - `docs/swift-composable-architecture/trial-retrospective.md` — this document
-- `docs/swift-composable-architecture/trial-transcripts/replayable.txt`
-- `docs/swift-composable-architecture/trial-transcripts/strict-replayable.txt`
+- `docs/swift-composable-architecture/trial-transcripts/replayable.txt` — **overwritten with post-fix output**
+- `docs/swift-composable-architecture/trial-transcripts/strict-replayable.txt` — **overwritten with post-fix output**
 
 Adopter-side edits remain on the `trial-tca` branch of a
 shallow TCA clone at `/tmp/swift-composable-architecture`,
 local-only.
+
+## Post-fix remeasurement (2026-04-19)
+
+PR #17 on SwiftProjectLint landed as commit `4c8623f` (squash-merge
+from `slice-return-trailing-annotation`). Post-merge clean build
+of the release CLI, same six annotation sites on TCA, same scan
+commands:
+
+- **Replayable**: 7 diagnostics (1 positive control + 6 annotated
+  `.run { }` closures now fire on their inner `send` calls).
+- **Strict**: 22 diagnostics (7 carried + 15 strict-only unannotated-
+  callee fires on stdlib/TCA surface).
+
+Every annotation site is now visible to the visitor. The round's
+primary research question — "does the trailing-closure annotation
+mechanism fire correctly on TCA effects?" — now answers **yes**.
+
+The remeasurement also opened two new adoption-gap candidates that
+were previously hidden behind the visibility gap:
+
+1. **`send`-on-closure-parameter** — 6 defensible fires. Receiver-
+   type resolution on closure parameters, or a framework whitelist
+   entry gated on `import ComposableArchitecture`.
+2. **Dependency-client method dispatch** — 3 adoption-gap fires on
+   `weatherClient.search`, `weatherClient.forecast`,
+   `factClient.fetch`. Calls via `@Dependency(\.foo)` property
+   wrappers are syntactically unclassifiable today; a generic
+   property-wrapper-aware receiver resolver would unlock
+   TCA-shape and SwiftUI `@Environment`-shape alike.
+
+See [`trial-findings.md`](trial-findings.md) for the full
+per-diagnostic verdict table and decomposition into slice clusters.
+
+The slice's own correctness-closure is confirmed: TCA adopters
+using the `return .run { ... }` idiom now see diagnostics they
+previously missed. The remaining `send` and dependency-client
+noise is real work, but it's precision-engineering on top of a
+now-functional baseline rather than a blocking visibility gap.
