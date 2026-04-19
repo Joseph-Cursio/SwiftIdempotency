@@ -1,0 +1,13 @@
+warning: 'swiftprojectlint': dependency 'swiftprojectlintmodels' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintvisitors' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintregistry' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintrules' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintconfig' is not used by any target
+warning: 'swiftprojectlint': dependency 'swift-syntax' is not used by any target
+warning: 'swiftprojectlint': dependency 'yams' is not used by any target
+[0/1] Planning build
+Building for debugging...
+[0/3] Write swift-version--58304C5D6DBC2206.txt
+Build of product 'CLI' complete! (0.71s)
+
+No issues found.
