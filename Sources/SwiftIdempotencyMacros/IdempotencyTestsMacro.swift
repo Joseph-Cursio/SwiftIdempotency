@@ -18,11 +18,17 @@ import SwiftSyntaxMacros
 ///     extension IdempotencyChecks {
 ///         @Test
 ///         func testIdempotencyOfCurrentSystemStatus() async throws {
-///             let (__first, __second) = try await SwiftIdempotency
+///             let (__first, __second) = await SwiftIdempotency
 ///                 .__idempotencyInvokeTwice { currentSystemStatus() }
 ///             #expect(__first == __second)
 ///         }
 ///     }
+///
+/// The expansion adapts to the target function's effect specifiers —
+/// `try` / `await` are emitted only when the target's signature requires
+/// them, so non-throwing and non-async targets don't produce spurious
+/// warnings ("no calls to throwing functions occur within 'try'
+/// expression"). See the effect matrix in `generateTestMember`.
 ///
 /// ## Why an extension role, not peer or member
 ///
@@ -49,15 +55,14 @@ public struct IdempotencyTestsMacro: ExtensionMacro {
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
-        let functionNames = declaration.memberBlock.members
+        let functions = declaration.memberBlock.members
             .compactMap { $0.decl.as(FunctionDeclSyntax.self) }
             .filter(hasIdempotentAttribute)
             .filter { $0.signature.parameterClause.parameters.isEmpty }
-            .map { $0.name.text }
 
-        guard !functionNames.isEmpty else { return [] }
+        guard !functions.isEmpty else { return [] }
 
-        let members = functionNames
+        let members = functions
             .map(generateTestMember)
             .map { "\($0)" }
             .joined(separator: "\n\n")
@@ -86,16 +91,47 @@ public struct IdempotencyTestsMacro: ExtensionMacro {
         }
     }
 
-    private static func generateTestMember(for functionName: String) -> DeclSyntax {
+    /// Emits one `@Test` member per target function, inspecting the
+    /// target's effect specifiers so the expansion doesn't carry
+    /// unnecessary `try` / `await` tokens. Four cases:
+    ///
+    ///     target effects       inner call          outer helper call
+    ///     ()                   fn()                await __helper { ... }
+    ///     () throws            try fn()            try await __helper { ... }
+    ///     () async             await fn()          await __helper { ... }
+    ///     () async throws      try await fn()      try await __helper { ... }
+    ///
+    /// The outer `await` is always present because
+    /// `__idempotencyInvokeTwice` is declared `async`. The outer `try`
+    /// is present iff the closure body can throw (helper is `rethrows`).
+    /// The test method stays `async throws` regardless — Swift doesn't
+    /// warn on declared-but-unused `throws`, only on `try` over
+    /// non-throwing expressions.
+    private static func generateTestMember(for function: FunctionDeclSyntax) -> DeclSyntax {
+        let functionName = function.name.text
         let testName = "testIdempotencyOf"
             + functionName.prefix(1).uppercased()
             + functionName.dropFirst()
 
+        let effects = function.signature.effectSpecifiers
+        let isAsync = effects?.asyncSpecifier != nil
+        let isThrowing = effects?.throwsClause != nil
+
+        let innerEffectPrefix: String
+        switch (isAsync, isThrowing) {
+        case (false, false): innerEffectPrefix = ""
+        case (false, true):  innerEffectPrefix = "try "
+        case (true, false):  innerEffectPrefix = "await "
+        case (true, true):   innerEffectPrefix = "try await "
+        }
+
+        let outerEffectPrefix = isThrowing ? "try await " : "await "
+
         return """
             @Test
             func \(raw: testName)() async throws {
-                let (__first, __second) = try await SwiftIdempotency.__idempotencyInvokeTwice {
-                    \(raw: functionName)()
+                let (__first, __second) = \(raw: outerEffectPrefix)SwiftIdempotency.__idempotencyInvokeTwice {
+                    \(raw: innerEffectPrefix)\(raw: functionName)()
                 }
                 #expect(__first == __second)
             }
