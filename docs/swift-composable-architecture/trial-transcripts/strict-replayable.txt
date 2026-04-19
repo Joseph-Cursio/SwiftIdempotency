@@ -1,0 +1,14 @@
+=== /tmp/swift-composable-architecture/Examples/Todos ===
+Todos.swift:15: error: [Non-Idempotent In Retry Context] Non-idempotent call in strict_replayable context: 'trialHandleMoveEffect' is declared `@lint.context strict_replayable` but calls 'trialSendNotification', which is declared `@lint.effect non_idempotent`.
+  suggestion: Replace 'trialSendNotification' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+
+Found 1 issue (1 error)
+
+=== /tmp/swift-composable-architecture/Examples/Search ===
+
+No issues found.
+
+=== /tmp/swift-composable-architecture/Examples/CaseStudies ===
+
+No issues found.
+

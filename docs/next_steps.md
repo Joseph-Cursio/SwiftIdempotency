@@ -14,11 +14,13 @@ value-per-effort, top to bottom.
   `@Idempotent`, `@NonIdempotent`, `@Observational`,
   `@ExternallyIdempotent(by:)`, `@IdempotencyTests`,
   `#assertIdempotent`, `IdempotencyKey`.
-- **Adopter road-tests**: three rounds completed — `todos-fluent/`,
-  `pointfreeco/`, `swift-nio/`. Each has its own `docs/<slug>/`
-  directory with scope / findings / retrospective / transcripts.
-  pointfreeco round surfaced 4 probable Stripe-retry duplicate-email
-  shapes in production code (see caveats in the retrospective).
+- **Adopter road-tests**: four rounds completed — `todos-fluent/`,
+  `pointfreeco/`, `swift-nio/`, `swift-composable-architecture/`.
+  Framework-coverage criterion (Vapor / Hummingbird / SwiftNIO /
+  Point-Free) is now met. pointfreeco round surfaced 4 probable
+  Stripe-retry duplicate-email shapes in production code (see
+  caveats in that retrospective). TCA round surfaced a **new
+  correctness slice** — see slot 1 below.
 - **Macro-form end-to-end validation**: ticked on `todos-fluent`
   via the attribute-form A/B supplement. Three macros still
   un-exercised on adopter code: `@IdempotencyTests`,
@@ -26,14 +28,27 @@ value-per-effort, top to bottom.
 
 ## Immediate candidates (small, concrete)
 
-### 1. Point-Free library adopter round
+### 1. `return-trailing-annotation` correctness slice
 
-Last remaining framework tier from [`swift_idempotency_targets.md`](swift_idempotency_targets.md).
-TCA or swift-dependencies. Pure-function-heavy — very different shape
-from the webhook/server adopters we've scanned. May surface
-reducer / effect patterns the current heuristic misses. Follow the
-template in [`road_test_plan.md`](road_test_plan.md); 30-45 min
-per round.
+Surfaced this round on TCA. Doc-comment annotations above
+`return <call> { closure in ... }` don't attach to the call
+— SwiftSyntax binds the trivia to the `return` keyword. The
+visitor checks `FunctionCallExprSyntax.leadingTrivia` only,
+missing the annotation. Same shape applies to any prefix
+statement: `return`, `try`, `await`, `let x =`.
+
+Affects 6 of 6 TCA annotation sites (100%). Structurally
+applies to any adopter that wraps annotated calls in a
+prefixed statement.
+
+Fix direction: in `NonIdempotentInRetryContextVisitor` and
+`UnannotatedInStrictReplayableContextVisitor`, when visiting
+a `FunctionCallExprSyntax`, also walk up to the enclosing
+statement (`ReturnStmtSyntax`, `ExpressionStmtSyntax`, etc.)
+and consult that node's leading trivia. ~30-line change plus
+test fixtures. See
+[`swift-composable-architecture/trial-findings.md`](swift-composable-architecture/trial-findings.md)
+for the full shape. Recommended next session opener.
 
 ### 2. Escape-wrapper recognition slice
 
@@ -126,7 +141,8 @@ audit trail). Docs and simple tweaks go straight to main.
 
 ## Recommended next-session opener
 
-"Let's do the Point-Free library adopter round on
-`swift-composable-architecture`." That's slot (1) above. After
-that round closes, revisit this file — the landscape will look
-different.
+"Let's close the `return-trailing-annotation` correctness slice
+on SwiftProjectLint." Slot (1) above. After it lands, rerun the
+TCA round to confirm the 6 annotation sites now fire — that's
+the validation. If it does, the adoption-gap plateau clock
+re-starts at 1/3.
