@@ -1,0 +1,10 @@
+Sources/App/Controllers/TodoController.swift:56: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'create' is declared `@lint.context replayable` but calls 'save', whose effect is inferred `non_idempotent` from the FluentKit ORM verb `save`. If the inference is wrong, annotate 'save' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'save' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/App/Controllers/TodoController.swift:59: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'create' is declared `@lint.context replayable` but calls 'update', whose effect is inferred `non_idempotent` from the FluentKit ORM verb `update`. If the inference is wrong, annotate 'update' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'update' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/App/Controllers/TodoController.swift:60: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'create' is declared `@lint.context replayable` but calls 'recordAuditEvent', which is declared `@lint.effect non_idempotent`.
+  suggestion: Replace 'recordAuditEvent' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/App/Controllers/TodoController.swift:106: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'deleteId' is declared `@lint.context replayable` but calls 'delete', whose effect is inferred `non_idempotent` from the FluentKit ORM verb `delete`. If the inference is wrong, annotate 'delete' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'delete' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+
+Found 4 issues (4 errors)
