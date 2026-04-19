@@ -1,0 +1,182 @@
+# Road-Test Plan
+
+How to run a road-test round against a real Swift adopter application,
+what to capture, and when to stop. This document is the template the
+trial author works from when picking up a new target.
+
+See [`swift_idempotency_targets.md`](swift_idempotency_targets.md) for
+the prioritised target list. See
+[`hummingbird-examples/`](hummingbird-examples/) for the worked example
+this template is abstracted from — if this document conflicts with
+what that round actually did, the round is the reference and this
+document is wrong.
+
+## When to run a round
+
+- A linter slice has landed that changes an inference heuristic or a
+  framework whitelist. Road-test validates the slice on adopter code
+  before calling it done.
+- An adopter target is added to `swift_idempotency_targets.md` that
+  isn't yet covered.
+- A bug report or adoption-friction observation names a shape we
+  haven't measured. A targeted round scopes the evidence.
+
+Not every linter edit needs a round — rule bugfixes that ship with
+fixture tests are self-verifying. Rounds are for **adoption-evidence**,
+not unit-test coverage.
+
+## Per-round protocol
+
+### Pick the target
+
+One adopter project per round. Slug the project name with hyphens
+(e.g. `todos-fluent`, not `TodosFluent`). Multi-package corpora like
+`vapor` or `hummingbird-examples` get one round per package — don't
+blend packages in one directory.
+
+### Pre-flight
+
+- Verify the linter is on a known-green tip (`swift test` passes).
+  Pin the commit SHA in the scope doc.
+- Verify the target clone is clean and on a known SHA or tag. Pin
+  both in the scope doc.
+- Create a throwaway branch on the target clone
+  (`trial-<short-slug>`). Local-only; **never push**. The trial
+  branch's lifetime is this round.
+- Create `docs/<project-slug>/` in `swiftIdempotency`. If the dir
+  exists from a prior round, its contents will be overwritten by
+  this round — git history is the audit trail, per the
+  project-named-dir convention.
+
+### Annotate
+
+- 3-6 handlers, selected for shape diversity (pure read, create/write,
+  delete, etc.). Prefer `func` declarations over closure-based
+  handlers unless the closure shape is the specific thing under test.
+- `/// @lint.context replayable` on each. Matched attribute forms
+  (`@lint.context(.replayable)` if the adopter is already consuming
+  the macros package) are equivalent.
+- No logic edits to the target. If a source change is required to
+  make annotations meaningful (e.g. a `by:` parameter on
+  `@ExternallyIdempotent`), document it explicitly in the scope
+  doc's "source modifications" section.
+
+### Scan twice
+
+- **Replayable scan.** `swift run CLI <target-path> --categories
+  idempotency --threshold info`. Capture transcript to
+  `docs/<slug>/trial-transcripts/replayable.txt`.
+- **Strict-replayable scan.** Flip the annotations to
+  `strict_replayable`, re-run, capture to
+  `trial-transcripts/strict-replayable.txt`.
+
+For larger corpora where more runs are warranted (e.g. a third pass
+with different annotation sets), add numbered variants
+(`replayable-extended.txt`, etc.).
+
+### Audit
+
+Every diagnostic gets a one-line verdict:
+- **correct catch** — the adopter's code is genuinely non-idempotent
+  in a retry context, and this is a real bug shape to fix.
+- **defensible** — fires on a pattern that's non-idempotent in some
+  readings but the adopter's code is OK by design. Silence by
+  annotation.
+- **adoption gap** — the heuristic missed a real shape. Name the
+  gap and score a future slice.
+- **noise** — fires on genuinely idempotent code with no good
+  silencer. Log as a precision issue.
+
+Cap the per-round audit at 30 diagnostics. If strict mode exceeds
+30, decompose the excess by class in the findings doc without
+per-diagnostic verdicts.
+
+## Documents to produce
+
+Four files under `docs/<project-slug>/`. No phase prefix. No round
+number. Latest measurement only; re-runs overwrite in place.
+
+### `trial-scope.md`
+
+- Research question (quoted, one sentence)
+- Pinned context (linter SHA, target SHA, trial-branch name, clone path)
+- Annotation plan (which handlers, which tier)
+- Scope commitment (measurement-only, source-edit ceiling, audit cap)
+- Pre-committed questions for the retrospective (3-4)
+
+### `trial-findings.md`
+
+- Run A (replayable) — per-diagnostic table, yield calculation, link
+  to transcript
+- Run B (strict_replayable) — per-diagnostic table split into
+  "carried from Run A" and "strict-only," adoption-gap verdicts,
+  decomposition into named slice clusters
+- Comparison to prior measurement on this target (if any) or to the
+  predicted outcome from the scope doc
+
+### `trial-retrospective.md`
+
+- Did the scope hold? (scope audit)
+- Answers to the four pre-committed questions (explicit headers per
+  question)
+- What would have changed the outcome (counterfactuals — 2-3 bullets)
+- Cost summary (estimated vs actual)
+- Policy notes (lessons for the template; if any of them apply, fold
+  them back into this document)
+- Data committed (file list)
+
+### `trial-transcripts/<mode>.txt`
+
+Raw linter output, one file per scan. Strip SPM warnings and build
+progress noise. Keep the "Found N issues" footer.
+
+## Yield metric
+
+`catches / annotated handlers` across a single mode. Report per-handler
+(showing silent handlers explicitly) and aggregate.
+
+Silent handlers are not failures — they're the correctness signal.
+Report yield with + without silent handlers for comparison:
+- "3 catches / 3 handlers = 1.00 including silent"
+- "3 catches / 2 non-silent handlers = 1.50 excluding silent"
+
+## Macro-form variant
+
+Optional per round. Exercise if:
+- The adopter is already consuming the `SwiftIdempotency` package
+  for their own reasons (test generation, `IdempotencyKey` type),
+  OR
+- The round's specific purpose is macro-form validation.
+
+Otherwise skip. Adding a package dependency to a target purely for
+a measurement round is more invasive than the round warrants.
+
+When exercised: replace `/// @lint.context replayable` doc-comments
+with the equivalent attribute form from the macros package. Re-run
+both scans. Note any linter divergence between the two annotation
+forms — they are supposed to produce identical results.
+
+## Completion criteria
+
+Road-testing is "done enough to ship" when:
+
+1. **Framework coverage.** One adopter per framework listed in
+   `swift_idempotency_targets.md` has been road-tested: Vapor,
+   Hummingbird, SwiftNIO, Point-Free.
+2. **Adoption-gap stability.** Three consecutive rounds produce
+   zero new named adoption-gap slices — the strict-mode residual
+   has plateaued into a known set.
+3. **Macro-form evidence.** At least one adopter has exercised the
+   attribute-form annotations end-to-end and produced identical
+   linter output to the doc-comment form.
+
+Not on the list:
+- Zero strict-mode diagnostics. Unachievable goal — stdlib and
+  framework surface is always partially uninferrable.
+- Every adopter in `swift_idempotency_targets.md` road-tested. The
+  Tier-3 "random GitHub apps" list is exploratory, not a coverage
+  obligation.
+
+Continue the template even after completion criteria are met —
+future linter slices still get validated the same way. The plan
+stays alive; it just stops blocking on new targets.
