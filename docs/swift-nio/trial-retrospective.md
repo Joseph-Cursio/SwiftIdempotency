@@ -45,15 +45,26 @@ those catches.
 
 ### (c) New cross-adopter slice candidates?
 
-**No.** The round confirms the design claim. No linter changes
-are warranted.
+**One**, surfaced from investigating the full-corpus hang
+rather than from the annotation measurements themselves. A
+single-process scan reproduced the hang (12+ minutes, 100%
+CPU); `sample` of the running CLI pinned every sample inside
+`EffectSymbolTable.runInferencePass` during
+`IdempotencyViolationVisitor.finalizeAnalysis`. The outer
+fixed-point loop is bounded by `maxHops`, but a single pass on
+a large corpus (258 files × ~346 LOC average, wider per-file
+call graphs than pointfreeco despite fewer files overall) runs
+away.
 
-A minor observation: the full-corpus scan timeout could be an
-artefact of concurrent process contention (three CLI invocations
-were running at once) or a genuine pathological case in the
-linter. This round's data isn't strong enough to diagnose; not
-a slice candidate, not a named follow-on, just a note to future
-rounds that want to attempt a single-process clean scan.
+Shipped as **PR #16** — wall-clock budget (default 30s) on the
+fixed-point loop with defense-in-depth checks at both the outer
+multi-hop iteration and each inner source iteration. swift-nio
+scan now completes in ~3 minutes with partial inference instead
+of hanging. Graceful-degradation semantics: multi-hop chains on
+huge corpora may not fully resolve, but single-hop catches
+land for whichever sources are processed before the budget
+expires. The proper fix — profiling and optimising the inner
+loop — remains deferred.
 
 ### (d) What should change in CLAUDE.md guidance?
 
@@ -117,10 +128,14 @@ Per [`../road_test_plan.md`](../road_test_plan.md):
   via pointfreeco; TCA would be a pure-function-heavy target
   with different trade-offs.
 - **Adoption-gap stability** (criterion #1) — this round
-  produces **zero new named slice candidates**. Open
-  slices from the pointfreeco round (escape-wrapper
-  recognition) remain deferred. Plateau-clock: one round of
-  zero-new-slices complete.
+  produced **one linter slice** (PR #16 — wall-clock budget)
+  that surfaced from investigating a perf observation, not
+  from the annotation measurements. Zero new *semantic*
+  adoption-gap candidates. Open deferred slices from prior
+  rounds (escape-wrapper recognition from pointfreeco) remain
+  open. Plateau-clock partially reset — the PR #16 slice is a
+  robustness fix rather than a semantic gap, arguable whether
+  it restarts the three-round count.
 - **Macro-form** (criterion #3) — already ticked on
   todos-fluent; not exercised on swift-nio (wouldn't make
   sense — there's no annotation reason to consume the
