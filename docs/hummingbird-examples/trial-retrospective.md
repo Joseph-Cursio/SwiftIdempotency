@@ -18,6 +18,11 @@ answers.
   Predicted ~7 strict-mode silences on this corpus; measured 8.
   Same shape as PR #11 but for the read-only side of the Fluent
   API surface.
+- **PR #14** — Hummingbird primitive slice. Adds `HTTPError`
+  (bare-identifier type constructor) and a new
+  `(receiver, method)` pair whitelist shape for
+  `request.decode` / `parameters.require`. Predicted 4
+  strict-mode silences; measured exactly 4.
 - **Macro-form supplement** on this round's doc branch — added a
   `@NonIdempotent`-annotated helper to `TodoController` and
   confirmed byte-identical linter output to the equivalent
@@ -51,31 +56,29 @@ is wrong.
 
 ### (c) What's the strict-mode decomposition?
 
-Post-slices: 10 total, decomposed as 4 non-idempotent (save,
-update, delete, `recordAuditEvent`) + 6 "unannotated callee"
-diagnostics. The unannotated surface splits into three clusters:
-3 Hummingbird primitives, 1 codec-receiver shape mismatch, 1
-`.init(...)` member-access gap, 1 adopter-responsibility catch.
-See [`trial-findings.md`](trial-findings.md) for the per-callee
-table.
+Post-PR-14: **6 total**, all in `TodoController.create`. 4 are
+carried from replayable mode (save/update/delete + the macro-form
+`recordAuditEvent` helper) — these are correct catches of real
+non-idempotent calls. The remaining 2 are `Todo()` (adopter-owned
+constructor; adopter's responsibility, not a linter whitelist) and
+one `.init(...)` member-access form (known long-running gap, 1/6
+firing rate). See [`trial-findings.md`](trial-findings.md).
 
 ### (d) Which adoption gaps are next-slice worthy?
 
-Post-PR-13, the residual looks like this:
+**None on this corpus.** The strict-mode residual has plateaued
+at 6; no cluster has the 3-catch-or-more density to motivate a
+new slice. Remaining firing shapes are either (i) intentionally
+correct catches, (ii) adopter responsibility, or (iii) the
+deferred `.init(...)` gap still awaiting cross-adopter evidence.
 
-1. **Hummingbird primitive whitelist** (~1 hour) — `HTTPError`,
-   `request.decode`, `parameters.require`. 4 of 6 strict-only
-   diagnostics on this corpus. Broader adopter surface than
-   Fluent — worth measuring yield lift on a second Hummingbird
-   adopter before generalising. Pattern matches PR #11 / PR #13.
-2. **Codec-receiver widening OR Hummingbird decode entry** — the
-   `request.decode(...)` shape. One diagnostic here, but likely
-   common across Hummingbird-using adopters. Fold into (1) or
-   ship alongside.
-3. **`.init(...)` member-access form** — long-running known gap.
-   Still 1 catch here; cross-adopter evidence needed. Defer.
+Further progress against
+[`road_test_plan.md`](../road_test_plan.md)'s completion criteria
+requires moving to a different adopter — todos-fluent has
+delivered what it can.
 
-Macro follow-ons (not adopter-shape-appropriate for todos-fluent):
+Macro follow-ons (not adopter-shape-appropriate for todos-fluent,
+documented for future round selection):
 
 - `@IdempotencyTests` — needs zero-arg target functions; handlers
   all have args. Purpose-built sample or a different adopter.

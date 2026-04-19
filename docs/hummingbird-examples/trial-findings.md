@@ -1,12 +1,12 @@
 # hummingbird-examples / todos-fluent — Trial Findings
 
 Current measurement state. Linter at `SwiftProjectLint` main
-`d85e5dc` (post-PR #13, the Fluent query-builder idempotent-read
-slice). Target `hummingbird-examples` at `0d0f9bd`, on the
-`trial-fluent-verify` branch with three `@lint.context replayable`
-doc-comments on `TodoController.{list,create,deleteId}` plus one
-adopter helper `recordAuditEvent` marked `@NonIdempotent` (from
-the macro-form supplement).
+`040f186` (post-PR #14, the Hummingbird primitive slice). Target
+`hummingbird-examples` at `0d0f9bd`, on the `trial-fluent-verify`
+branch with three `@lint.context` annotations on
+`TodoController.{list,create,deleteId}` plus one adopter helper
+`recordAuditEvent` marked `@NonIdempotent` (from the macro-form
+supplement).
 
 ## Run A — replayable context
 
@@ -20,67 +20,52 @@ the macro-form supplement).
 | `create` | 64 | `recordAuditEvent` | nonIdempotentInRetryContext | declared `@NonIdempotent` (attribute) |
 | `deleteId` | 110 | `delete` | nonIdempotentInRetryContext | inferred — FluentKit ORM verb |
 
-`list` produces zero diagnostics (Fluent reads under the
-idempotent gate from PR #13; classification is `idempotent` which
-is trusted in `replayable` context).
+Unchanged by PR #14. The Hummingbird slice adds `idempotent`
+classifications only — no new diagnostic shape in replayable mode.
 
 ## Run B — strict_replayable context
 
-**10 diagnostics.** Transcript:
+**6 diagnostics.** Transcript:
 [`trial-transcripts/strict-replayable.txt`](trial-transcripts/strict-replayable.txt).
 
 **Carried from Run A** (4 diagnostics): same `save` / `update` /
-`delete` / `recordAuditEvent` catches as above. Strict mode is
-stricter, not different.
+`delete` / `recordAuditEvent` catches.
 
-**Strict-only** (6 diagnostics) — fire from
-`UnannotatedInStrictReplayableContextVisitor` on callees whose
-effect is neither declared nor inferrable:
+**Strict-only** (2 diagnostics):
 
 | Handler | Line | Callee | Adoption-fix verdict |
 |---|---|---|---|
-| `create` | 56 | `decode` | `request.decode(...)` — receiver `request` not codec-shaped. Future Hummingbird whitelist or codec-receiver widening. |
-| `create` | 57 | `HTTPError` | Hummingbird error constructor — future Hummingbird primitive whitelist. |
-| `create` | 58 | `Todo` | adopter-owned type constructor — adopter should annotate `@Idempotent` on `Todo.init`. |
-| `create` | 65 | `init` | `EditedResponse(.init(...))` — Hummingbird response; known `.init(...)` member-access form gap. |
-| `deleteId` | 101 | `require` | `context.parameters.require(...)` — Hummingbird primitive; future whitelist. |
-| `deleteId` | 108 | `HTTPError` | Hummingbird error constructor — same as above. |
+| `create` | 58 | `Todo` | adopter-owned type constructor — adopter should annotate `@Idempotent` on `Todo.init` (no future linter slice will close this) |
+| `create` | 65 | `init` | `EditedResponse(.init(...))` — known `.init(...)` member-access form gap. 1/6 here; still below cross-adopter threshold for slicing. |
 
-## Silence accounting — where PR #13 landed
+## Silence accounting — where PR #14 landed
 
-The strict-mode diagnostic count went from 17 (pre-PR-13, per git
-history) plus 1 (the `@NonIdempotent` helper added in the macro-form
-supplement) = 18 expected pre-slice, down to 10 post-slice. **8
-diagnostics silenced** by the Fluent query-builder read whitelist.
+Strict-mode count went from 10 (post-PR-13) to 6 after PR #14:
+**4 silences**, matching prediction exactly.
 
-Silenced callees, by handler:
-
-- `list` — 3 (all `all`, `query`, `db`)
-- `create` — 1 (`db`)
-- `deleteId` — 4 (`db`, `query`, `filter`, `first`)
-
-All 5 verbs in the PR #13 whitelist (`db`, `query`, `all`, `first`,
-`filter`) fired in at least one position on this corpus. Predicted
-silence was ~7; actual 8 (the `create` handler's `db` catch
-wasn't itemised in the pre-slice decomposition).
+Silenced callees:
+- `create:57 HTTPError` (Hummingbird type constructor)
+- `create:56 decode` (`request.decode` — Hummingbird primitive pair)
+- `deleteId:101 require` (`parameters.require` — Hummingbird primitive pair)
+- `deleteId:108 HTTPError` (Hummingbird type constructor, second site)
 
 ## Next-slice candidates on this corpus
 
-Two remaining clusters in Run B's residual, with firing rates:
+**None actionable.** The strict-mode residual on todos-fluent
+has plateaued at 6:
 
-1. **Hummingbird primitives** (3/10): `HTTPError` x2 + `require` x1.
-   A modest framework whitelist similar in shape to PR #11 / PR #13.
-2. **Codec-receiver widening OR Hummingbird request.decode** (1/10):
-   `request.decode` fails the codec-receiver shape check because
-   `request` doesn't contain "decoder" / "encoder". Two slice
-   options: (a) widen the codec-receiver matcher to accept
-   `request`-shaped receivers when `Hummingbird` is imported, or
-   (b) add `decode` to a Hummingbird method whitelist.
-3. **`.init(...)` member-access form** (1/10): `EditedResponse(...)`
-   construction. Known gap; 1/10 on this corpus matches the 1/17
-   rate observed pre-slice. Cross-adopter evidence still needed
-   before slicing.
+- 4 catches are intentional non-idempotent classifications
+  (real Fluent mutations + the macro-form attribute-declared helper).
+  These are correct catches; the adopter's fix is a deduplication
+  guard or idempotency key, not a linter change.
+- 1 catch is adopter-owned (`Todo()` constructor) — adopter
+  responsibility; annotate `@Idempotent` on `Todo.init`.
+- 1 catch is the long-running `.init(...)` member-access gap.
+  Firing rate on this corpus is 1/6; deferred pending
+  cross-adopter evidence.
 
-Truly adopter-responsibility (1/10): the `Todo()` constructor on
-line 58. The adopter's own type; fix is an `@Idempotent`
-annotation on `Todo.init`, not a linter whitelist.
+The **completion criterion** from [`road_test_plan.md`](../road_test_plan.md)
+for "adoption-gap stability" requires three consecutive rounds with
+zero new named adoption-gap slices. PR #14 closes the slice this
+round named. A fresh round on a different adopter is the next move
+toward that criterion.
