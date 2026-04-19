@@ -40,9 +40,20 @@ blend packages in one directory.
   Pin the commit SHA in the scope doc.
 - Verify the target clone is clean and on a known SHA or tag. Pin
   both in the scope doc.
-- Create a throwaway branch on the target clone
-  (`trial-<short-slug>`). Local-only; **never push**. The trial
-  branch's lifetime is this round.
+- Create a `<upstream>-idempotency-trial` fork on your GitHub
+  (naming convention, e.g.
+  `swift-composable-architecture-idempotency-trial`). Harden it:
+  `gh repo edit --enable-issues=false --enable-wiki=false
+  --enable-projects=false --description "Validation sandbox for
+  SwiftIdempotency road-tests. Not a contribution fork."`, then
+  set the trial branch as the default after it's pushed, and
+  prepend a README banner flagging the fork as non-contribution.
+- Create a `trial-<short-slug>` branch on the fork. **The fork is
+  authoritative**; scans are run against a fresh clone of the fork,
+  not an ambient local checkout — this guarantees the measurement
+  reflects pushed state and survives `/tmp` wipes. The trial
+  branch's lifetime is this round; retire the fork or delete the
+  branch when the round's findings are superseded.
 - Create `docs/<project-slug>/` in `swiftIdempotency`. If the dir
   exists from a prior round, its contents will be overwritten by
   this round — git history is the audit trail, per the
@@ -99,7 +110,7 @@ number. Latest measurement only; re-runs overwrite in place.
 ### `trial-scope.md`
 
 - Research question (quoted, one sentence)
-- Pinned context (linter SHA, target SHA, trial-branch name, clone path)
+- Pinned context (linter SHA, target SHA, fork URL, trial-branch name)
 - Annotation plan (which handlers, which tier)
 - Scope commitment (measurement-only, source-edit ceiling, audit cap)
 - Pre-committed questions for the retrospective (3-4)
