@@ -5,27 +5,32 @@ value-per-effort, top to bottom.
 
 ## Where things stand
 
-- **Linter** (`Joseph-Cursio/SwiftProjectLint`): main at PR #17 tip
-  (`4c8623f`). Seven slices shipped: Fluent save/update/delete
-  (PR #11), drop nil-imports backcompat (#12), Fluent query-builder
-  reads (#13), Hummingbird primitives (#14), move `update` to bare
-  prefix (#15), wall-clock budget on the fixed-point loop (#16),
-  walk CodeBlockItem trivia for prefix-statement annotations (#17).
+- **Linter** (`Joseph-Cursio/SwiftProjectLint`): main at `4c8623f`
+  (PR #17 tip). Seven slices merged (`11-17`); two open PRs this
+  session:
+  - **PR #18** — `composableArchitecture` framework whitelist;
+    bare-name override lets `send` in a TCA effect closure classify
+    idempotent instead of hitting the bare-name non-idempotent
+    list. Closes TCA cluster 3 (6-of-6 `send` fires in both
+    `replayable` and `strict_replayable` runs).
+  - **PR #19** — closure-typed stored properties become effect
+    declarations. `EffectSymbolTable.merge(source:)` now walks
+    `VariableDeclSyntax` with function-typed annotations and feeds
+    them through the same record path as `FunctionDeclSyntax`.
+    Unblocks user annotations on `@DependencyClient` structs.
+    Closes TCA cluster 4 (3-of-3 `search` / `forecast` / `fetch`
+    fires) **conditional on the adopter annotating the client**.
 - **Macros** (this repo): shipped; unchanged this past session.
   `@Idempotent`, `@NonIdempotent`, `@Observational`,
   `@ExternallyIdempotent(by:)`, `@IdempotencyTests`,
   `#assertIdempotent`, `IdempotencyKey`.
 - **Adopter road-tests**: four rounds completed — `todos-fluent/`,
   `pointfreeco/`, `swift-nio/`, `swift-composable-architecture/`.
-  Framework-coverage criterion (Vapor / Hummingbird / SwiftNIO /
-  Point-Free) is now met. pointfreeco round surfaced 4 probable
-  Stripe-retry duplicate-email shapes in production code. TCA round
-  surfaced `return-trailing-annotation` (closed as PR #17); the
-  post-fix remeasurement is now committed and surfaced **two new
-  adoption-gap candidates**: `send`-on-closure-parameter (6 fires)
-  and dependency-client method dispatch via `@Dependency` property
-  wrappers (3 fires on `weatherClient.search/forecast`,
-  `factClient.fetch`).
+  The TCA round closed two of the three cluster-level gaps it
+  surfaced (send-on-closure-parameter, dependency-client
+  declarations). One remains open: the property-wrapper receiver
+  resolver (see §3 below), deferred because the existing
+  name+labels lookup suffices on today's corpus.
 - **Macro-form end-to-end validation**: ticked on `todos-fluent`
   via the attribute-form A/B supplement. Three macros still
   un-exercised on adopter code: `@IdempotencyTests`,
@@ -33,71 +38,28 @@ value-per-effort, top to bottom.
 
 ## Immediate candidates (small, concrete)
 
-### 1. `send`-on-closure-parameter false-positive
+### 1. Post-PR-#18/#19 TCA docs hygiene
 
-Surfaced by the TCA post-fix re-run. `await send(.action)` inside
-TCA effects dispatches an action via the `Send<Action>` closure
-parameter; the heuristic sees bare `send` and infers
-`non_idempotent`. Structurally safe (calling `send` is
-state-transition dispatching, not an effectful side effect), but
-the heuristic can't distinguish `send` as a closure parameter
-from `send` as a mail-sending receiver method.
+Two small docs commits hanging off the two open PRs:
 
-Fix directions (not mutually exclusive):
+- **trial-tca annotations.** The `trial-tca` branch of
+  `swift-composable-architecture` should be rolled forward to add
+  `/// @lint.effect idempotent` on the three `@DependencyClient`
+  closure properties (`WeatherClient.search`,
+  `WeatherClient.forecast`, `FactClient.fetch`). Proves out the
+  PR #19 prediction and gives the corpus a realistic post-slice
+  reading for future rounds.
+- **trial-transcripts.** The post-PR-#18 `replayable` and
+  `strict_replayable` transcripts were captured at
+  `/tmp/tca-rerun-post-pr18/` during validation but not committed.
+  Rolling both into
+  `docs/swift-composable-architecture/trial-transcripts/` with a
+  short retrospective addendum closes the PR-#18 / PR-#19
+  measurement story.
 
-- **Receiver-type awareness on closure parameters.** The linter
-  already has ReceiverTypeResolver; teach it to recognise a
-  `send` that resolves to a closure parameter (via the enclosing
-  closure's signature) and exempt it from the bare-name rule.
-- **TCA framework whitelist entry.** Add `send` under a `tca` or
-  `composableArchitecture` framework name in
-  `idempotentReceiverMethodsByFramework`, gated on
-  `import ComposableArchitecture`. Parallels PR #14's
-  Hummingbird/Fluent approach. Cheaper than receiver-type work
-  but specific to TCA.
+Cheap; tie-up work, not design.
 
-Prevalence: 6 of 6 TCA effect closures fire on `send`. Natural
-next adopter-driven slice.
-
-### 2. Dependency-client receiver resolution via property wrappers
-
-New from the TCA post-fix remeasurement. 3 strict-mode fires on
-`weatherClient.search`, `weatherClient.forecast`, `factClient.fetch`
-— calls via `@Dependency(\.foo)` property wrappers. Linter reads
-`self.weatherClient.search(query:)` but cannot classify the
-receiver because property-wrapper projection hides the real type
-from syntactic analysis.
-
-Generalises beyond TCA: SwiftUI `@Environment(\.foo)`,
-`@EnvironmentObject`, `@State` all have the same shape. A
-property-wrapper-aware receiver resolver would unlock classification
-for the whole class of DI-style access patterns.
-
-Fix direction: teach `ReceiverTypeResolver` to look up
-`@propertyWrapper var foo: Wrapper<T>` declarations in scope and
-resolve `self.foo.method()` through the wrapper's
-`wrappedValue` type. Scope may need either a targeted TCA/`Dependency`
-whitelist or a generic wrapper-aware path; start with the generic
-approach since it delivers SwiftUI coverage too.
-
-See
-[`swift-composable-architecture/trial-findings.md`](swift-composable-architecture/trial-findings.md)
-§"Decomposition into named slice clusters" cluster 4 for the
-full scope.
-
-### 3. Escape-wrapper recognition slice
-
-Only open deferred slice candidate. `fireAndForget` (pointfreeco),
-`detach` / `runInBackground` (AWS Lambda / Hummingbird-shape).
-A per-framework whitelist of known "trusted observational wrappers"
-would reduce strict-mode noise.
-
-**Hold until a second adopter surfaces the same pattern** — the
-current evidence is pointfreeco-specific. An AWS Lambda adopter
-round would be the natural cross-adopter data point. Shape would
-mirror PR #14's `idempotentReceiverMethodsByFramework`.
-
-### 4. `.init(...)` member-access form gap
+### 2. `.init(...)` member-access form gap
 
 Long-running known gap. Firing at ~1/10 rate on todos-fluent,
 ~1/10 on pointfreeco. Current type-constructor whitelist matches
@@ -106,8 +68,54 @@ Extending to `Type.init(...)` member-access form would close one
 diagnostic per framework-response-builder call site.
 
 Low priority in isolation (1 catch per adopter) but the sum
-across rounds is creeping up. Slice when it firing rate exceeds
+across rounds is creeping up. Slice when the firing rate exceeds
 ~2/round consistently.
+
+## Deferred slices (open but paused)
+
+### 3. Property-wrapper-aware receiver-type resolution
+
+Originally framed as TCA cluster 4's fix; PR #19 delivered the
+3-of-3 drop via a simpler route (closure-property declarations).
+The receiver-type work is **still open** and relevant when the
+trial corpora eventually exhibit a same-name method collision.
+
+Current state: `EffectSymbolTable` keys on `name + argumentLabels`
+(receiver-agnostic). Two distinct `search(query:)` declarations
+with different effects collide and both withdraw. On today's
+corpora the collision policy hasn't bitten, but the risk grows
+linearly with the number of annotated dependency clients.
+
+Fix direction when it's needed:
+- Teach `FunctionDeclCollector` / `ClosurePropertyDeclCollector`
+  to capture each decl's enclosing type.
+- Re-key `EffectSymbolTable` on `(typeName, signature)` when
+  a type is known; keep bare-signature lookup as fallback.
+- Teach `ReceiverTypeResolver` to look through property wrappers
+  — `@Dependency(\.foo) var foo` (no type annotation), `@Environment`,
+  `@EnvironmentObject`, `@State` — and return `.named(WrappedType)`.
+  The generic wrapper-aware path is preferable to a TCA-specific
+  whitelist because SwiftUI coverage comes along.
+- Visitor update: `analyzeCall` consults the type-qualified entry
+  when the receiver resolves, falls back to bare-signature otherwise.
+
+Trigger: the first annotated-corpus round where two different
+types each declare a signature with the same `name(labels:)` and
+different tiers. Watch for this on swift-nio-scale corpora or on
+large TCA apps with multiple dependency clients sharing method
+names (`fetch`, `search`, `save` are the likely collision points).
+
+### 4. Escape-wrapper recognition slice
+
+`fireAndForget` (pointfreeco), `detach` / `runInBackground`
+(AWS Lambda / Hummingbird-shape). A per-framework whitelist of
+known "trusted observational wrappers" would reduce strict-mode
+noise.
+
+**Hold until a second adopter surfaces the same pattern** — the
+current evidence is pointfreeco-specific. An AWS Lambda adopter
+round would be the natural cross-adopter data point. Shape would
+mirror PR #14's `idempotentReceiverMethodsByFramework`.
 
 ## Deeper work (bigger slices)
 
@@ -170,23 +178,24 @@ The Claude-Code memory at
 `/Users/joecursio/.claude/projects/-Users-joecursio-xcode-projects-swiftIdempotency/memory/`
 has one entry — the direct-to-main workflow preference for both
 `SwiftIdempotency` and `SwiftProjectLint`. Linter rule slices still
-follow the PR workflow (PRs #11-17 form the heuristic-evolution
+follow the PR workflow (PRs #11-19 form the heuristic-evolution
 audit trail). Docs and simple tweaks go straight to main.
 
 ## Recommended next-session opener
 
-Two good options, pick based on appetite:
+Three options, pick based on appetite:
 
-- **Slot 1: `send`-on-closure-parameter slice.** Small, TCA-specific.
-  Either receiver-type resolution on closure parameters, or a
-  `composableArchitecture` framework whitelist. Whichever path, the
-  slice ships as PR #18.
-- **Slot 2: property-wrapper-aware receiver resolution.** Larger,
-  generalises across TCA + SwiftUI + any `@propertyWrapper` DSL.
-  Probably 1-2 sessions. Doing this first would also catch the
-  `@Dependency` case for free on the next adopter round.
+- **Slot 1: post-PR #18/#19 docs hygiene.** Commit trial-tca
+  annotations + transcripts. 15-30 minutes. Closes out the past
+  session's two PRs without starting anything new.
+- **Slot 8: swift-nio remeasurement.** Small and closes a loop.
+  Gives a cleaner null-result dataset for the adopter survey.
+  Tests whether PR #16's budget fully unblocks nio-scale inference.
+- **Slot 6: `IdempotencyKey` macro sample.** Small SPM sample that
+  exercises the last un-validated macro surface. Good candidate
+  if appetite is for feature work rather than measurement.
 
-The TCA round will likely produce stronger follow-on evidence if
-slot 2 lands first (more classifications mean more ground truth
-for the heuristic to evaluate). Slot 1 is the lower-risk,
-quicker-feedback choice.
+Slot 5 (perf fix) and slot 3 (property-wrapper receiver resolution)
+are both real work but have no immediate triggering evidence —
+wait for a corpus that exhibits the pathology before committing
+a session to either.
