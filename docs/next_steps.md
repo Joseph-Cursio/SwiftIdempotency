@@ -5,11 +5,14 @@ value-per-effort, top to bottom.
 
 ## Where things stand
 
-- **Linter** (`Joseph-Cursio/SwiftProjectLint`): main at the most
-  recent tip. Six slices shipped last session: Fluent save/update/delete
-  (PR #11), drop nil-imports backcompat (#12), Fluent query-builder
-  reads (#13), Hummingbird primitives (#14), move `update` to bare
-  prefix (#15), wall-clock budget on the fixed-point loop (#16).
+- **Linter** (`Joseph-Cursio/SwiftProjectLint`): main at PR #16 tip.
+  Seven slices shipped so far: Fluent save/update/delete (PR #11),
+  drop nil-imports backcompat (#12), Fluent query-builder reads (#13),
+  Hummingbird primitives (#14), move `update` to bare prefix (#15),
+  wall-clock budget on the fixed-point loop (#16). PR #17 (walk
+  CodeBlockItem trivia for prefix-statement annotations) is **open
+  and awaiting review** — closes the `return-trailing-annotation`
+  correctness slice surfaced on the TCA round.
 - **Macros** (this repo): shipped; unchanged this past session.
   `@Idempotent`, `@NonIdempotent`, `@Observational`,
   `@ExternallyIdempotent(by:)`, `@IdempotencyTests`,
@@ -19,8 +22,11 @@ value-per-effort, top to bottom.
   Framework-coverage criterion (Vapor / Hummingbird / SwiftNIO /
   Point-Free) is now met. pointfreeco round surfaced 4 probable
   Stripe-retry duplicate-email shapes in production code (see
-  caveats in that retrospective). TCA round surfaced a **new
-  correctness slice** — see slot 1 below.
+  caveats in that retrospective). TCA round surfaced the
+  `return-trailing-annotation` correctness slice, now shipping as
+  PR #17. Post-fix re-validation against the TCA examples confirms
+  all 6 annotated `.run { send in ... }` sites fire — replayable
+  produces 7 diagnostics (1 control + 6 real), strict produces 22.
 - **Macro-form end-to-end validation**: ticked on `todos-fluent`
   via the attribute-form A/B supplement. Three macros still
   un-exercised on adopter code: `@IdempotencyTests`,
@@ -28,29 +34,56 @@ value-per-effort, top to bottom.
 
 ## Immediate candidates (small, concrete)
 
-### 1. `return-trailing-annotation` correctness slice
+### 1. Land PR #17 and remeasure TCA
 
-Surfaced this round on TCA. Doc-comment annotations above
-`return <call> { closure in ... }` don't attach to the call
-— SwiftSyntax binds the trivia to the `return` keyword. The
-visitor checks `FunctionCallExprSyntax.leadingTrivia` only,
-missing the annotation. Same shape applies to any prefix
-statement: `return`, `try`, `await`, `let x =`.
+PR #17 on SwiftProjectLint closes the `return-trailing-annotation`
+slice (10 new tests, 2229/275 green). Merge, pull main locally,
+rebuild the release CLI, then re-run the TCA round against the
+fix in place. Replace
+`docs/swift-composable-architecture/trial-transcripts/*.txt` with
+the post-fix output and note in the findings doc that the gap
+is closed (don't delete the pre-fix findings — they're the audit
+trail that justified the slice).
 
-Affects 6 of 6 TCA annotation sites (100%). Structurally
-applies to any adopter that wraps annotated calls in a
-prefixed statement.
+Expected outcome from validation done this session:
 
-Fix direction: in `NonIdempotentInRetryContextVisitor` and
-`UnannotatedInStrictReplayableContextVisitor`, when visiting
-a `FunctionCallExprSyntax`, also walk up to the enclosing
-statement (`ReturnStmtSyntax`, `ExpressionStmtSyntax`, etc.)
-and consult that node's leading trivia. ~30-line change plus
-test fixtures. See
-[`swift-composable-architecture/trial-findings.md`](swift-composable-architecture/trial-findings.md)
-for the full shape. Recommended next session opener.
+- replayable — 7 diagnostics (1 positive control + 6 inferred-`send`
+  fires inside the `.run { }` closures)
+- strict_replayable — 22 diagnostics (same 7 + 15 unannotated-callee
+  fires on stdlib/TCA surface: `sleep`, `seconds`, `milliseconds`,
+  `Result`, `fetch`, `search`, `forecast`, `searchResponse`,
+  `forecastResponse`, `numberFactResponse`)
 
-### 2. Escape-wrapper recognition slice
+The `send` heuristic fire inside TCA effect closures is a
+separate adoption-gap candidate — see slot 2 below.
+
+### 2. `send`-on-closure-parameter false-positive
+
+Surfaced by the TCA post-fix re-run. `await send(.action)` inside
+TCA effects dispatches an action via the `Send<Action>` closure
+parameter; the heuristic sees bare `send` and infers
+`non_idempotent`. Structurally safe (calling `send` is
+state-transition dispatching, not an effectful side effect), but
+the heuristic can't distinguish `send` as a closure parameter
+from `send` as a mail-sending receiver method.
+
+Fix directions (not mutually exclusive):
+
+- **Receiver-type awareness on closure parameters.** The linter
+  already has ReceiverTypeResolver; teach it to recognise a
+  `send` that resolves to a closure parameter (via the enclosing
+  closure's signature) and exempt it from the bare-name rule.
+- **TCA framework whitelist entry.** Add `send` under a `tca` or
+  `composableArchitecture` framework name in
+  `idempotentReceiverMethodsByFramework`, gated on
+  `import ComposableArchitecture`. Parallels PR #14's
+  Hummingbird/Fluent approach. Cheaper than receiver-type work
+  but specific to TCA.
+
+Prevalence: 6 of 6 TCA effect closures fire on `send`. Would be
+the natural next adopter-driven slice once PR #17 lands.
+
+### 3. Escape-wrapper recognition slice
 
 Only open deferred slice candidate. `fireAndForget` (pointfreeco),
 `detach` / `runInBackground` (AWS Lambda / Hummingbird-shape).
@@ -58,12 +91,11 @@ A per-framework whitelist of known "trusted observational wrappers"
 would reduce strict-mode noise.
 
 **Hold until a second adopter surfaces the same pattern** — the
-current evidence is pointfreeco-specific. A Point-Free library
-round or any AWS Lambda adopter round would be the natural
-cross-adopter data point. Shape would mirror PR #14's
-`idempotentReceiverMethodsByFramework`.
+current evidence is pointfreeco-specific. An AWS Lambda adopter
+round would be the natural cross-adopter data point. Shape would
+mirror PR #14's `idempotentReceiverMethodsByFramework`.
 
-### 3. `.init(...)` member-access form gap
+### 4. `.init(...)` member-access form gap
 
 Long-running known gap. Firing at ~1/10 rate on todos-fluent,
 ~1/10 on pointfreeco. Current type-constructor whitelist matches
@@ -77,7 +109,7 @@ across rounds is creeping up. Slice when it firing rate exceeds
 
 ## Deeper work (bigger slices)
 
-### 4. Real perf fix on the inference loop
+### 5. Real perf fix on the inference loop
 
 PR #16 is a safety net (wall-clock budget, default 30s). The
 underlying cause — `EffectSymbolTable.runInferencePass` scales
@@ -88,9 +120,9 @@ corpora is incomplete even with the budget.
 Requires profiling + algorithm work. Probably 1-2 sessions.
 Unlocks full correctness on swift-nio-scale codebases.
 
-### 5. Macro-form validation for `IdempotencyKey` + `@ExternallyIdempotent(by:)`
+### 6. Macro-form validation for `IdempotencyKey` + `@ExternallyIdempotent(by:)`
 
-Ties into pointfreeco finding #6 below: Stripe's `paymentIntent.id`
+Ties into pointfreeco finding #7 below: Stripe's `paymentIntent.id`
 is the canonical idempotency-key carrier. Two paths:
 
 - **Purpose-built sample**: tiny SPM package that consumes
@@ -107,7 +139,7 @@ Start with the sample; the adopter integration is its own project.
 
 ## Follow-ups on what we found
 
-### 6. Verify the pointfreeco findings
+### 7. Verify the pointfreeco findings
 
 The road-test surfaced 4 static patterns matching "Stripe retry →
 duplicate email" in pointfreeco's webhook handlers. Unknown
@@ -122,7 +154,7 @@ production. Three possible next moves:
 - Leave it. The round's value was validating the linter's
   precision; pursuing adopter bugs is a different project.
 
-### 7. Remeasure swift-nio with annotations under the new budget
+### 8. Remeasure swift-nio with annotations under the new budget
 
 Now that full-corpus scans complete (~3 min post PR #16), a
 proper full-corpus measurement with real annotations on NIO
@@ -136,13 +168,14 @@ The Claude-Code memory at
 `/Users/joecursio/.claude/projects/-Users-joecursio-xcode-projects-swiftIdempotency/memory/`
 has one entry — the direct-to-main workflow preference for both
 `SwiftIdempotency` and `SwiftProjectLint`. Linter rule slices still
-follow the PR workflow (PRs #11-16 form the heuristic-evolution
+follow the PR workflow (PRs #11-17 form the heuristic-evolution
 audit trail). Docs and simple tweaks go straight to main.
 
 ## Recommended next-session opener
 
-"Let's close the `return-trailing-annotation` correctness slice
-on SwiftProjectLint." Slot (1) above. After it lands, rerun the
-TCA round to confirm the 6 annotation sites now fire — that's
-the validation. If it does, the adoption-gap plateau clock
-re-starts at 1/3.
+"Merge SwiftProjectLint PR #17 and remeasure TCA." Slot (1) above.
+After the remeasurement artefact lands, decide between slot (2)
+(`send`-on-closure-parameter slice — TCA-specific but the natural
+follow-on from the re-run) and a fresh adopter round on a
+non-Point-Free target to accumulate toward the three-round
+adoption-gap plateau.
