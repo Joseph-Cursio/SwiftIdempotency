@@ -1,87 +1,86 @@
 # hummingbird-examples / todos-fluent — Trial Findings
 
+Current measurement state. Linter at `SwiftProjectLint` main
+`d85e5dc` (post-PR #13, the Fluent query-builder idempotent-read
+slice). Target `hummingbird-examples` at `0d0f9bd`, on the
+`trial-fluent-verify` branch with three `@lint.context replayable`
+doc-comments on `TodoController.{list,create,deleteId}` plus one
+adopter helper `recordAuditEvent` marked `@NonIdempotent` (from
+the macro-form supplement).
+
 ## Run A — replayable context
 
-**3 diagnostics / 3 annotated handlers. Yield = 1.00 catches/handler
-on non-silent shapes (2/3 handlers produce ≥1 catch; `list` silent
-by correctness).**
+**4 diagnostics.** Transcript:
+[`trial-transcripts/replayable.txt`](trial-transcripts/replayable.txt).
 
-Transcript: [`trial-transcripts/replayable.txt`](trial-transcripts/replayable.txt).
-
-| Handler | Line | Callee | Rule | Inference reason |
+| Handler | Line | Callee | Rule | Source of classification |
 |---|---|---|---|---|
-| `create` | 49 | `save` | nonIdempotentInRetryContext | from the FluentKit ORM verb `save` |
-| `create` | 52 | `update` | nonIdempotentInRetryContext | from the FluentKit ORM verb `update` |
-| `deleteId` | 98 | `delete` | nonIdempotentInRetryContext | from the FluentKit ORM verb `delete` |
+| `create` | 60 | `save` | nonIdempotentInRetryContext | inferred — FluentKit ORM verb |
+| `create` | 63 | `update` | nonIdempotentInRetryContext | inferred — FluentKit ORM verb |
+| `create` | 64 | `recordAuditEvent` | nonIdempotentInRetryContext | declared `@NonIdempotent` (attribute) |
+| `deleteId` | 110 | `delete` | nonIdempotentInRetryContext | inferred — FluentKit ORM verb |
 
-Every catch credits the Fluent gate explicitly (the PR #11
-`inferenceReason` prose). The bare-name `nonIdempotentNames` path
-is structurally unreachable here — these three verbs were deliberately
-kept out of the global list; the gate only fires because `TodoController.swift`
-imports `FluentKit`.
-
-`list` produces zero diagnostics. Its body (`Todo.query(...).all()`)
-has no Fluent mutation verbs; the query-builder reads are not on any
-non-idempotent heuristic. Correct silence, matches the pre-commit
-prediction.
+`list` produces zero diagnostics (Fluent reads under the
+idempotent gate from PR #13; classification is `idempotent` which
+is trusted in `replayable` context).
 
 ## Run B — strict_replayable context
 
-**17 diagnostics / 3 annotated handlers. Decomposes into 3 Fluent
-catches (unchanged from Run A) + 14 unannotated-callee diagnostics.**
+**10 diagnostics.** Transcript:
+[`trial-transcripts/strict-replayable.txt`](trial-transcripts/strict-replayable.txt).
 
-Transcript: [`trial-transcripts/strict-replayable.txt`](trial-transcripts/strict-replayable.txt).
+**Carried from Run A** (4 diagnostics): same `save` / `update` /
+`delete` / `recordAuditEvent` catches as above. Strict mode is
+stricter, not different.
 
-Fluent catches — **carried from Run A**, not new:
-
-| Handler | Line | Callee | Reason |
-|---|---|---|---|
-| `create` | 49 | `save` | FluentKit ORM verb |
-| `create` | 52 | `update` | FluentKit ORM verb |
-| `deleteId` | 98 | `delete` | FluentKit ORM verb |
-
-Strict-only diagnostics (`UnannotatedInStrictReplayableContextVisitor`
-— fires on any callee whose effect is neither declared nor
-inferable):
+**Strict-only** (6 diagnostics) — fire from
+`UnannotatedInStrictReplayableContextVisitor` on callees whose
+effect is neither declared nor inferrable:
 
 | Handler | Line | Callee | Adoption-fix verdict |
 |---|---|---|---|
-| `list` | 35 | `all` | Fluent query-builder read — future Fluent whitelist (idempotent-read) |
-| `list` | 35 | `query` | Fluent query-builder entry — future Fluent whitelist (idempotent-read) |
-| `list` | 35 | `db` | Fluent `Fluent.db()` accessor — future Fluent whitelist (idempotent) |
-| `create` | 45 | `decode` | `request.decode(...)` — receiver not codec-shaped; future Hummingbird whitelist OR codec-heuristic widening |
-| `create` | 46 | `HTTPError` | Hummingbird error constructor — future Hummingbird whitelist |
-| `create` | 47 | `Todo` | adopter-owned type constructor — adopter should annotate `@Idempotent` |
-| `create` | 48 | `db` | Fluent `Fluent.db()` accessor — same as above |
-| `create` | 53 | `init` | `EditedResponse(.init(...))` — Hummingbird response; `.init(...)` member-access form gap (known from round-13-era PR #9) |
-| `deleteId` | 89 | `require` | `context.parameters.require(...)` — Hummingbird primitive; future whitelist |
-| `deleteId` | 90 | `db` | Fluent `Fluent.db()` accessor — same as above |
-| `deleteId` | 92 | `query` | Fluent query-builder entry — same as list |
-| `deleteId` | 92 | `filter` | Fluent query-builder filter — future Fluent whitelist (idempotent-read) |
-| `deleteId` | 92 | `first` | Fluent query-builder terminal read — future Fluent whitelist (idempotent-read) |
-| `deleteId` | 96 | `HTTPError` | Hummingbird error constructor — same as above |
+| `create` | 56 | `decode` | `request.decode(...)` — receiver `request` not codec-shaped. Future Hummingbird whitelist or codec-receiver widening. |
+| `create` | 57 | `HTTPError` | Hummingbird error constructor — future Hummingbird primitive whitelist. |
+| `create` | 58 | `Todo` | adopter-owned type constructor — adopter should annotate `@Idempotent` on `Todo.init`. |
+| `create` | 65 | `init` | `EditedResponse(.init(...))` — Hummingbird response; known `.init(...)` member-access form gap. |
+| `deleteId` | 101 | `require` | `context.parameters.require(...)` — Hummingbird primitive; future whitelist. |
+| `deleteId` | 108 | `HTTPError` | Hummingbird error constructor — same as above. |
 
-Two named adoption-gap clusters, both at ~5-6 catches:
+## Silence accounting — where PR #13 landed
 
-- **Fluent query-builder read whitelist** (closes ~7/14): `db`,
-  `query`, `all`, `first`, `filter` — all pure reads on `FluentKit`'s
-  `Database` / `QueryBuilder` surface. Gate on `import FluentKit`,
-  classification `idempotent`. Same shape as PR #9 / PR #11.
-- **Hummingbird primitive whitelist** (closes ~4/14): `HTTPError`,
-  `request.decode`, `parameters.require`. Gate on `import Hummingbird`.
-  Hummingbird error/decode/route-parameter surface — adopters hit
-  these in every handler.
+The strict-mode diagnostic count went from 17 (pre-PR-13, per git
+history) plus 1 (the `@NonIdempotent` helper added in the macro-form
+supplement) = 18 expected pre-slice, down to 10 post-slice. **8
+diagnostics silenced** by the Fluent query-builder read whitelist.
 
-Residual after both hypothetical slices: `.init(...)` member-access
-form (~1 catch) and adopter-owned `Todo()` constructor (~1 catch).
-The former is the existing PR-#9 known gap; the latter is genuinely
-adopter-responsibility.
+Silenced callees, by handler:
 
-## Comparison to pre-slice baseline
+- `list` — 3 (all `all`, `query`, `db`)
+- `create` — 1 (`db`)
+- `deleteId` — 4 (`db`, `query`, `filter`, `first`)
 
-The nearest comparable measurement before PR #11 shipped was a
-zero-yield result on the same three handlers — `replayable` mode
-produced `No issues found` because none of `save`/`update`/`delete`
-were in `nonIdempotentNames`. Post-PR-11: 3 catches on the same
-three annotations, all on the adopter's canonical "duplicate POST
-row" bug shape. **The slice fired as designed.**
+All 5 verbs in the PR #13 whitelist (`db`, `query`, `all`, `first`,
+`filter`) fired in at least one position on this corpus. Predicted
+silence was ~7; actual 8 (the `create` handler's `db` catch
+wasn't itemised in the pre-slice decomposition).
+
+## Next-slice candidates on this corpus
+
+Two remaining clusters in Run B's residual, with firing rates:
+
+1. **Hummingbird primitives** (3/10): `HTTPError` x2 + `require` x1.
+   A modest framework whitelist similar in shape to PR #11 / PR #13.
+2. **Codec-receiver widening OR Hummingbird request.decode** (1/10):
+   `request.decode` fails the codec-receiver shape check because
+   `request` doesn't contain "decoder" / "encoder". Two slice
+   options: (a) widen the codec-receiver matcher to accept
+   `request`-shaped receivers when `Hummingbird` is imported, or
+   (b) add `decode` to a Hummingbird method whitelist.
+3. **`.init(...)` member-access form** (1/10): `EditedResponse(...)`
+   construction. Known gap; 1/10 on this corpus matches the 1/17
+   rate observed pre-slice. Cross-adopter evidence still needed
+   before slicing.
+
+Truly adopter-responsibility (1/10): the `Todo()` constructor on
+line 58. The adopter's own type; fix is an `@Idempotent`
+annotation on `Todo.init`, not a linter whitelist.
