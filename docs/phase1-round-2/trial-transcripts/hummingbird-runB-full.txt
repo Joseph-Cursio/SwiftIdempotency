@@ -1,0 +1,840 @@
+warning: 'swiftprojectlint': dependency 'swiftprojectlintmodels' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintvisitors' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintregistry' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintrules' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintconfig' is not used by any target
+warning: 'swiftprojectlint': dependency 'swift-syntax' is not used by any target
+warning: 'swiftprojectlint': dependency 'yams' is not used by any target
+Building for debugging...
+[0/3] Write swift-version--58304C5D6DBC2206.txt
+Build of product 'CLI' complete! (0.16s)
+Tests/HummingbirdHTTP2Tests/TestUtils.swift:48: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdHTTP2Tests/TestUtils.swift:48: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdHTTP2Tests/TestUtils.swift:106: info: [Actor Naming Suffix] Actor 'Promise' is not suffixed with 'Actor'
+  suggestion: Rename to 'PromiseActor' to make isolation semantics visible at usage sites
+Tests/HummingbirdHTTP2Tests/TestUtils.swift:106: info: [Actor Agent Name] Actor 'Promise' has a passive name — nothing signals it's an isolated concurrent agent
+  suggestion: Rename to 'PromiseActor', or choose an agent-noun name ending in -er or -or
+Tests/HummingbirdHTTP2Tests/TestUtils.swift:33: warning: [Missing Cancellation Check] Async function 'testServer' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdHTTP2Tests/TestUtils.swift:91: warning: [Missing Cancellation Check] Async function 'withTimeout' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdHTTP2Tests/TestUtils.swift:80: warning: [Discarded Try Result] 'try?' result is discarded — both the return value and the error are silently lost
+  suggestion: Capture the result ('let x = try? call()') or handle the error with do/catch.
+Tests/HummingbirdHTTP2Tests/HTTP2Tests.swift:266: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdHTTP2Tests/HTTP2Tests.swift:266: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdHTTP2Tests/HTTP2Tests.swift:140: warning: [Missing Cancellation Check] Async function 'testMultipleConcurrentRequests' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdHTTP2Tests/HTTP2Tests.swift:243: warning: [Missing Cancellation Check] Async function 'testChildChannelGracefulShutdown' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdHTTP2Tests/HTTP2Tests.swift:234: warning: [Discarded Try Result] 'try?' result is discarded — both the return value and the error are silently lost
+  suggestion: Capture the result ('let x = try? call()') or handle the error with do/catch.
+Tests/HummingbirdTests/EnvironmentTests.swift:89: warning: [Discarded Try Result] 'try?' result is discarded — both the return value and the error are silently lost
+  suggestion: Capture the result ('let x = try? call()') or handle the error with do/catch.
+Tests/HummingbirdTests/EnvironmentTests.swift:169: warning: [Discarded Try Result] 'try?' result is discarded — both the return value and the error are silently lost
+  suggestion: Capture the result ('let x = try? call()') or handle the error with do/catch.
+Tests/HummingbirdTests/HTTPTests.swift:103: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdTests/ParserTests.swift:99: warning: [Force Try] Force try (try!) will crash on error — use try/catch or try? instead
+  suggestion: Use do/catch for error handling or try? to return nil on failure.
+Tests/HummingbirdTests/SplitStringSequenceTests.swift:173: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdTests/SplitStringSequenceTests.swift:177: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdTests/URLEncodedForm/URLDecoderTests.swift:294: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdTests/URLEncodedForm/URLEncoderTests.swift:218: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdTests/TracingTests.swift:545: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdCoreTests/HTTP1ChannelTests.swift:98: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdCoreTests/HTTP1ChannelTests.swift:18: warning: [Missing Cancellation Check] Async function 'testHTTP1Channel' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdCoreTests/HTTP1ChannelTests.swift:87: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Tests/HummingbirdRouterTests/MiddlewareTests.swift:183: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdRouterTests/MiddlewareTests.swift:184: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdRouterTests/MiddlewareTests.swift:185: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdCoreTests/TSTests.swift:45: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdCoreTests/TLSTests.swift:97: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Tests/HummingbirdCoreTests/TestUtils.swift:31: warning: [Missing Cancellation Check] Async function 'testServer' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdCoreTests/TestUtils.swift:69: warning: [Missing Cancellation Check] Async function 'testServer' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdCoreTests/TestUtils.swift:116: warning: [Missing Cancellation Check] Async function 'withTimeout' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdCoreTests/TestUtils.swift:106: warning: [Discarded Try Result] 'try?' result is discarded — both the return value and the error are silently lost
+  suggestion: Capture the result ('let x = try? call()') or handle the error with do/catch.
+Tests/HummingbirdCoreTests/TestUtils.swift:131: info: [Actor Naming Suffix] Actor 'Promise' is not suffixed with 'Actor'
+  suggestion: Rename to 'PromiseActor' to make isolation semantics visible at usage sites
+Tests/HummingbirdCoreTests/TestUtils.swift:131: info: [Actor Agent Name] Actor 'Promise' has a passive name — nothing signals it's an isolated concurrent agent
+  suggestion: Rename to 'PromiseActor', or choose an agent-noun name ending in -er or -or
+Tests/HummingbirdCoreTests/TestUtils.swift:46: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdCoreTests/TestUtils.swift:46: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdCoreTests/TestUtils.swift:85: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdCoreTests/TestUtils.swift:85: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdCoreTests/RequestBodyTests.swift:15: warning: [Missing Cancellation Check] Async function 'testSingleRequestBody' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdCoreTests/RequestBodyTests.swift:34: warning: [Missing Cancellation Check] Async function 'testMultipleRequestBodies' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdCoreTests/RequestBodyTests.swift:55: warning: [Missing Cancellation Check] Async function 'testInboundClosureParsingStream' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdCoreTests/RequestBodyTests.swift:80: warning: [Missing Cancellation Check] Async function 'testInboundClosureWithoutParsingStream' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdCoreTests/RequestBodyTests.swift:103: warning: [Missing Cancellation Check] Async function 'testInboundClosureWithStreamError' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdCoreTests/RequestBodyTests.swift:126: warning: [Missing Cancellation Check] Async function 'testInboundClosureWithStreamErrorIsPassedOn' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Benchmarks/HummingbirdBenchmarks/RouterBenchmarks.swift:31: info: [Multiple Types Per File] Multiple top-level types in one file. 'struct BenchmarkRequestContextSource' should be in its own file.
+  suggestion: Move 'BenchmarkRequestContextSource' to BenchmarkRequestContextSource.swift for better code organization.
+Benchmarks/HummingbirdBenchmarks/RouterBenchmarks.swift:36: info: [Multiple Types Per File] Multiple top-level types in one file. 'struct BenchmarkBodyWriter' should be in its own file.
+  suggestion: Move 'BenchmarkBodyWriter' to BenchmarkBodyWriter.swift for better code organization.
+Benchmarks/HummingbirdBenchmarks/RouterBenchmarks.swift:101: info: [Multiple Types Per File] Multiple top-level types in one file. 'struct EmptyMiddleware' should be in its own file.
+  suggestion: Move 'EmptyMiddleware' to EmptyMiddleware.swift for better code organization.
+Benchmarks/HummingbirdBenchmarks/RouterBenchmarks.swift:108: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Benchmarks/HummingbirdBenchmarks/RouterBenchmarks.swift:171: error: [Variable Shadowing] Variable 'buffer' shadows a declaration from an outer scope
+  suggestion: Rename the inner variable to avoid confusion with the outer 'buffer'
+Benchmarks/HummingbirdBenchmarks/RouterBenchmarks.swift:115: info: [Magic Number] Consider extracting magic number 10 to a named constant
+  suggestion: Extract 10 to a named constant for better maintainability
+Benchmarks/HummingbirdBenchmarks/RouterBenchmarks.swift:127: info: [Magic Number] Consider extracting magic number 10 to a named constant
+  suggestion: Extract 10 to a named constant for better maintainability
+Benchmarks/HummingbirdBenchmarks/RouterBenchmarks.swift:139: info: [Magic Number] Consider extracting magic number 10 to a named constant
+  suggestion: Extract 10 to a named constant for better maintainability
+Benchmarks/HummingbirdBenchmarks/RouterBenchmarks.swift:157: info: [Magic Number] Consider extracting magic number 10 to a named constant
+  suggestion: Extract 10 to a named constant for better maintainability
+Benchmarks/HummingbirdBenchmarks/RouterBenchmarks.swift:183: info: [Magic Number] Consider extracting magic number 10 to a named constant
+  suggestion: Extract 10 to a named constant for better maintainability
+Benchmarks/HummingbirdBenchmarks/RouterBenchmarks.swift:199: info: [Magic Number] Consider extracting magic number 10 to a named constant
+  suggestion: Extract 10 to a named constant for better maintainability
+Sources/HummingbirdCore/Response/ResponseWriter.swift:75: info: [Multiple Types Per File] Multiple top-level types in one file. 'struct RootResponseBodyWriter' should be in its own file.
+  suggestion: Move 'RootResponseBodyWriter' to RootResponseBodyWriter.swift for better code organization.
+Sources/HummingbirdCore/Response/ResponseBody.swift:81: info: [Missing Documentation] Missing documentation for 'write'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/BindAddress.swift:30: info: [Missing Documentation] Missing documentation for 'hostname'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/BindAddress.swift:33: info: [Missing Documentation] Missing documentation for 'unixDomainSocket'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/BindAddress.swift:36: info: [Missing Documentation] Missing documentation for 'nwEndpoint'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/HTTPUserEventHandler.swift:13: info: [Missing Documentation] Missing documentation for 'HTTPUserEventHandler'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/HTTPUserEventHandler.swift:28: info: [Missing Documentation] Missing documentation for 'write'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/HTTPUserEventHandler.swift:42: info: [Missing Documentation] Missing documentation for 'channelRead'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/HTTPUserEventHandler.swift:56: info: [Missing Documentation] Missing documentation for 'userInboundEventTriggered'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/HTTP/HTTPChannelHandler.swift:33: info: [Missing Documentation] Missing documentation for 'handleHTTP'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/TSTLSOptions.swift:138: warning: [Print Statement] print() in production code — use os.Logger for structured logging
+  suggestion: Use os.Logger for structured logging, or wrap in #if DEBUG if needed only during development.
+Sources/HummingbirdCore/Server/TSTLSOptions.swift:161: warning: [Unchecked Sendable] @unchecked Sendable on 'Internal' bypasses the compiler's data-race safety checks
+  suggestion: Ensure thread safety with a lock (OSAllocatedUnfairLock, Mutex, NSLock) or isolate with an actor, or remove @unchecked and fix the resulting compiler errors to get real safety guarantees.
+Sources/HummingbirdCore/Server/TSTLSOptions.swift:16: info: [Missing Documentation] Missing documentation for 'Error'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/TSTLSOptions.swift:36: info: [Missing Documentation] Missing documentation for 'Identity'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/TSTLSOptions.swift:39: info: [Missing Documentation] Missing documentation for 'secIdentity'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/TSTLSOptions.swift:43: info: [Missing Documentation] Missing documentation for 'p12'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/TSTLSOptions.swift:101: info: [Missing Documentation] Missing documentation for 'options'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/TSTLSOptions.swift:113: info: [Missing Documentation] Missing documentation for 'options'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/TSTLSOptions.swift:63: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdTests/ApplicationTests.swift:1184: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Tests/HummingbirdTests/ApplicationTests.swift:837: warning: [Missing Cancellation Check] Async function 'testMakeStream' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdTests/ApplicationTests.swift:870: warning: [Missing Cancellation Check] Async function 'testMakeStreamMultipleSources' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdTests/ApplicationTests.swift:1194: warning: [Missing Cancellation Check] Async function 'testCancelledRequest' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdTests/ApplicationTests.swift:741: error: [Variable Shadowing] Variable 'buffer' shadows a declaration from an outer scope
+  suggestion: Rename the inner variable to avoid confusion with the outer 'buffer'
+Tests/HummingbirdTests/ApplicationTests.swift:848: error: [Variable Shadowing] Variable 'body' shadows a declaration from an outer scope
+  suggestion: Rename the inner variable to avoid confusion with the outer 'body'
+Tests/HummingbirdTests/ApplicationTests.swift:896: error: [Variable Shadowing] Variable 'body' shadows a declaration from an outer scope
+  suggestion: Rename the inner variable to avoid confusion with the outer 'body'
+Tests/HummingbirdTests/ApplicationTests.swift:629: warning: [Discarded Try Result] 'try?' result is discarded — both the return value and the error are silently lost
+  suggestion: Capture the result ('let x = try? call()') or handle the error with do/catch.
+Tests/HummingbirdTests/ApplicationTests.swift:1239: warning: [Discarded Try Result] 'try?' result is discarded — both the return value and the error are silently lost
+  suggestion: Capture the result ('let x = try? call()') or handle the error with do/catch.
+Tests/HummingbirdTests/ApplicationTests.swift:1214: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdTests/ApplicationTests.swift:1214: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdTests/ApplicationTests.swift:1229: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdTests/ApplicationTests.swift:1262: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdTests/ApplicationTests.swift:628: info: [Magic Boolean Parameter] Function call has 1 unlabeled boolean parameter — meaning is unclear
+  suggestion: Add argument labels to boolean parameters for self-documenting code.
+Tests/HummingbirdTests/ApplicationTests.swift:630: info: [Magic Boolean Parameter] Function call has 1 unlabeled boolean parameter — meaning is unclear
+  suggestion: Add argument labels to boolean parameters for self-documenting code.
+Tests/HummingbirdTests/ApplicationTests.swift:651: info: [Magic Boolean Parameter] Function call has 1 unlabeled boolean parameter — meaning is unclear
+  suggestion: Add argument labels to boolean parameters for self-documenting code.
+Tests/HummingbirdTests/ApplicationTests.swift:671: info: [Magic Boolean Parameter] Function call has 1 unlabeled boolean parameter — meaning is unclear
+  suggestion: Add argument labels to boolean parameters for self-documenting code.
+Sources/HummingbirdCore/Server/AvailableConnectionsHandler.swift:39: info: [Missing Documentation] Missing documentation for 'connectionOpened'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/AvailableConnectionsHandler.swift:43: info: [Missing Documentation] Missing documentation for 'connectionClosed'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/AvailableConnectionsHandler.swift:47: info: [Missing Documentation] Missing documentation for 'isAcceptingNewConnections'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/AvailableConnectionsHandler.swift:81: info: [Missing Documentation] Missing documentation for 'channelRead'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/AvailableConnectionsHandler.swift:98: info: [Missing Documentation] Missing documentation for 'read'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/Server.swift:131: warning: [Fire And Forget Task] Fire-and-forget Task — the handle is discarded and the task cannot be cancelled or observed
+  suggestion: Store the Task handle ('let task = Task { }') so it can be cancelled and awaited. If intentional, suppress with '// swiftprojectlint:disable:next fire-and-forget-task'.
+Sources/HummingbirdCore/Server/Server.swift:92: info: [Missing Documentation] Missing documentation for 'run'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Server/Server.swift:92: warning: [Missing Cancellation Check] Async function 'run' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Sources/HummingbirdCore/Server/Server.swift:21: info: [Actor Naming Suffix] Actor 'Server' is not suffixed with 'Actor'
+  suggestion: Rename to 'ServerActor' to make isolation semantics visible at usage sites
+Sources/HummingbirdCore/Utils/String+percentEncode.swift:78: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdCore/Utils/String+percentEncode.swift:90: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdCore/Request/RequestBody+inboundClose.swift:76: warning: [Missing Cancellation Check] Async function 'consumeWithCancellationOnInboundClose' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Sources/HummingbirdCore/Request/RequestBody+inboundClose.swift:105: warning: [Missing Cancellation Check] Async function 'withInboundCloseHandler' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Sources/HummingbirdCore/Request/RequestBody+inboundClose.swift:119: error: [Variable Shadowing] Variable 'value' shadows a declaration from an outer scope
+  suggestion: Rename the inner variable to avoid confusion with the outer 'value'
+Sources/HummingbirdRouter/RouterBuilderContext.swift:28: info: [Multiple Types Per File] Multiple top-level types in one file. 'struct BasicRouterRequestContext' should be in its own file.
+  suggestion: Move 'BasicRouterRequestContext' to BasicRouterRequestContext.swift for better code organization.
+Sources/HummingbirdRouter/RouterController.swift:38: info: [Missing Documentation] Missing documentation for 'buildExpression'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdRouter/RouteHandler.swift:28: info: [Missing Documentation] Missing documentation for 'handle'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdRouter/RouteHandler.swift:53: info: [Missing Documentation] Missing documentation for 'handle'
+  suggestion: Add documentation comments to describe the purpose and usage
+Tests/HummingbirdCoreTests/CoreTests.swift:71: warning: [Missing Cancellation Check] Async function 'testMultipleConnections' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdCoreTests/CoreTests.swift:99: warning: [Missing Cancellation Check] Async function 'testMaxConnections' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdCoreTests/CoreTests.swift:520: warning: [Missing Cancellation Check] Async function 'testChildChannelGracefulShutdown' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Tests/HummingbirdCoreTests/CoreTests.swift:618: info: [Magic Boolean Parameter] Function call has 1 unlabeled boolean parameter — meaning is unclear
+  suggestion: Add argument labels to boolean parameters for self-documenting code.
+Tests/HummingbirdCoreTests/CoreTests.swift:168: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Tests/HummingbirdCoreTests/CoreTests.swift:330: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Tests/HummingbirdCoreTests/CoreTests.swift:333: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Tests/HummingbirdCoreTests/CoreTests.swift:408: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Tests/HummingbirdCoreTests/CoreTests.swift:427: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Tests/HummingbirdCoreTests/CoreTests.swift:428: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Tests/HummingbirdCoreTests/CoreTests.swift:448: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Tests/HummingbirdCoreTests/CoreTests.swift:467: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Tests/HummingbirdCoreTests/CoreTests.swift:468: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Tests/HummingbirdCoreTests/CoreTests.swift:495: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Tests/HummingbirdCoreTests/CoreTests.swift:537: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdCoreTests/CoreTests.swift:537: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Tests/HummingbirdCoreTests/CoreTests.swift:126: warning: [Discarded Try Result] 'try?' result is discarded — both the return value and the error are silently lost
+  suggestion: Capture the result ('let x = try? call()') or handle the error with do/catch.
+Tests/HummingbirdCoreTests/CoreTests.swift:532: warning: [Discarded Try Result] 'try?' result is discarded — both the return value and the error are silently lost
+  suggestion: Capture the result ('let x = try? call()') or handle the error with do/catch.
+Tests/HummingbirdCoreTests/CoreTests.swift:100: warning: [Unchecked Sendable] @unchecked Sendable on 'TestMaximumAvailableConnections' bypasses the compiler's data-race safety checks
+  suggestion: Ensure thread safety with a lock (OSAllocatedUnfairLock, Mutex, NSLock) or isolate with an actor, or remove @unchecked and fix the resulting compiler errors to get real safety guarantees.
+Sources/HummingbirdRouter/RouterBuilder.swift:67: info: [Missing Documentation] Missing documentation for 'respond'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdRouter/RouterBuilder.swift:78: info: [Missing Documentation] Missing documentation for 'buildResponder'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Request/URI.swift:56: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Sources/HummingbirdCore/Request/URI.swift:30: warning: [Map Used For Side Effects] 'map' result discarded — use 'forEach' for side effects
+  suggestion: Replace 'map' with 'forEach' when the transformed collection is not needed, or assign the result to a variable.
+Sources/HummingbirdCore/Request/URI.swift:32: warning: [Map Used For Side Effects] 'map' result discarded — use 'forEach' for side effects
+  suggestion: Replace 'map' with 'forEach' when the transformed collection is not needed, or assign the result to a variable.
+Sources/HummingbirdCore/Request/URI.swift:38: warning: [Map Used For Side Effects] 'map' result discarded — use 'forEach' for side effects
+  suggestion: Replace 'map' with 'forEach' when the transformed collection is not needed, or assign the result to a variable.
+Sources/HummingbirdCore/Request/URI.swift:106: warning: [Force Try] Force try (try!) will crash on error — use try/catch or try? instead
+  suggestion: Use do/catch for error handling or try? to return nil on failure.
+Sources/HummingbirdCore/Request/URI.swift:120: warning: [Force Try] Force try (try!) will crash on error — use try/catch or try? instead
+  suggestion: Use do/catch for error handling or try? to return nil on failure.
+Sources/HummingbirdCore/Request/URI.swift:124: warning: [Force Try] Force try (try!) will crash on error — use try/catch or try? instead
+  suggestion: Use do/catch for error handling or try? to return nil on failure.
+Sources/HummingbirdCore/Request/URI.swift:129: warning: [Force Try] Force try (try!) will crash on error — use try/catch or try? instead
+  suggestion: Use do/catch for error handling or try? to return nil on failure.
+Sources/HummingbirdCore/Request/URI.swift:11: info: [Missing Documentation] Missing documentation for 'Scheme'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdRouter/RouterPath.swift:39: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdRouter/RouterPath.swift:43: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdRouter/RouterPath.swift:45: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdRouter/RouterPath.swift:52: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdRouter/RouterPath.swift:61: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdRouter/RouterPath.swift:66: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdRouter/RouteBuilder.swift:60: info: [Missing Documentation] Missing documentation for 'buildBlock'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdRouter/RouteBuilder.swift:64: info: [Missing Documentation] Missing documentation for 'buildPartialBlock'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdRouter/RouteBuilder.swift:68: info: [Missing Documentation] Missing documentation for 'buildPartialBlock'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdRouter/ContextTransform.swift:26: info: [Nested Generic Complexity] Generic complexity: 4 where clause constraints — consider simplifying with a protocol composition
+  suggestion: Combine constraints into a protocol composition or use typealiases.
+Sources/HummingbirdRouter/ContextTransform.swift:67: info: [Nested Generic Complexity] Generic complexity: 4 where clause constraints — consider simplifying with a protocol composition
+  suggestion: Combine constraints into a protocol composition or use typealiases.
+Sources/HummingbirdRouter/ContextTransform.swift:62: info: [Multiple Types Per File] Multiple top-level types in one file. 'struct ThrowingContextTransform' should be in its own file.
+  suggestion: Move 'ThrowingContextTransform' to ThrowingContextTransform.swift for better code organization.
+Sources/HummingbirdRouter/Route.swift:66: info: [Nested Generic Complexity] Generic complexity: 4 where clause constraints — consider simplifying with a protocol composition
+  suggestion: Combine constraints into a protocol composition or use typealiases.
+Sources/HummingbirdHTTP2/HTTP2Channel.swift:52: info: [Missing Documentation] Missing documentation for 'Value'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdHTTP2/TLSChannelConfiguration+ConfigReader.swift:15: info: [Missing Documentation] Missing documentation for 'TLSConfigError'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Utils/HBParser.swift:428: info: [Missing Documentation] Missing documentation for 'makeIterator'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Utils/HBParser.swift:432: info: [Missing Documentation] Missing documentation for 'Iterator'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Utils/HBParser.swift:441: info: [Missing Documentation] Missing documentation for 'next'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Utils/HBParser.swift:498: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdCore/Utils/HBParser.swift:528: error: [Variable Shadowing] Variable 'byte' shadows a declaration from an outer scope
+  suggestion: Rename the inner variable to avoid confusion with the outer 'byte'
+Sources/HummingbirdCore/Utils/HBParser.swift:533: error: [Variable Shadowing] Variable 'byte' shadows a declaration from an outer scope
+  suggestion: Rename the inner variable to avoid confusion with the outer 'byte'
+Sources/HummingbirdCore/Utils/HBParser.swift:337: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Sources/Hummingbird/Middleware/MetricsMiddleware.swift:24: info: [Missing Documentation] Missing documentation for 'handle'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/MiddlewareModule/_Middleware2.swift:37: info: [Missing Documentation] Missing documentation for 'handle'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/MiddlewareModule/_OptionalMiddleware.swift:32: info: [Missing Documentation] Missing documentation for 'handle'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/TracingMiddleware.swift:200: info: [Multiple Types Per File] Multiple top-level types in one file. 'struct RecordingHeader' should be in its own file.
+  suggestion: Move 'RecordingHeader' to RecordingHeader.swift for better code organization.
+Sources/Hummingbird/Middleware/TracingMiddleware.swift:70: info: [Missing Documentation] Missing documentation for 'handle'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/TracingMiddleware.swift:97: info: [TODO Comment] TODO comment found — unresolved technical debt
+  suggestion: Resolve or track this TODO in your issue tracker.
+Sources/Hummingbird/Middleware/MiddlewareModule/MiddlewareFixedTypeBuilder.swift:21: info: [Missing Documentation] Missing documentation for 'buildExpression'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/MiddlewareModule/MiddlewareFixedTypeBuilder.swift:25: info: [Missing Documentation] Missing documentation for 'buildBlock'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/MiddlewareModule/MiddlewareFixedTypeBuilder.swift:29: info: [Missing Documentation] Missing documentation for 'buildPartialBlock'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/MiddlewareModule/MiddlewareFixedTypeBuilder.swift:33: info: [Missing Documentation] Missing documentation for 'buildPartialBlock'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/MiddlewareModule/MiddlewareFixedTypeBuilder.swift:40: info: [Missing Documentation] Missing documentation for 'buildOptional'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/MiddlewareModule/MiddlewareFixedTypeBuilder.swift:44: info: [Missing Documentation] Missing documentation for 'buildEither'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/MiddlewareModule/MiddlewareFixedTypeBuilder.swift:50: info: [Missing Documentation] Missing documentation for 'buildEither'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/MiddlewareModule/MiddlewareFixedTypeBuilder.swift:56: info: [Missing Documentation] Missing documentation for 'buildArray'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/MiddlewareModule/_SpreadMiddleware.swift:31: info: [Missing Documentation] Missing documentation for 'handle'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Request/RequestBody.swift:363: error: [Variable Shadowing] Variable 'done' shadows a declaration from an outer scope
+  suggestion: Rename the inner variable to avoid confusion with the outer 'done'
+Sources/HummingbirdCore/Request/RequestBody.swift:61: info: [Missing Documentation] Missing documentation for 'AsyncIterator'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Request/RequestBody.swift:78: info: [Missing Documentation] Missing documentation for 'next'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Request/RequestBody.swift:99: info: [Missing Documentation] Missing documentation for 'makeAsyncIterator'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Request/RequestBody.swift:338: info: [Missing Documentation] Missing documentation for 'next'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Request/RequestBody.swift:356: info: [Missing Documentation] Missing documentation for 'makeAsyncIterator'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdCore/Request/RequestBody.swift:308: info: [Multiple Types Per File] Multiple top-level types in one file. 'struct NIOAsyncChannelRequestBody' should be in its own file.
+  suggestion: Move 'NIOAsyncChannelRequestBody' to NIOAsyncChannelRequestBody.swift for better code organization.
+Sources/HummingbirdHTTP2/HTTP2UpgradeChannel.swift:179: info: [Nested Generic Complexity] Generic complexity: nesting depth 3 — consider using typealiases or intermediate types
+  suggestion: Introduce a typealias to simplify the nested generic type.
+Sources/HummingbirdHTTP2/HTTP2UpgradeChannel.swift:25: info: [Missing Documentation] Missing documentation for 'Value'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdHTTP2/HTTP2UpgradeChannel.swift:180: warning: [Map Used For Side Effects] 'flatMap' result discarded — use 'forEach' for side effects
+  suggestion: Replace 'flatMap' with 'forEach' when the transformed collection is not needed, or assign the result to a variable.
+Sources/HummingbirdHTTP2/HTTP2UpgradeChannel.swift:197: warning: [Map Used For Side Effects] 'map' result discarded — use 'forEach' for side effects
+  suggestion: Replace 'map' with 'forEach' when the transformed collection is not needed, or assign the result to a variable.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:231: warning: [Unchecked Sendable] @unchecked Sendable on 'LoopBoundHandler' bypasses the compiler's data-race safety checks
+  suggestion: Ensure thread safety with a lock (OSAllocatedUnfairLock, Mutex, NSLock) or isolate with an actor, or remove @unchecked and fix the resulting compiler errors to get real safety guarantees.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:248: warning: [Unchecked Sendable] @unchecked Sendable on 'HTTP2StreamDelegate' bypasses the compiler's data-race safety checks
+  suggestion: Ensure thread safety with a lock (OSAllocatedUnfairLock, Mutex, NSLock) or isolate with an actor, or remove @unchecked and fix the resulting compiler errors to get real safety guarantees.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:301: info: [Multiple Types Per File] Multiple top-level types in one file. 'struct Timer' should be in its own file.
+  suggestion: Move 'Timer' to Timer.swift for better code organization.
+Sources/Hummingbird/Codable/ResponseEncodable.swift:20: info: [Missing Documentation] Missing documentation for 'response'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Codable/ResponseEncodable.swift:30: info: [Missing Documentation] Missing documentation for 'response'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Codable/ResponseEncodable.swift:40: info: [Missing Documentation] Missing documentation for 'response'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedForm.swift:41: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Middleware/LogRequestMiddleware.swift:68: info: [Missing Documentation] Missing documentation for 'handle'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Server/RequestResponder.swift:29: info: [Missing Documentation] Missing documentation for 'respond'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Server/RequestContext.swift:37: info: [Multiple Types Per File] Multiple top-level types in one file. 'struct CoreRequestContextStorage' should be in its own file.
+  suggestion: Move 'CoreRequestContextStorage' to CoreRequestContextStorage.swift for better code organization.
+Sources/Hummingbird/Server/RequestContext.swift:125: info: [Multiple Types Per File] Multiple top-level types in one file. 'struct BasicRequestContext' should be in its own file.
+  suggestion: Move 'BasicRequestContext' to BasicRequestContext.swift for better code organization.
+Sources/Hummingbird/Server/RequestContext.swift:105: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Environment.swift:171: warning: [Discarded Try Result] 'try?' result is discarded — both the return value and the error are silently lost
+  suggestion: Capture the result ('let x = try? call()') or handle the error with do/catch.
+Sources/Hummingbird/Environment.swift:181: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Sources/Hummingbird/Environment.swift:211: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Sources/Hummingbird/Environment.swift:32: info: [Missing Documentation] Missing documentation for 'Error'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Environment.swift:46: info: [Missing Documentation] Missing documentation for '=='
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Server/RequestID.swift:24: info: [Magic Number] Consider extracting magic number 16 to a named constant
+  suggestion: Extract 16 to a named constant for better maintainability
+Sources/Hummingbird/Server/RequestID.swift:32: info: [Magic Number] Consider extracting magic number 16 to a named constant
+  suggestion: Extract 16 to a named constant for better maintainability
+Sources/Hummingbird/Utils/DateCache.swift:41: info: [Missing Documentation] Missing documentation for 'run'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/FileMiddleware.swift:116: info: [Missing Documentation] Missing documentation for 'withAdditionalMediaType'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/FileMiddleware.swift:120: info: [Missing Documentation] Missing documentation for 'withAdditionalMediaType'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/FileMiddleware.swift:124: info: [Missing Documentation] Missing documentation for 'withAdditionalMediaTypes'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/FileMiddleware.swift:135: info: [Missing Documentation] Missing documentation for 'withAdditionalMediaTypes'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Middleware/FileMiddleware.swift:360: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormNode.swift:147: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormNode.swift:17: info: [Missing Documentation] Missing documentation for 'Code'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormNode.swift:253: info: [Multiple Types Per File] Multiple top-level types in one file. 'enum KeyParser' should be in its own file.
+  suggestion: Move 'KeyParser' to KeyParser.swift for better code organization.
+Sources/Hummingbird/Storage/PersistDriver.swift:65: info: [Missing Documentation] Missing documentation for 'run'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Storage/PersistDriver.swift:67: warning: [Discarded Try Result] 'try?' result is discarded — both the return value and the error are silently lost
+  suggestion: Capture the result ('let x = try? call()') or handle the error with do/catch.
+Sources/Hummingbird/Utils/ByteBuffer+foundation.swift:160: warning: [Disfavored Overload] @_disfavoredOverload is a compiler-internal attribute with no stability guarantee
+  suggestion: Redesign the overload set so the correct overload is selected without relying on compiler-internal attributes.
+Sources/Hummingbird/Utils/ByteBuffer+foundation.swift:74: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Utils/ByteBuffer+foundation.swift:80: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Utils/ByteBuffer+foundation.swift:145: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Utils/ByteBuffer+foundation.swift:163: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/HTTP/Cookies.swift:23: warning: [Map Used For Side Effects] 'map' result discarded — use 'forEach' for side effects
+  suggestion: Replace 'map' with 'forEach' when the transformed collection is not needed, or assign the result to a variable.
+Sources/Hummingbird/Storage/MemoryPersistDriver.swift:17: info: [Missing Documentation] Missing documentation for 'Configuration'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Storage/MemoryPersistDriver.swift:56: info: [Missing Documentation] Missing documentation for 'create'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Storage/MemoryPersistDriver.swift:61: info: [Missing Documentation] Missing documentation for 'set'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Storage/MemoryPersistDriver.swift:66: info: [Missing Documentation] Missing documentation for 'get'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Storage/MemoryPersistDriver.swift:75: info: [Missing Documentation] Missing documentation for 'remove'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Storage/MemoryPersistDriver.swift:104: info: [Missing Documentation] Missing documentation for 'run'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Storage/MemoryPersistDriver.swift:15: info: [Actor Naming Suffix] Actor 'MemoryPersistDriver' is not suffixed with 'Actor'
+  suggestion: Rename to 'MemoryPersistDriverActor' to make isolation semantics visible at usage sites
+Sources/Hummingbird/Storage/MemoryPersistDriver.swift:31: warning: [Disfavored Overload] @_disfavoredOverload is a compiler-internal attribute with no stability guarantee
+  suggestion: Redesign the overload set so the correct overload is selected without relying on compiler-internal attributes.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:24: warning: [Discarded Try Result] 'try?' result is discarded — both the return value and the error are silently lost
+  suggestion: Capture the result ('let x = try? call()') or handle the error with do/catch.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:82: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:94: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:119: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:128: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:137: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:287: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:290: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:292: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:294: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:296: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:298: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:300: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormDecoder.swift:702: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Error/HTTPError.swift:60: info: [Missing Documentation] Missing documentation for 'response'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Error/NIOCore+HTTPResponseError.swift:17: info: [Missing Documentation] Missing documentation for 'response'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Files/CacheControl.swift:133: warning: [Disfavored Overload] @_disfavoredOverload is a compiler-internal attribute with no stability guarantee
+  suggestion: Redesign the overload set so the correct overload is selected without relying on compiler-internal attributes.
+Sources/Hummingbird/Files/LocalFileSystem.swift:99: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Sources/Hummingbird/Router/EndpointResponder.swift:20: info: [Missing Documentation] Missing documentation for 'getResponder'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Router/Parameters+UUID.swift:46: warning: [Map Used For Side Effects] 'compactMap' result discarded — use 'forEach' for side effects
+  suggestion: Replace 'compactMap' with 'forEach' when the transformed collection is not needed, or assign the result to a variable.
+Sources/Hummingbird/Application.swift:301: info: [Missing Documentation] Missing documentation for 'buildResponder'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Application.swift:305: info: [Missing Documentation] Missing documentation for 'onServerRunning'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/HTTP/Cookie.swift:18: info: [Missing Documentation] Missing documentation for 'ValidationError'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/HTTP/Cookie.swift:267: error: [Variable Shadowing] Variable 'keyValueIterator' shadows a declaration from an outer scope
+  suggestion: Rename the inner variable to avoid confusion with the outer 'keyValueIterator'
+Sources/Hummingbird/HTTP/Cookie.swift:44: warning: [Map Used For Side Effects] 'flatMap' result discarded — use 'forEach' for side effects
+  suggestion: Replace 'flatMap' with 'forEach' when the transformed collection is not needed, or assign the result to a variable.
+Sources/Hummingbird/Router/TrieRouter.swift:38: info: [Missing Documentation] Missing documentation for 'build'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Router/RouterResponder.swift:11: info: [Missing Documentation] Missing documentation for 'RouterResponder'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Router/Router+validation.swift:33: warning: [Map Used For Side Effects] 'map' result discarded — use 'forEach' for side effects
+  suggestion: Replace 'map' with 'forEach' when the transformed collection is not needed, or assign the result to a variable.
+Sources/Hummingbird/Router/Parameters.swift:27: warning: [Disfavored Overload] @_disfavoredOverload is a compiler-internal attribute with no stability guarantee
+  suggestion: Redesign the overload set so the correct overload is selected without relying on compiler-internal attributes.
+Sources/Hummingbird/Router/Parameters.swift:53: warning: [Disfavored Overload] @_disfavoredOverload is a compiler-internal attribute with no stability guarantee
+  suggestion: Redesign the overload set so the correct overload is selected without relying on compiler-internal attributes.
+Sources/Hummingbird/Router/Parameters.swift:91: warning: [Disfavored Overload] @_disfavoredOverload is a compiler-internal attribute with no stability guarantee
+  suggestion: Redesign the overload set so the correct overload is selected without relying on compiler-internal attributes.
+Sources/Hummingbird/Router/Parameters.swift:108: warning: [Disfavored Overload] @_disfavoredOverload is a compiler-internal attribute with no stability guarantee
+  suggestion: Redesign the overload set so the correct overload is selected without relying on compiler-internal attributes.
+Sources/Hummingbird/Router/Parameters.swift:20: warning: [Map Used For Side Effects] 'map' result discarded — use 'forEach' for side effects
+  suggestion: Replace 'map' with 'forEach' when the transformed collection is not needed, or assign the result to a variable.
+Sources/Hummingbird/Router/Parameters.swift:84: warning: [Map Used For Side Effects] 'compactMap' result discarded — use 'forEach' for side effects
+  suggestion: Replace 'compactMap' with 'forEach' when the transformed collection is not needed, or assign the result to a variable.
+Sources/Hummingbird/Router/Parameters.swift:93: warning: [Map Used For Side Effects] 'compactMap' result discarded — use 'forEach' for side effects
+  suggestion: Replace 'compactMap' with 'forEach' when the transformed collection is not needed, or assign the result to a variable.
+Sources/Hummingbird/Router/Parameters.swift:101: warning: [Map Used For Side Effects] 'compactMap' result discarded — use 'forEach' for side effects
+  suggestion: Replace 'compactMap' with 'forEach' when the transformed collection is not needed, or assign the result to a variable.
+Sources/Hummingbird/Router/TransformingRouterGroup.swift:57: info: [Multiple Types Per File] Multiple top-level types in one file. 'struct ThrowingTransformingRouterGroup' should be in its own file.
+  suggestion: Move 'ThrowingTransformingRouterGroup' to ThrowingTransformingRouterGroup.swift for better code organization.
+Sources/Hummingbird/Router/ResponseGenerator.swift:84: info: [Missing Documentation] Missing documentation for 'response'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Router/ResponseGenerator.swift:94: info: [Missing Documentation] Missing documentation for 'EditedResponse'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Router/ResponseGenerator.swift:109: info: [Missing Documentation] Missing documentation for 'response'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Router/Trie/RouterTrie.swift:53: info: [Missing Documentation] Missing documentation for 'RouterTrie'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Router/Router.swift:90: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Router/Router.swift:106: info: [Multiple Types Per File] Multiple top-level types in one file. 'struct NotFoundResponder' should be in its own file.
+  suggestion: Move 'NotFoundResponder' to NotFoundResponder.swift for better code organization.
+Sources/HummingbirdTesting/ApplicationTester.swift:70: info: [Discardable Result Misuse] @discardableResult on 'execute' allows callers to silently ignore 'Return', which may carry important outcome information
+  suggestion: Remove @discardableResult and address unused-result warnings at call sites, or rename the function to make the optional-chaining use case explicit.
+Sources/HummingbirdTesting/ApplicationTester.swift:83: info: [Protocol Naming Suffix] Protocol 'ApplicationTestFramework' is not suffixed with 'Protocol'
+  suggestion: Rename to 'ApplicationTestFrameworkProtocol' to improve clarity for both humans and LLMs
+Sources/HummingbirdTesting/TestApplication.swift:42: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/TestApplication.swift:42: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/Hummingbird/Router/RouterMethods.swift:151: info: [Discardable Result Misuse] @discardableResult on 'delete' allows callers to silently ignore 'Self', which may carry important outcome information
+  suggestion: Remove @discardableResult and address unused-result warnings at call sites, or rename the function to make the optional-chaining use case explicit.
+Sources/HummingbirdTesting/LiveTestFramework.swift:47: warning: [Missing Cancellation Check] Async function 'run' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Sources/Hummingbird/Router/RouterPath.swift:11: info: [Missing Documentation] Missing documentation for 'Element'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/Router/RouterPath.swift:200: info: [Missing Documentation] Missing documentation for 'index'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/HTTP/MediaType.swift:218: info: [Missing Documentation] Missing documentation for 'encode'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/HTTP/MediaType.swift:488: info: [Missing Documentation] Missing documentation for '~='
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/Hummingbird/HTTP/MediaType.swift:83: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Sources/HummingbirdTesting/RouterTestFramework.swift:47: warning: [Missing Cancellation Check] Async function 'run' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Sources/HummingbirdTesting/RouterTestFramework.swift:96: warning: [Missing Cancellation Check] Async function 'executeRequest' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Sources/HummingbirdTesting/RouterTestFramework.swift:131: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/RouterTestFramework.swift:139: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/RouterTestFramework.swift:118: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Sources/HummingbirdTLS/TLSChannel+ConfigReader.swift:15: info: [Missing Documentation] Missing documentation for 'TLSConfigError'
+  suggestion: Add documentation comments to describe the purpose and usage
+Sources/HummingbirdTLS/TLSChannel.swift:43: warning: [Map Used For Side Effects] 'flatMap' result discarded — use 'forEach' for side effects
+  suggestion: Replace 'flatMap' with 'forEach' when the transformed collection is not needed, or assign the result to a variable.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:164: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:167: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:168: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:169: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:170: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:171: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:174: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:175: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:176: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:177: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:178: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:179: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:180: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:181: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:182: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:184: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:186: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:188: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:189: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:190: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:191: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:192: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:193: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:194: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:195: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/AsyncHTTPClientTestFramework.swift:55: warning: [Missing Cancellation Check] Async function 'run' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Sources/HummingbirdTesting/TestClient.swift:122: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Sources/HummingbirdTesting/TestClient.swift:131: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Sources/HummingbirdTesting/TestClient.swift:132: warning: [Catch Without Handling] Catch block does not rethrow, log, or propagate the error
+  suggestion: Rethrow with 'throw error', log with 'print(error)' / 'logger.error(...)', or assign to error state. Use 'swiftprojectlint:disable:next catch-without-handling' if swallowing is intentional.
+Sources/HummingbirdTesting/TestClient.swift:169: warning: [Missing Cancellation Check] Async function 'execute' spawns tasks without checking cancellation
+  suggestion: Add 'guard !Task.isCancelled else { return }' or 'try Task.checkCancellation()' to avoid unnecessary work after cancellation.
+Sources/HummingbirdTesting/TestClient.swift:186: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/TestClient.swift:245: info: [Force Unwrap] Force unwrap (!) will crash on nil — consider using if-let, guard-let, or nil-coalescing
+  suggestion: Use if-let, guard-let, or the nil-coalescing operator (??) for safe unwrapping.
+Sources/HummingbirdTesting/TestClient.swift:95: warning: [Discarded Try Result] 'try?' result is discarded — both the return value and the error are silently lost
+  suggestion: Capture the result ('let x = try? call()') or handle the error with do/catch.
+Sources/HummingbirdTesting/TestClient.swift:184: error: [Variable Shadowing] Variable 'response' shadows a declaration from an outer scope
+  suggestion: Rename the inner variable to avoid confusion with the outer 'response'
+Sources/Hummingbird/Middleware/TracingMiddleware.swift:90: info: [Could Be Private] 'RecordingHeader' is only used in its declaring file and could be private
+  suggestion: Add `private` access to narrow the scope of 'RecordingHeader'.
+Sources/Hummingbird/Utils/SplitStringSequences.swift:62: info: [Could Be Private] 'SplitStringMaxSplitsSequence' is only used in its declaring file and could be private
+  suggestion: Add `private` access to narrow the scope of 'SplitStringMaxSplitsSequence'.
+Sources/HummingbirdCore/Utils/String+percentEncode.swift:90: info: [Could Be Private] 'URLComponentSet' is only used in its declaring file and could be private
+  suggestion: Add `private` access to narrow the scope of 'URLComponentSet'.
+Sources/HummingbirdCore/Request/RequestBodyMergedWithUnderlyingRequestPartIterator.swift:20: info: [Could Be Private] 'RequestBodyMergedWithUnderlyingRequestPartIterator' is only used in its declaring file and could be private
+  suggestion: Add `private` access to narrow the scope of 'RequestBodyMergedWithUnderlyingRequestPartIterator'.
+Sources/Hummingbird/Utils/PreludeService.swift:15: info: [Could Be Private] 'PreludeService' is only used in its declaring file and could be private
+  suggestion: Add `private` access to narrow the scope of 'PreludeService'.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:27: info: [Could Be Private] 'HTTPHeaderDateParsingError' is only used in its declaring file and could be private
+  suggestion: Add `private` access to narrow the scope of 'HTTPHeaderDateParsingError'.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:27: info: [Could Be Private] 'HTTPHeaderDateFormatStyle' is only used in its declaring file and could be private
+  suggestion: Add `private` access to narrow the scope of 'HTTPHeaderDateFormatStyle'.
+Sources/HummingbirdCore/Request/RequestBody.swift:90: info: [Could Be Private Member] 'Delegate.produceMore' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func produceMore' to narrow its scope.
+Sources/HummingbirdCore/Request/RequestBody.swift:90: info: [Could Be Private Member] 'Delegate.didTerminate' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func didTerminate' to narrow its scope.
+Sources/HummingbirdCore/Request/RequestBody.swift:90: info: [Could Be Private Member] 'Delegate.waitForProduceMore' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func waitForProduceMore' to narrow its scope.
+Sources/HummingbirdCore/Request/RequestBody.swift:90: info: [Could Be Private Member] 'Delegate.stopProducing' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func stopProducing' to narrow its scope.
+Sources/HummingbirdCore/Request/URI.swift:46: info: [Could Be Private Member] 'URI.queries' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let queries' to narrow its scope.
+Sources/HummingbirdCore/Request/URI.swift:49: info: [Could Be Private Member] 'URI.queryKeyValues' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let queryKeyValues' to narrow its scope.
+Sources/HummingbirdCore/Request/URI.swift:90: info: [Could Be Private Member] 'URI.h' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let h' to narrow its scope.
+Sources/Hummingbird/HTTP/MediaType.swift:44: info: [Could Be Private Member] 'MediaType.categoryString' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let categoryString' to narrow its scope.
+Sources/Hummingbird/HTTP/MediaType.swift:90: info: [Could Be Private Member] 'MediaType.~=' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func ~=' to narrow its scope.
+Sources/Hummingbird/HTTP/MediaType.swift:90: info: [Could Be Private Member] 'MediaType.tSpecial' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let tSpecial' to narrow its scope.
+Sources/HummingbirdCore/Server/TSTLSOptions.swift:90: info: [Could Be Private Member] 'TSTLSOptions.tlsDispatchQueue' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let tlsDispatchQueue' to narrow its scope.
+Sources/Hummingbird/Router/Trie/Trie+resolve.swift:55: info: [Could Be Private Member] 'ResolveContext.descend' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func descend' to narrow its scope.
+Sources/Hummingbird/Router/Trie/Trie+resolve.swift:90: info: [Could Be Private Member] 'ResolveContext.matchComponent' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func matchComponent' to narrow its scope.
+Sources/Hummingbird/Router/Trie/Trie+resolve.swift:90: info: [Could Be Private Member] 'ResolveContext.matchComponent' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func matchComponent' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormNode.swift:90: info: [Could Be Private Member] 'URLEncodedFormNode.percentEncoded' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var percentEncoded' to narrow its scope.
+Sources/HummingbirdCore/Utils/FlatDictionary.swift:83: info: [Could Be Private Member] 'FlatDictionary.hashKey' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let hashKey' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormEncoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormEncoder.encodeNil' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func encodeNil' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormEncoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormEncoder.nestedUnkeyedContainer' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func nestedUnkeyedContainer' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormEncoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormEncoder.superEncoder' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func superEncoder' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormEncoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormEncoder.superEncoder' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func superEncoder' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormEncoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormEncoder.encodeResult' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func encodeResult' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormEncoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormEncoder.encodeResult' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func encodeResult' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormEncoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormEncoder.encodeNil' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func encodeNil' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormEncoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormEncoder.nestedUnkeyedContainer' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func nestedUnkeyedContainer' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormEncoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormEncoder.superEncoder' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func superEncoder' to narrow its scope.
+Sources/HummingbirdCore/Utils/String+percentEncode.swift:90: info: [Could Be Private Member] 'URLComponentSet.hostIPLiteral' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let hostIPLiteral' to narrow its scope.
+Sources/HummingbirdCore/Utils/String+percentEncode.swift:90: info: [Could Be Private Member] 'URLComponentSet.hostZoneID' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let hostZoneID' to narrow its scope.
+Sources/HummingbirdCore/Utils/String+percentEncode.swift:90: info: [Could Be Private Member] 'URLComponentSet.pathFirstSegment' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let pathFirstSegment' to narrow its scope.
+Sources/HummingbirdCore/Utils/String+percentEncode.swift:90: info: [Could Be Private Member] 'URLComponentSet.fragment' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let fragment' to narrow its scope.
+Sources/Hummingbird/HTTP/Cookie.swift:90: info: [Could Be Private Member] 'Cookie.keyValueIterator' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var keyValueIterator' to narrow its scope.
+Sources/Hummingbird/HTTP/Cookie.swift:90: info: [Could Be Private Member] 'Cookie.keyValueIterator' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var keyValueIterator' to narrow its scope.
+Sources/Hummingbird/Router/RouterPath.swift:41: info: [Could Be Private Member] 'RouterPath.charAfterClosingParethesis' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let charAfterClosingParethesis' to narrow its scope.
+Sources/Hummingbird/Router/RouterPath.swift:58: info: [Could Be Private Member] 'RouterPath.charAfterOpeningParenthesis' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let charAfterOpeningParenthesis' to narrow its scope.
+Sources/Hummingbird/Environment.swift:66: info: [Could Be Private Member] 'Environment.decodedValues' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let decodedValues' to narrow its scope.
+Sources/Hummingbird/Environment.swift:90: info: [Could Be Private Member] 'Environment.getEnvironment' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func getEnvironment' to narrow its scope.
+Sources/Hummingbird/Router/TrieRouter.swift:55: info: [Could Be Private Member] 'RouterPathTrieBuilder.getChild' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func getChild' to narrow its scope.
+Sources/Hummingbird/Router/TrieRouter.swift:57: info: [Could Be Private Member] 'RouterPathTrieBuilder.getChild' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func getChild' to narrow its scope.
+Sources/HummingbirdCore/Server/HTTPUserEventHandler.swift:21: info: [Could Be Private Member] 'HTTPUserEventHandler.closeAfterResponseWritten' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var closeAfterResponseWritten' to narrow its scope.
+Sources/HummingbirdCore/Server/HTTPUserEventHandler.swift:21: info: [Could Be Private Member] 'HTTPUserEventHandler.requestsBeingRead' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var requestsBeingRead' to narrow its scope.
+Sources/HummingbirdCore/Server/HTTPUserEventHandler.swift:23: info: [Could Be Private Member] 'HTTPUserEventHandler.requestsInProgress' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var requestsInProgress' to narrow its scope.
+Sources/HummingbirdTesting/ApplicationTester.swift:33: info: [Could Be Private Member] 'TestError.notStarted' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var notStarted' to narrow its scope.
+Sources/HummingbirdTesting/ApplicationTester.swift:35: info: [Could Be Private Member] 'TestError.noHead' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var noHead' to narrow its scope.
+Sources/HummingbirdTesting/ApplicationTester.swift:37: info: [Could Be Private Member] 'TestError.illegalBody' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var illegalBody' to narrow its scope.
+Sources/HummingbirdTesting/ApplicationTester.swift:39: info: [Could Be Private Member] 'TestError.noEnd' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var noEnd' to narrow its scope.
+Sources/Hummingbird/Server/RequestID.swift:20: info: [Could Be Private Member] 'RequestID.formatAsHexWithLeadingZeros' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func formatAsHexWithLeadingZeros' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:25: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.idleTimer' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var idleTimer' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:27: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.maxAgeTimer' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var maxAgeTimer' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:32: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.gracefulCloseTimer' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var gracefulCloseTimer' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:36: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.channelHandlerContext' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var channelHandlerContext' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:39: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.inReadLoop' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var inReadLoop' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:40: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.flushPending' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var flushPending' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:52: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.handlerAdded' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func handlerAdded' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:63: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.handlerRemoved' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func handlerRemoved' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:66: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.channelActive' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func channelActive' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:68: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.channelInactive' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func channelInactive' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:72: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.channelRead' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func channelRead' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:81: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.channelReadComplete' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func channelReadComplete' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:84: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.userInboundEventTriggered' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func userInboundEventTriggered' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:90: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.errorCaught' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func errorCaught' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:90: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.optionallyFlush' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func optionallyFlush' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:90: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.handlePing' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func handlePing' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:90: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.handlePingAck' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func handlePingAck' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:90: info: [Could Be Private Member] 'HTTP2ServerConnectionManager.handleInputClosed' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func handleInputClosed' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:90: info: [Could Be Private Member] 'HTTP2StreamDelegate.streamCreated' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func streamCreated' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager.swift:90: info: [Could Be Private Member] 'Timer.schedule' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func schedule' to narrow its scope.
+Sources/HummingbirdCore/Server/Server.swift:90: info: [Could Be Private Member] 'Server.makeServer' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func makeServer' to narrow its scope.
+Sources/Hummingbird/Utils/HTTPHeaderDateFormatStyle.swift:33: info: [Could Be Private Member] 'HTTPHeaderDateFormatStyle.calendar' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var calendar' to narrow its scope.
+Sources/Hummingbird/Files/FileIO.swift:90: info: [Could Be Private Member] 'FileIO.readFile' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func readFile' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormDecoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormDecoder.decodeNil' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func decodeNil' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormDecoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormDecoder.nestedUnkeyedContainer' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func nestedUnkeyedContainer' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormDecoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormDecoder.superDecoder' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func superDecoder' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormDecoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormDecoder.superDecoder' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func superDecoder' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormDecoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormDecoder.isAtEnd' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'var isAtEnd' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormDecoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormDecoder.decodeNextNode' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func decodeNextNode' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormDecoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormDecoder.decodeNil' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func decodeNil' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormDecoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormDecoder.nestedUnkeyedContainer' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func nestedUnkeyedContainer' to narrow its scope.
+Sources/Hummingbird/Codable/URLEncodedForm/URLEncodedFormDecoder.swift:90: info: [Could Be Private Member] '_URLEncodedFormDecoder.superDecoder' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func superDecoder' to narrow its scope.
+Sources/HummingbirdHTTP2/HTTP2ServerConnectionManager+StateMachine.swift:90: info: [Could Be Private Member] 'Keepalive.reset' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'func reset' to narrow its scope.
+Sources/Hummingbird/Utils/DateCache.swift:27: info: [Could Be Private Member] 'DateCache.dateContainer' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'let dateContainer' to narrow its scope.
+Sources/HummingbirdCore/Server/Server.swift:90: info: [Protocol Could Be Private] Protocol 'ServerBootstrapProtocol' is only used in its declaring file and could be private
+  suggestion: Add `private` to 'protocol ServerBootstrapProtocol' to narrow its scope.
+
+Found 414 issues (10 errors, 97 warnings, 307 info)
