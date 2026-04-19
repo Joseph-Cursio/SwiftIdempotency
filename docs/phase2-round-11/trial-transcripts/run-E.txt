@@ -1,6 +1,0 @@
-Sources/Development/routes.swift:63: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'closure' is declared `@lint.context replayable` but calls 'decode', whose effect is inferred `non_idempotent` from its body via 5-hop chain of un-annotated callees. If the inference is wrong, annotate 'decode' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
-  suggestion: Replace 'decode' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
-Sources/Development/routes.swift:360: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'respond' is declared `@lint.context replayable` but calls 'respond', whose effect is inferred `non_idempotent` from its body via 5-hop chain of un-annotated callees. If the inference is wrong, annotate 'respond' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
-  suggestion: Replace 'respond' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
-
-Found 2 issues (2 errors)

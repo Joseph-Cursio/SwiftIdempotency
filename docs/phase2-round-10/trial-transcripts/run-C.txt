@@ -1,4 +1,0 @@
-Sources/Development/routes.swift:355: error: [Non-Idempotent In Retry Context] Non-idempotent call in strict_replayable context: 'respond' is declared `@lint.context strict_replayable` but calls 'respond', whose effect is inferred `non_idempotent` from its body via 5-hop chain of un-annotated callees. If the inference is wrong, annotate 'respond' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
-  suggestion: Replace 'respond' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
-
-Found 1 issue (1 error)
