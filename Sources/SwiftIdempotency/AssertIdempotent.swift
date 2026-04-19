@@ -23,19 +23,39 @@
 ///   - The assertion should run inside an XCTest method or as part of a
 ///     larger Swift Testing scenario, rather than as a standalone test.
 ///
+/// ## Sync and async overloads
+///
+/// Two `assertIdempotent` macro declarations coexist — one for
+/// `() throws -> Result`, one for `() async throws -> Result`. Swift's
+/// overload resolution picks the more specific sync signature when the
+/// closure has no `await`, and the async signature when it does.
+/// Adopters get the right behaviour without choosing explicitly; the
+/// only visible difference is that async usage requires `try await`
+/// at the macro call site.
+///
 /// ## Current scope
 ///
-/// Phase 4 ships the expression macro with Option C semantics — same as
-/// `@Idempotent` peer-macro expansion. Options A and B (dependency-
-/// injected observation sinks, mock-based equivalence) remain deferred;
-/// callers wanting stronger guarantees wrap the closure in their own
-/// harness.
+/// Option C semantics only — same as the `@Idempotent` peer-macro
+/// expansion. Options A and B (dependency-injected observation sinks,
+/// mock-based equivalence) remain deferred; callers wanting stronger
+/// guarantees wrap the closure in their own harness.
 @freestanding(expression)
 public macro assertIdempotent<Result: Equatable>(
     _ body: () throws -> Result
 ) -> Result = #externalMacro(
     module: "SwiftIdempotencyMacros",
     type: "AssertIdempotentMacro"
+)
+
+/// Async overload of `#assertIdempotent`. Picked by Swift overload
+/// resolution when the closure contains an `await` effect. See the sync
+/// declaration above for usage and scope details; semantics are identical.
+@freestanding(expression)
+public macro assertIdempotent<Result: Equatable>(
+    _ body: () async throws -> Result
+) -> Result = #externalMacro(
+    module: "SwiftIdempotencyMacros",
+    type: "AssertIdempotentAsyncMacro"
 )
 
 // swiftlint:disable identifier_name
@@ -68,6 +88,29 @@ public func __idempotencyAssertRunTwice<Result: Equatable>(
     return first
 }
 
+/// Async runtime helper for the async overload of `#assertIdempotent`.
+/// Identical semantics to `__idempotencyAssertRunTwice` but accepts an
+/// `async throws` closure. The `async rethrows` signature lets the
+/// closure's throwing effect pass through: a non-throwing async closure
+/// compiles as `await #assertIdempotent { ... }` with no `try`; a
+/// throwing async closure requires `try await`.
+@inlinable
+public func __idempotencyAssertRunTwiceAsync<Result: Equatable>(
+    _ body: () async throws -> Result,
+    file: StaticString = #file,
+    line: UInt = #line
+) async rethrows -> Result {
+    let first = try await body()
+    let second = try await body()
+    precondition(
+        first == second,
+        "#assertIdempotent: closure returned different values on re-invocation — not idempotent",
+        file: file,
+        line: line
+    )
+    return first
+}
+
 /// Runtime helper the `@IdempotencyTests(for:)` member-macro expansion
 /// (Candidate A) calls into. Takes a zero-argument closure, invokes it
 /// twice, returns both results as a tuple. `async rethrows` lets sync,
@@ -86,11 +129,3 @@ public func __idempotencyInvokeTwice<Result: Equatable>(
 }
 
 // swiftlint:enable identifier_name
-
-// Async variant is deferred to a follow-on slice. Swift's effect-polymorphic
-// macro signatures for freestanding-expression macros with closure arguments
-// are an evolving area; shipping the sync variant first lets #assertIdempotent
-// be usable in XCTest methods, Swift Testing @Test bodies that don't need
-// await inside the closure, and unit-test contexts generally. Users with
-// genuinely async closures can wrap the call inside a Task or use
-// XCTestCase.measure-style async test harnesses.

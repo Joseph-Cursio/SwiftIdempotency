@@ -175,7 +175,6 @@ tested. Deferred for future work:
 - Parameterised `@Idempotent` expansion (needs `IdempotencyTestArgs`
   protocol design)
 - Option A / B observable-equivalence (dependency-injected mocks)
-- Async variant of `#assertIdempotent`
 - Framework-specific integrations (Vapor, Hummingbird, SwiftNIO)
 
 See the design document in

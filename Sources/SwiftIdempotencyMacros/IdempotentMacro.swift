@@ -95,6 +95,7 @@ struct SwiftIdempotencyMacrosPlugin: CompilerPlugin {
         ObservationalMacro.self,
         ExternallyIdempotentMacro.self,
         AssertIdempotentMacro.self,
+        AssertIdempotentAsyncMacro.self,
         IdempotencyTestsMacro.self
     ]
 }

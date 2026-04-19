@@ -16,6 +16,10 @@ struct AssertIdempotentMacroTests {
         "assertIdempotent": AssertIdempotentMacro.self
     ]
 
+    private let testMacrosAsync: [String: Macro.Type] = [
+        "assertIdempotent": AssertIdempotentAsyncMacro.self
+    ]
+
     // MARK: - Expansion shape
 
     @Test
@@ -121,4 +125,124 @@ struct AssertIdempotentMacroTests {
     // shows `precondition` is emitted) and by the semantic contract of
     // `precondition` itself. A future phase may swap to `Issue.record`
     // when `import Testing` is guaranteed.
+
+    // MARK: - Async overload expansion shape
+
+    @Test
+    func asyncTrailingClosureForm_expandsToAsyncHelperCall() {
+        // When overload resolution picks the async signature, the macro
+        // routes to the async runtime helper. Swift's type checker selects
+        // this overload automatically based on closure effects; the macro
+        // itself doesn't inspect them.
+        assertMacroExpansion(
+            """
+            let r = #assertIdempotent { 42 }
+            """,
+            expandedSource: """
+            let r = SwiftIdempotency.__idempotencyAssertRunTwiceAsync({ 42 })
+            """,
+            macros: testMacrosAsync
+        )
+    }
+
+    @Test
+    func asyncExplicitClosureForm_expandsToAsyncHelperCall() {
+        assertMacroExpansion(
+            """
+            let r = #assertIdempotent({ 42 })
+            """,
+            expandedSource: """
+            let r = SwiftIdempotency.__idempotencyAssertRunTwiceAsync({ 42 })
+            """,
+            macros: testMacrosAsync
+        )
+    }
+
+    @Test
+    func asyncNonClosureArgument_producesDiagnostic() {
+        assertMacroExpansion(
+            """
+            let x = 42
+            let r = #assertIdempotent(x)
+            """,
+            expandedSource: """
+            let x = 42
+            let r = fatalError("#assertIdempotent requires a closure literal argument")
+            """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: "#assertIdempotent requires a closure literal argument, " +
+                        "e.g. `#assertIdempotent { ... }`",
+                    line: 2,
+                    column: 9
+                )
+            ],
+            macros: testMacrosAsync
+        )
+    }
+
+    // MARK: - Async runtime behaviour
+
+    /// The async overload is selected because the closure contains `await`.
+    /// This case proves end-to-end compilation of `try await #assertIdempotent`
+    /// against an `async throws` closure — the shape blocked by the
+    /// pre-fix signature.
+    @Test
+    func asyncIdempotentClosure_returnsFirstValue() async throws {
+        actor Counter {
+            private(set) var calls = 0
+            func bump() -> Int {
+                calls += 1
+                return 42
+            }
+        }
+        let counter = Counter()
+        let result = try await #assertIdempotent { () async -> Int in
+            await counter.bump()
+        }
+        #expect(result == 42)
+        let calls = await counter.calls
+        #expect(calls == 2)
+    }
+
+    @Test
+    func asyncThrowingClosureInFirstCall_propagates() async {
+        struct TestError: Error, Equatable {}
+        actor Gate {
+            private var shouldThrow = true
+            func next() throws -> Int {
+                if shouldThrow {
+                    shouldThrow = false
+                    throw TestError()
+                }
+                return 0
+            }
+        }
+        let gate = Gate()
+        var caught = false
+        do {
+            _ = try await #assertIdempotent {
+                try await gate.next()
+            }
+        } catch is TestError {
+            caught = true
+        } catch {
+            Issue.record("unexpected error type: \(error)")
+        }
+        #expect(caught)
+    }
+
+    /// Overload resolution sanity check — a closure with no `await` still
+    /// resolves to the sync overload, keeping the existing surface intact.
+    /// The macro-expansion tests above cover the async routing; this one
+    /// covers the selection rule at the user's call site.
+    @Test
+    func syncClosure_stillResolvesToSyncOverload() async throws {
+        // No `await` in the body, so Swift picks the sync overload. If
+        // overload resolution ever regressed to always pick async, the
+        // outer `try` would become unnecessary (warning) and the absence
+        // of `await` would become a compile error.
+        let result = try #assertIdempotent { () -> Int in 7 }
+        #expect(result == 7)
+    }
 }

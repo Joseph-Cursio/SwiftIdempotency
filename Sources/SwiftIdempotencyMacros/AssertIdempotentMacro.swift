@@ -35,27 +35,9 @@ public struct AssertIdempotentMacro: ExpressionMacro {
         of node: some FreestandingMacroExpansionSyntax,
         in context: some MacroExpansionContext
     ) throws -> ExprSyntax {
-        // A freestanding expression macro's closure argument can arrive in
-        // two positions:
-        //   - `#assertIdempotent { body }` → trailing-closure form. The
-        //     closure lives in `node.trailingClosure`.
-        //   - `#assertIdempotent({ body })` → explicit-argument form. The
-        //     closure lives in `node.arguments.first?.expression`.
-        // Accept either.
-        let closureArg: ClosureExprSyntax
-        if let trailing = node.trailingClosure {
-            closureArg = trailing
-        } else if let explicit = node.arguments.first?.expression.as(ClosureExprSyntax.self) {
-            closureArg = explicit
-        } else {
-            context.diagnose(Diagnostic(
-                node: Syntax(node),
-                message: AssertIdempotentDiagnostic.requiresClosureArgument
-            ))
+        guard let closureSource = try extractClosureSource(from: node, in: context) else {
             return "fatalError(\"#assertIdempotent requires a closure literal argument\")"
         }
-
-        let closureSource = closureArg.description
 
         // The expansion defers the double-invocation + compare + return-first
         // pattern to a runtime helper (`__idempotencyAssertRunTwice`) in
@@ -68,6 +50,50 @@ public struct AssertIdempotentMacro: ExpressionMacro {
             """
         return expansion
     }
+}
+
+/// Async overload of `AssertIdempotentMacro`. Shape and diagnostics are
+/// identical; the only difference is the runtime helper — this one routes
+/// to `__idempotencyAssertRunTwiceAsync`, which is `async rethrows` and
+/// therefore requires `await` at the macro call site.
+public struct AssertIdempotentAsyncMacro: ExpressionMacro {
+    public static func expansion(
+        of node: some FreestandingMacroExpansionSyntax,
+        in context: some MacroExpansionContext
+    ) throws -> ExprSyntax {
+        guard let closureSource = try extractClosureSource(from: node, in: context) else {
+            return "fatalError(\"#assertIdempotent requires a closure literal argument\")"
+        }
+
+        let expansion: ExprSyntax = """
+            SwiftIdempotency.__idempotencyAssertRunTwiceAsync(\(raw: closureSource))
+            """
+        return expansion
+    }
+}
+
+/// Extracts the closure argument that `#assertIdempotent` was invoked
+/// with. A freestanding expression macro's closure argument can arrive
+/// either as a trailing closure (`#assertIdempotent { body }`) or as an
+/// explicit argument (`#assertIdempotent({ body })`); both forms route
+/// to the same runtime helper so both need to be recognised here.
+///
+/// Returns `nil` after emitting a diagnostic when no closure is present.
+private func extractClosureSource(
+    from node: some FreestandingMacroExpansionSyntax,
+    in context: some MacroExpansionContext
+) throws -> String? {
+    if let trailing = node.trailingClosure {
+        return trailing.description
+    }
+    if let explicit = node.arguments.first?.expression.as(ClosureExprSyntax.self) {
+        return explicit.description
+    }
+    context.diagnose(Diagnostic(
+        node: Syntax(node),
+        message: AssertIdempotentDiagnostic.requiresClosureArgument
+    ))
+    return nil
 }
 
 /// Diagnostic messages surfaced by `AssertIdempotentMacro`.
