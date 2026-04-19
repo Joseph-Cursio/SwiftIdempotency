@@ -276,8 +276,10 @@ work on the PR-#18/#19 merge should:
 4. Consolidate the `-post-pr18` transcripts into the canonical
    `replayable.txt` / `strict-replayable.txt` names.
 
-**Trial branch durability caveat.** The `trial-tca` branch lives
-on a `/tmp` clone and is not pushed to any remote. Macs don't
-wipe `/tmp` on every reboot, but they can. If the verification
-run above is blocked by a lost branch, the annotations are
-trivially replayable from the instructions in this addendum.
+**Trial branch durability.** The `trial-tca` branch lives on the
+fork at
+[`Joseph-Cursio/swift-composable-architecture-idempotency-trial`](https://github.com/Joseph-Cursio/swift-composable-architecture-idempotency-trial/tree/trial-tca)
+(commits `7517cc3`, `d326f80`, `02ba3e0`). The `/tmp` clone is the
+authoritative working copy; the fork is durable storage. Fork
+naming follows the `<upstream>-idempotency-trial` convention for
+adopter sandboxes.
