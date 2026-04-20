@@ -284,10 +284,11 @@ one-line fix (`&& !gift.delivered`). Findings #2–#4 are correct
 flags but low-impact (admin alert noise, or Stripe-retry email
 policy that's pointfreeco's call to make).
 
-Follow-on — **not done, requires user approval**: opening a
-narrowly-scoped triage issue on pointfreeco for finding #1 only.
-Publicly visible action; deferred until the user decides whether
-pursuing adopter bugs is in scope for this project.
+Follow-on — **parked in ideas/**: opening a narrowly-scoped triage
+issue on pointfreeco for finding #1 only is a publicly-visible
+action gated on user approval; moved to
+[`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md)
+with a promotion trigger.
 
 ### 8. Remeasure swift-nio with annotations under the new budget — **done**
 
@@ -334,18 +335,9 @@ has three entries:
 
 ## Recommended next-session opener
 
-No in-flight slot with urgent triggering evidence. Two
-possibilities, in rough order of ease:
+No in-flight slot with urgent triggering evidence. One
+natural move:
 
-- **Slot 7 follow-on: open the pointfreeco triage issue.** The
-  runtime-path read closed the "does runtime defang them?"
-  question (no, it doesn't, for the email-send patterns). The
-  remaining move is the publicly-visible one: open a narrowly-
-  scoped issue on `pointfreeco/pointfreeco` for finding #1 only
-  (`sendGiftEmail` missing `!gift.delivered` gate, one-line fix).
-  Requires explicit user approval before filing. See
-  [`pointfreeco/slot7-runtime-verification.md §6`](pointfreeco/slot7-runtime-verification.md)
-  for the recommendation.
 - **New adopter road-test.** Every slot that closed in recent
   sessions (4, 8, 9, 10, 11) started from a road-test surfacing
   a concrete cluster. Next natural target: a production SwiftNIO-
@@ -359,5 +351,6 @@ still have no immediate triggering evidence — wait for a corpus
 that exhibits the pathology before committing a session to either.
 Slots 2, 4, 6, 7, 8, 9, 10, and 11 are closed out (§2, §4, §6,
 §7, §8, §9, §10, §11 above). Slot 7's publicly-visible follow-on
-(filing an upstream triage issue) is the one remaining step from
-that slot and is gated on user approval.
+(filing an upstream triage issue) has been moved to
+[`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md)
+with an explicit promotion trigger.

@@ -62,6 +62,44 @@ Good targets:
 
 ---
 
+## 🟠 Production applications (real side effects) — top priority
+
+Per `CLAUDE.md`'s Lambda "corpus caveat," demo/example corpora
+(awslabs Lambda examples, hummingbird-examples, point-free docs)
+produce low Run A yields because the handler bodies are deliberately
+thin — logging + echo + one SDK read, with little business state to
+mutate. For FP-rate evidence, a codebase with real business side
+effects (DB writes, third-party API calls, message dispatches) is a
+stronger target than more annotations on the demo corpora.
+
+### Candidates
+
+- **`vapor/penny-bot`** → https://github.com/vapor/penny-bot
+  - SSWG Discord bot (the actual production one). AWS Lambda +
+    SotoDynamoDB + Discord Gateway + GitHub webhooks. Real business
+    workload: coin/reward tracking, PR notifications, FAQ/ping
+    management, sponsor sync, OAuth callbacks.
+  - Shape diversity: 8 discrete Lambda handlers under `Lambdas/`
+    (`GHHooks`, `GHOAuth`, `Users`, `Faqs`, `AutoPings`, `AutoFaqs`,
+    `Sponsors`, `GitHubAPI`) plus a long-running `Sources/Penny`
+    service. Webhook-replayable, OAuth-callback, CRUD, scheduled
+    sync all represented.
+  - **Directly addresses the Lambda corpus caveat.** Reuses the
+    slot-10 response-writer whitelist infrastructure, so the
+    framework baseline is warm.
+
+- **`FeatherCMS/feather`** → https://github.com/FeatherCMS/feather
+  - Modern Vapor 4 CMS. DB writes + file uploads + admin flows.
+  - **Caveat: last push 2023-05-29.** Not archived, but clearly
+    unmaintained since Vapor 4 era. Verify Swift version / SPM
+    resolves on current toolchain before committing to a round.
+  - Worth holding as the "Vapor proper" fill-in (current Vapor
+    coverage gap: `todos-fluent` was a toy, `pointfreeco` uses
+    custom `HttpPipeline`) — but only if a lively alternative
+    doesn't surface first.
+
+---
+
 ## 🟣 Point-Free ecosystem (very interesting for semantics)
 
 - swift-composable-architecture (TCA)
