@@ -1,6 +1,15 @@
+=== /tmp/swift-nio-scan (full corpus) ===
+No issues found.
+
+=== /tmp/swift-nio-scan/Sources/NIOEchoServer (scoped) ===
+No issues found.
+
+=== /tmp/swift-nio-scan/Sources/NIOChatServer (scoped) ===
+No issues found.
+
+=== /tmp/swift-nio-scan/Sources/NIOHTTP1Server (scoped) ===
 main.swift:533: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'channelRead' is declared `@lint.context replayable` but calls 'handleFile', whose effect is inferred `non_idempotent` from its body. If the inference is wrong, annotate 'handleFile' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
   suggestion: Replace 'handleFile' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
 main.swift:537: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'channelRead' is declared `@lint.context replayable` but calls 'handleFile', whose effect is inferred `non_idempotent` from its body. If the inference is wrong, annotate 'handleFile' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
   suggestion: Replace 'handleFile' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
-
 Found 2 issues (2 errors)

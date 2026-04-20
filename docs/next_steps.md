@@ -5,14 +5,9 @@ value-per-effort, top to bottom.
 
 ## Where things stand
 
-- **Linter** (`Joseph-Cursio/SwiftProjectLint`): main at `4c8623f`
-  (PR #17 tip). Two open PRs carry over from the previous session:
-  - **PR #18** — `composableArchitecture` framework whitelist;
-    bare-name override lets `send` in a TCA effect closure classify
-    idempotent instead of hitting the bare-name non-idempotent
-    list. Closes TCA cluster 3 (6-of-6 `send` fires in both
-    `replayable` and `strict_replayable` runs).
-  - **PR #19** — closure-typed stored properties become effect
+- **Linter** (`Joseph-Cursio/SwiftProjectLint`): main at `5698683`
+  (post-PR #18 merge tip). PR status:
+  - **PR #19 (open)** — closure-typed stored properties become effect
     declarations. `EffectSymbolTable.merge(source:)` now walks
     `VariableDeclSyntax` with function-typed annotations and feeds
     them through the same record path as `FunctionDeclSyntax`.
@@ -21,6 +16,11 @@ value-per-effort, top to bottom.
     fires) **conditional on the adopter annotating the client**.
     Annotations are in place on the trial-tca branch — re-run is
     cheap once PR #19 merges.
+  - **PR #18 (merged)** — commit `5698683`: TCA send-closure-parameter
+    whitelist. Post-Lambda-round evidence: the PR #18 bare-name
+    override shape is TCA-specific. The earlier `idempotentReceiverMethodsByFramework`
+    infrastructure (commit `040f186`, Hummingbird) is what
+    generalises across frameworks — see slot 10.
 - **Macros** (this repo): shipped; plus a new consumer sample at
   `examples/webhook-handler-sample/` (commit `359db69`) exercising
   `IdempotencyKey` end-to-end in a downstream SPM package. The
@@ -29,21 +29,26 @@ value-per-effort, top to bottom.
   `#assertIdempotent`, and `IdempotencyKey` surfaces ship; only
   `@IdempotencyTests` and `#assertIdempotent` remain un-exercised
   in a consumer context (see slot 6).
-- **Adopter road-tests**: four rounds completed — `todos-fluent/`,
-  `pointfreeco/`, `swift-nio/`, `swift-composable-architecture/`.
-  The TCA round closed two of the three cluster-level gaps it
-  surfaced (send-on-closure-parameter, dependency-client
-  declarations). One remains open: the property-wrapper receiver
-  resolver (see §3 below), deferred because the existing
-  name+labels lookup suffices on today's corpus.
+- **Adopter road-tests**: five rounds completed — `todos-fluent/`,
+  `pointfreeco/`, `swift-nio/`, `swift-composable-architecture/`,
+  `swift-aws-lambda-runtime/`. The TCA round closed two of the
+  three cluster-level gaps it surfaced (send-on-closure-parameter,
+  dependency-client declarations); the property-wrapper receiver
+  resolver remains open (see §3 below). The Lambda round surfaced
+  a new cluster — response-writer primitives (`write` / `finish`
+  on `LambdaResponseWriter` / `LambdaResponseStreamWriter`) —
+  scored as slot 10.
 - **Road-test workflow**: reworked to be fork-authoritative (commit
-  `bb69729`). Trial branches now live on `<upstream>-idempotency-trial`
+  `bb69729`), first dogfooded end-to-end on the Lambda round
+  this session. Trial branches live on `<upstream>-idempotency-trial`
   forks under the user's GitHub, not on ephemeral `/tmp` clones.
-  Four forks provisioned so far:
+  Five forks provisioned so far:
   - `swift-composable-architecture-idempotency-trial` — **active**;
-    carries the `trial-tca` branch (setup + `@DependencyClient`
-    annotations + sandbox README banner) and has default-branch
-    switched to `trial-tca`.
+    carries `trial-tca` (setup + `@DependencyClient` annotations
+    + banner), default-branch switched.
+  - `swift-aws-lambda-runtime-idempotency-trial` — **active**;
+    carries `trial-lambda` (6 handler annotations, banner),
+    default-branch switched. Tip: `349725b`.
   - `hummingbird-examples-idempotency-trial`
   - `pointfreeco-idempotency-trial`
   - `swift-nio-idempotency-trial`
@@ -51,7 +56,8 @@ value-per-effort, top to bottom.
   disabled, sandbox description) but have no trial branch yet.
   Banner + default-branch switch apply per-round when a
   `trial-<slug>` branch lands. See `road_test_plan.md` for the
-  full pre-flight recipe.
+  full pre-flight recipe (now validated end-to-end — one gap
+  surfaced, captured as a housekeeping item below).
 - **Macro-form end-to-end validation**: ticked on `todos-fluent`
   (attribute-form A/B supplement) and now on the webhook-handler
   sample (`IdempotencyKey` in a real consumer SPM). Two macros
@@ -106,17 +112,25 @@ different tiers. Watch for this on swift-nio-scale corpora or on
 large TCA apps with multiple dependency clients sharing method
 names (`fetch`, `search`, `save` are the likely collision points).
 
-### 4. Escape-wrapper recognition slice
+### 4. Escape-wrapper recognition slice — **closed (pointfreeco-specific)**
 
 `fireAndForget` (pointfreeco), `detach` / `runInBackground`
-(AWS Lambda / Hummingbird-shape). A per-framework whitelist of
-known "trusted observational wrappers" would reduce strict-mode
-noise.
+(AWS Lambda / Hummingbird-shape). The original hypothesis was
+that these wrappers recurred across frameworks and deserved a
+shared "trusted observational wrapper" whitelist.
 
-**Hold until a second adopter surfaces the same pattern** — the
-current evidence is pointfreeco-specific. Slot 9 (AWS Lambda
-round) is the natural cross-adopter data point. Shape would
-mirror PR #14's `idempotentReceiverMethodsByFramework`.
+**Negative result from slot 9.** The Lambda example corpus
+contains zero escape-wrapper calls — `BackgroundTasks` uses
+structured concurrency (inline post-`outputWriter.write(...)`
+background work), not `Task { }` / `detach` / any wrapper. So
+**`fireAndForget` is pointfreeco-specific, not a cross-framework
+pattern.**
+
+Downgrade to "don't generalise." The separate shape Lambda
+surfaced — response-writer primitives — has its own receiver-method
+whitelist path (see slot 10). If a future adopter genuinely does
+surface `detach`/`runInBackground`, reopen and score; until then
+this slot is closed.
 
 ## Deeper work (bigger slices)
 
@@ -156,40 +170,69 @@ Adopter-integration sub-path (carried over from the original slot 6):
   natural fit since SQS message IDs are the canonical
   `@ExternallyIdempotent(by:)` case.
 
-### 9. AWS Lambda adopter road-test
+### 9. AWS Lambda adopter road-test — **done**
 
-Fifth adopter round, targeting `apple/swift-aws-lambda-runtime`.
-The original `CLAUDE.md` validation recommendation: every SQS/SNS
-handler is objectively `@lint.context replayable`, so annotation
-correctness is unambiguous — no judgement calls about what the
-context should be.
+Completed in one session. Artifacts:
+[`swift-aws-lambda-runtime/trial-scope.md`](swift-aws-lambda-runtime/trial-scope.md),
+[`trial-findings.md`](swift-aws-lambda-runtime/trial-findings.md),
+[`trial-retrospective.md`](swift-aws-lambda-runtime/trial-retrospective.md),
+[`trial-transcripts/`](swift-aws-lambda-runtime/trial-transcripts/).
 
-**Pre-flight**: the `swift-aws-lambda-runtime-idempotency-trial`
-fork does not exist yet — creating it (same recipe as the four
-existing forks) is step 0 per `road_test_plan.md`'s fork-authoritative
-workflow.
+Headlines: Run A 0 / 6, Run B 16 / 6 (all `Unannotated In Strict
+Replayable Context`). One new cluster surfaced
+(lambda-response-writer-gap — slot 10); slot 4 closed out as
+pointfreeco-specific; protocol-method placement confirmed; one
+template gap found and captured as housekeeping.
 
-Value per session:
+Target path drift: `apple/swift-aws-lambda-runtime` → `awslabs/…`
+(captured as housekeeping).
 
-- **Cross-adopter evidence for slot 4.** If Lambda's
-  `detach` / `runInBackground`-shape escape wrappers surface the
-  same pattern pointfreeco's `fireAndForget` did, slot 4 lights up
-  with two independent data points and can ship.
-- **Cross-framework validation of PR #18.** Does the
-  `@lint.framework` whitelist infrastructure generalize cleanly to
-  a second framework, or does it need shape changes first?
-- **Natural adopter for `IdempotencyKey` integration.** SQS message
-  IDs are the canonical `@ExternallyIdempotent(by:)` case and tie
-  slot 6's macro sample to a real adopter target down the line.
-- **First dogfood of the fork-authoritative road-test workflow.**
-  The procedure was rewritten in `road_test_plan.md` this session
-  but has only been walked through on TCA retroactively; running
-  a fresh round end-to-end exposes any rough edges in the
-  documented recipe.
+### 10. Lambda response-writer framework whitelist — **done**
 
-Produces: transcripts + retrospective under
-`docs/swift-aws-lambda-runtime/`. Session-cost: 1-2 sessions,
-similar to the TCA round.
+Landed on SwiftProjectLint main as `6c611c7`. Three entries added
+to `idempotentReceiverMethodsByFramework` gated on
+`import AWSLambdaRuntime`:
+
+- `("outputWriter", "write")` — `LambdaResponseWriter<Output>` in
+  `LambdaWithBackgroundProcessingHandler.handle` (BackgroundTasks).
+- `("responseWriter", "write")` — `LambdaResponseStreamWriter` in
+  `StreamingLambdaHandler.handle` (MultiSourceAPI, streaming).
+- `("responseWriter", "finish")` — streaming stream-close on the
+  same writer.
+
+Identical shape to commit `040f186` (Hummingbird) — no inferrer
+code changes needed. 11 new tests in `FrameworkWhitelistGatingTests`;
+total suite 2246 / 275 green.
+
+Follow-up **done in the same session**. Rerun against linter tip
+`6c611c7` confirmed the expected 5 drop exactly: headline moved
+from 16 / 6 (yield 2.67) to **11 / 6 (yield 1.83)**, with
+`MultiSourceAPI` going fully silent under strict (0 / 1 silent
+— the branch-join stress test from the scope doc resolving
+cleanly). No other diagnostic changed, confirming the slice is
+scoped exactly to the intended pair surface. Remaining 11 are
+stdlib-gap (6), type-ctor-gap (5), correct-catch (2) — see
+`swift-aws-lambda-runtime/trial-findings.md` §"Comparison to
+pre-slot-10 baseline" for the per-line delta.
+
+### 11. Housekeeping (small docs/config items) — **done**
+
+All three items from slot 9's retrospective addressed in-session:
+
+- **`road_test_plan.md` — per-Example-package scan. ✅**
+  "Multi-package corpora" sub-bullet added under "Scan twice"
+  with a shell recipe matching the `=== path ===` header
+  convention.
+- **`CLAUDE.md` — validation target update. ✅** Upstream path
+  corrected (apple → swift-server → `awslabs/swift-aws-lambda-runtime`),
+  v2.x corpus caveat recorded (no SQS/SNS examples; S3EventNotifier
+  substitutes), and the "awslabs demos are an infrastructure
+  smoke test, not an FP-rate corpus" distinction called out.
+- **Claude Code hook scoping. ✅** The global PreToolUse
+  `git commit` hook (`~/.claude/settings.json`) is now scoped to
+  `$HOME/xcode_projects/*` so sandbox-fork commits in `/tmp` skip
+  the session-start clean+test+lint. Environment fix; captured
+  here as a breadcrumb if the hook ever gets rewritten.
 
 ## Follow-ups on what we found
 
@@ -208,16 +251,29 @@ production. Three possible next moves:
 - Leave it. The round's value was validating the linter's
   precision; pursuing adopter bugs is a different project.
 
-### 8. Remeasure swift-nio with annotations under the new budget
+### 8. Remeasure swift-nio with annotations under the new budget — **done**
 
-Now that full-corpus scans complete (~3 min post PR #16), a
-proper full-corpus measurement with real annotations on NIO
-handlers is cheap. Probably confirms the null-result conclusion
-from the scoped scan. Worth doing once to close the loop on the
-swift-nio round with a cleaner dataset. The
-`swift-nio-idempotency-trial` fork is already provisioned, so
-the scan can run against a fresh clone of that fork per the new
-road-test plan.
+Completed in one session. Artifacts updated in place:
+[`swift-nio/trial-scope.md`](swift-nio/trial-scope.md),
+[`trial-findings.md`](swift-nio/trial-findings.md),
+[`trial-retrospective.md`](swift-nio/trial-retrospective.md),
+[`trial-transcripts/`](swift-nio/trial-transcripts/).
+
+Headlines: 4 handlers annotated across 3 example targets (echo /
+chat-active / chat-read / HTTP1), corpus 549 files @ tag `2.98.0`.
+Full-corpus Run A 0 / 4 and Run B 0 / 4 — **cleanest null in the
+round set.** Scoped-per-target sums (2 / 40) reproduce the prior
+round's NIOHTTP1Server numbers almost exactly, confirming the
+scan completes consistently at both granularities.
+
+One adoption-guidance finding (documentation-only, no slice):
+scoped scans diverge from full-corpus results because body
+inference resolves framework callees to `idempotent` only when
+the module graph is visible. Scoped scans overcount; full-corpus
+scans are the correct reference.
+
+Slot 5 (real perf fix) remains deferred — the wall-clock budget
+was not exercised at this corpus size (~95s scan).
 
 ## Memory note
 
@@ -240,18 +296,8 @@ has three entries:
 
 ## Recommended next-session opener
 
-Three options, pick based on appetite:
+One natural option remains:
 
-- **Slot 9: AWS Lambda adopter road-test.** First real exercise
-  of the fork-authoritative workflow. Requires creating the
-  `swift-aws-lambda-runtime-idempotency-trial` fork as step 0
-  (same recipe as the existing four). Produces cross-adopter
-  evidence for slot 4 and cross-framework validation of PR #18.
-  1-2 sessions.
-- **Slot 8: swift-nio remeasurement.** Small and closes a loop.
-  The fork is pre-provisioned, so the run is cheap. Expected
-  null result; low info-value per unit of work, but ticks the
-  box.
 - **Slot 6 remaining samples: `@IdempotencyTests` or
   `#assertIdempotent`.** Similar scope to the webhook-handler
   sample that just shipped (~1-2 hours each). Finishes the
@@ -260,3 +306,5 @@ Three options, pick based on appetite:
 Slot 5 (perf fix) and slot 3 (property-wrapper receiver resolution)
 still have no immediate triggering evidence — wait for a corpus
 that exhibits the pathology before committing a session to either.
+Slots 4, 8, 9, 10, and 11 are closed out (§4, §8, §9, §10, §11
+above).

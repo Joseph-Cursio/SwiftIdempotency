@@ -85,6 +85,38 @@ For larger corpora where more runs are warranted (e.g. a third pass
 with different annotation sets), add numbered variants
 (`replayable-extended.txt`, etc.).
 
+#### Multi-package corpora
+
+Most Swift-server adopters ship a top-level SPM package plus an
+`Examples/` (or `Demos/`) directory whose subfolders are each their
+own SPM package with a nested `Package.swift`. Confirmed on
+`swift-composable-architecture`, `swift-aws-lambda-runtime`, and
+likely `vapor` and `hummingbird-examples` too. **The linter does
+not recurse into nested `Package.swift` trees from a top-level
+invocation** — a top-level scan on a multi-Example corpus silently
+reports "No issues found" while the annotated code sits in an
+un-walked subtree.
+
+When the target has this shape, scan each annotated Example
+directory separately and concatenate the output into a single
+transcript. Shell recipe:
+
+```sh
+for ex in <Example1> <Example2> ...; do
+  echo "=== <target-root>/Examples/$ex ==="
+  swift run CLI "<target-root>/Examples/$ex" \
+    --categories idempotency --threshold info
+  echo
+done > trial-transcripts/replayable.txt
+```
+
+Iterate only over the Example directories that actually carry
+annotations — scanning unannotated examples just adds noise.
+Match the `=== <path> ===` header convention so the transcript
+diffs cleanly against prior rounds. See the
+`swift-composable-architecture` and `swift-aws-lambda-runtime`
+transcripts for worked examples.
+
 ### Audit
 
 Every diagnostic gets a one-line verdict:

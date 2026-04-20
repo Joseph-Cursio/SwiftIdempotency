@@ -1,0 +1,18 @@
+=== /tmp/swift-aws-lambda-runtime-idempotency-trial-scan/Examples/S3EventNotifier ===
+No issues found.
+
+=== /tmp/swift-aws-lambda-runtime-idempotency-trial-scan/Examples/BackgroundTasks ===
+No issues found.
+
+=== /tmp/swift-aws-lambda-runtime-idempotency-trial-scan/Examples/S3_Soto ===
+No issues found.
+
+=== /tmp/swift-aws-lambda-runtime-idempotency-trial-scan/Examples/MultiSourceAPI ===
+No issues found.
+
+=== /tmp/swift-aws-lambda-runtime-idempotency-trial-scan/Examples/APIGatewayV2 ===
+No issues found.
+
+=== /tmp/swift-aws-lambda-runtime-idempotency-trial-scan/Examples/Testing ===
+No issues found.
+

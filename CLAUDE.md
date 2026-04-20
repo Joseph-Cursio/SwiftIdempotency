@@ -53,7 +53,15 @@ pure < idempotent < { transactional_idempotent, externallyIdempotent } < non_ide
 
 ## Validation Target
 
-When the proposal eventually gets validated against a real codebase, the recommended first target is `apple/swift-aws-lambda-runtime` — every SQS/SNS handler is objectively `@context replayable`, so annotation correctness is unambiguous. SwiftNIO is explicitly called out as the wrong target (reference-type handlers, runtime enforcement already in place, below the business-logic layer).
+When the proposal gets validated against a real codebase, event-driven AWS Lambda handlers are the recommended shape — every Lambda invocation runs in an objectively replayable retry context by the runtime's at-least-once contract, so `/// @lint.context replayable` is unambiguous without judgement calls about what the context should be.
+
+**Target-path drift** (recorded here so future sessions don't repeat the search). The originally-recommended `apple/swift-aws-lambda-runtime` has migrated: apple → swift-server → `awslabs/swift-aws-lambda-runtime`. Use the current path.
+
+**Corpus caveat** (April 2026 road-test, `docs/swift-aws-lambda-runtime/`). The v2.x awslabs example corpus has **no SQS/SNS examples** despite the original recommendation calling them out. Available examples are dominated by `S3EventNotifier` (at-least-once S3 events — the cleanest positive-control substitute), `APIGatewayV2`, `BackgroundTasks`, streaming handlers, and a Hummingbird integration. The demo-shaped bodies (logging + echo + base64 decode + one AWS SDK read) produce a zero-Run-A yield on the default `@lint.context replayable` tier; only strict mode surfaces useful diagnostics.
+
+**For FP-rate evidence** on Lambda specifically, a production Lambda app (real side effects — DB writes, webhook delivery, third-party API calls) is a stronger target than awslabs' demos. The awslabs examples are better understood as an "infrastructure smoke test" — does the visitor walk Lambda-shaped handler placements correctly? — than as a business-logic validation corpus. See `docs/swift-aws-lambda-runtime/trial-findings.md` for the yield data.
+
+SwiftNIO is explicitly called out as the wrong target (reference-type handlers, runtime enforcement already in place, below the business-logic layer).
 
 ## Editing Conventions
 
