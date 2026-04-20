@@ -6,8 +6,7 @@ value-per-effort, top to bottom.
 ## Where things stand
 
 - **Linter** (`Joseph-Cursio/SwiftProjectLint`): main at `4c8623f`
-  (PR #17 tip). Seven slices merged (`11-17`); two open PRs this
-  session:
+  (PR #17 tip). Two open PRs carry over from the previous session:
   - **PR #18** — `composableArchitecture` framework whitelist;
     bare-name override lets `send` in a TCA effect closure classify
     idempotent instead of hitting the bare-name non-idempotent
@@ -20,10 +19,16 @@ value-per-effort, top to bottom.
     Unblocks user annotations on `@DependencyClient` structs.
     Closes TCA cluster 4 (3-of-3 `search` / `forecast` / `fetch`
     fires) **conditional on the adopter annotating the client**.
-- **Macros** (this repo): shipped; unchanged this past session.
+    Annotations are in place on the trial-tca branch — re-run is
+    cheap once PR #19 merges.
+- **Macros** (this repo): shipped; plus a new consumer sample at
+  `examples/webhook-handler-sample/` (commit `359db69`) exercising
+  `IdempotencyKey` end-to-end in a downstream SPM package. The
   `@Idempotent`, `@NonIdempotent`, `@Observational`,
   `@ExternallyIdempotent(by:)`, `@IdempotencyTests`,
-  `#assertIdempotent`, `IdempotencyKey`.
+  `#assertIdempotent`, and `IdempotencyKey` surfaces ship; only
+  `@IdempotencyTests` and `#assertIdempotent` remain un-exercised
+  in a consumer context (see slot 6).
 - **Adopter road-tests**: four rounds completed — `todos-fluent/`,
   `pointfreeco/`, `swift-nio/`, `swift-composable-architecture/`.
   The TCA round closed two of the three cluster-level gaps it
@@ -31,33 +36,29 @@ value-per-effort, top to bottom.
   declarations). One remains open: the property-wrapper receiver
   resolver (see §3 below), deferred because the existing
   name+labels lookup suffices on today's corpus.
+- **Road-test workflow**: reworked to be fork-authoritative (commit
+  `bb69729`). Trial branches now live on `<upstream>-idempotency-trial`
+  forks under the user's GitHub, not on ephemeral `/tmp` clones.
+  Four forks provisioned so far:
+  - `swift-composable-architecture-idempotency-trial` — **active**;
+    carries the `trial-tca` branch (setup + `@DependencyClient`
+    annotations + sandbox README banner) and has default-branch
+    switched to `trial-tca`.
+  - `hummingbird-examples-idempotency-trial`
+  - `pointfreeco-idempotency-trial`
+  - `swift-nio-idempotency-trial`
+  The latter three are pre-provisioned (hardened: issues/wiki/projects
+  disabled, sandbox description) but have no trial branch yet.
+  Banner + default-branch switch apply per-round when a
+  `trial-<slug>` branch lands. See `road_test_plan.md` for the
+  full pre-flight recipe.
 - **Macro-form end-to-end validation**: ticked on `todos-fluent`
-  via the attribute-form A/B supplement. Three macros still
-  un-exercised on adopter code: `@IdempotencyTests`,
-  `#assertIdempotent`, `IdempotencyKey`.
+  (attribute-form A/B supplement) and now on the webhook-handler
+  sample (`IdempotencyKey` in a real consumer SPM). Two macros
+  still un-exercised in consumer context:
+  `@IdempotencyTests`, `#assertIdempotent` (see slot 6).
 
 ## Immediate candidates (small, concrete)
-
-### 1. Post-PR-#18/#19 TCA docs hygiene
-
-Two small docs commits hanging off the two open PRs:
-
-- **trial-tca annotations.** The `trial-tca` branch of
-  `swift-composable-architecture` should be rolled forward to add
-  `/// @lint.effect idempotent` on the three `@DependencyClient`
-  closure properties (`WeatherClient.search`,
-  `WeatherClient.forecast`, `FactClient.fetch`). Proves out the
-  PR #19 prediction and gives the corpus a realistic post-slice
-  reading for future rounds.
-- **trial-transcripts.** The post-PR-#18 `replayable` and
-  `strict_replayable` transcripts were captured at
-  `/tmp/tca-rerun-post-pr18/` during validation but not committed.
-  Rolling both into
-  `docs/swift-composable-architecture/trial-transcripts/` with a
-  short retrospective addendum closes the PR-#18 / PR-#19
-  measurement story.
-
-Cheap; tie-up work, not design.
 
 ### 2. `.init(...)` member-access form gap
 
@@ -113,9 +114,9 @@ known "trusted observational wrappers" would reduce strict-mode
 noise.
 
 **Hold until a second adopter surfaces the same pattern** — the
-current evidence is pointfreeco-specific. An AWS Lambda adopter
-round (see slot 9) would be the natural cross-adopter data point.
-Shape would mirror PR #14's `idempotentReceiverMethodsByFramework`.
+current evidence is pointfreeco-specific. Slot 9 (AWS Lambda
+round) is the natural cross-adopter data point. Shape would
+mirror PR #14's `idempotentReceiverMethodsByFramework`.
 
 ## Deeper work (bigger slices)
 
@@ -130,30 +131,43 @@ corpora is incomplete even with the budget.
 Requires profiling + algorithm work. Probably 1-2 sessions.
 Unlocks full correctness on swift-nio-scale codebases.
 
-### 6. Macro-form validation for `IdempotencyKey` + `@ExternallyIdempotent(by:)`
+### 6. Macro-form validation: remaining surfaces
 
-Ties into pointfreeco finding #7 below: Stripe's `paymentIntent.id`
-is the canonical idempotency-key carrier. Two paths:
+`IdempotencyKey` is now ticked by the webhook-handler sample
+(`examples/webhook-handler-sample/`, commit `359db69`). Two
+consumer-surface gaps remain:
 
-- **Purpose-built sample**: tiny SPM package that consumes
-  `SwiftIdempotency`, defines a webhook handler signature with
-  `idempotencyKey: IdempotencyKey`, verifies the type system
-  rejects raw `UUID()` construction. Cheap, demonstrates the
-  type safety.
-- **Annotate a real webhook adopter**: add `IdempotencyKey` to
+- **`@IdempotencyTests` sample**: extension macro on a test type.
+  Would need a small test-target example that applies
+  `@IdempotencyTests` and asserts the generated tests compile
+  and run. Natural home: a new sample under
+  `examples/idempotency-tests-sample/` following the same
+  shape as the webhook-handler sample.
+- **`#assertIdempotent` sample**: freestanding expression macro
+  that expands against `SwiftIdempotencyTestSupport`. Similar
+  sample package would cover it.
+
+Adopter-integration sub-path (carried over from the original slot 6):
+
+- **Annotate a real webhook adopter** — add `IdempotencyKey` to
   pointfreeco's `handlePaymentIntent` (or similar). Refactor-heavy;
   requires running the code to confirm; crosses from measurement
-  into production changes.
-
-Start with the sample; the adopter integration is its own project.
+  into production changes. Slot 9 (AWS Lambda) is probably a more
+  natural fit since SQS message IDs are the canonical
+  `@ExternallyIdempotent(by:)` case.
 
 ### 9. AWS Lambda adopter road-test
 
 Fifth adopter round, targeting `apple/swift-aws-lambda-runtime`.
-The original CLAUDE.md validation recommendation: every SQS/SNS
+The original `CLAUDE.md` validation recommendation: every SQS/SNS
 handler is objectively `@lint.context replayable`, so annotation
 correctness is unambiguous — no judgement calls about what the
 context should be.
+
+**Pre-flight**: the `swift-aws-lambda-runtime-idempotency-trial`
+fork does not exist yet — creating it (same recipe as the four
+existing forks) is step 0 per `road_test_plan.md`'s fork-authoritative
+workflow.
 
 Value per session:
 
@@ -167,6 +181,11 @@ Value per session:
 - **Natural adopter for `IdempotencyKey` integration.** SQS message
   IDs are the canonical `@ExternallyIdempotent(by:)` case and tie
   slot 6's macro sample to a real adopter target down the line.
+- **First dogfood of the fork-authoritative road-test workflow.**
+  The procedure was rewritten in `road_test_plan.md` this session
+  but has only been walked through on TCA retroactively; running
+  a fresh round end-to-end exposes any rough edges in the
+  documented recipe.
 
 Produces: transcripts + retrospective under
 `docs/swift-aws-lambda-runtime/`. Session-cost: 1-2 sessions,
@@ -195,32 +214,49 @@ Now that full-corpus scans complete (~3 min post PR #16), a
 proper full-corpus measurement with real annotations on NIO
 handlers is cheap. Probably confirms the null-result conclusion
 from the scoped scan. Worth doing once to close the loop on the
-swift-nio round with a cleaner dataset.
+swift-nio round with a cleaner dataset. The
+`swift-nio-idempotency-trial` fork is already provisioned, so
+the scan can run against a fresh clone of that fork per the new
+road-test plan.
 
 ## Memory note
 
 The Claude-Code memory at
 `/Users/joecursio/.claude/projects/-Users-joecursio-xcode-projects-swiftIdempotency/memory/`
-has one entry — the direct-to-main workflow preference for both
-`SwiftIdempotency` and `SwiftProjectLint`. Linter rule slices still
-follow the PR workflow (PRs #11-19 form the heuristic-evolution
-audit trail). Docs and simple tweaks go straight to main.
+has three entries:
+
+- `workflow_direct_to_main.md` — direct-to-main on solo repos
+  for `SwiftIdempotency` + `SwiftProjectLint`. Linter rule
+  slices keep the PR convention; docs and simple tweaks go
+  straight to main.
+- `project_validation_phase2.md` — after the false-positive
+  rate settles on battle-tested projects, shift validation
+  target to obscure single-contributor projects where latent
+  idempotency issues are more likely to survive collective
+  review.
+- `project_trial_fork_naming.md` — adopter trial branches live
+  on `<upstream>-idempotency-trial` forks (naming convention
+  codified in `road_test_plan.md`).
 
 ## Recommended next-session opener
 
 Three options, pick based on appetite:
 
-- **Slot 1: post-PR #18/#19 docs hygiene.** Commit trial-tca
-  annotations + transcripts. 15-30 minutes. Closes out the past
-  session's two PRs without starting anything new.
+- **Slot 9: AWS Lambda adopter road-test.** First real exercise
+  of the fork-authoritative workflow. Requires creating the
+  `swift-aws-lambda-runtime-idempotency-trial` fork as step 0
+  (same recipe as the existing four). Produces cross-adopter
+  evidence for slot 4 and cross-framework validation of PR #18.
+  1-2 sessions.
 - **Slot 8: swift-nio remeasurement.** Small and closes a loop.
-  Gives a cleaner null-result dataset for the adopter survey.
-  Tests whether PR #16's budget fully unblocks nio-scale inference.
-- **Slot 6: `IdempotencyKey` macro sample.** Small SPM sample that
-  exercises the last un-validated macro surface. Good candidate
-  if appetite is for feature work rather than measurement.
+  The fork is pre-provisioned, so the run is cheap. Expected
+  null result; low info-value per unit of work, but ticks the
+  box.
+- **Slot 6 remaining samples: `@IdempotencyTests` or
+  `#assertIdempotent`.** Similar scope to the webhook-handler
+  sample that just shipped (~1-2 hours each). Finishes the
+  macro-form validation story in consumer context.
 
 Slot 5 (perf fix) and slot 3 (property-wrapper receiver resolution)
-are both real work but have no immediate triggering evidence —
-wait for a corpus that exhibits the pathology before committing
-a session to either.
+still have no immediate triggering evidence — wait for a corpus
+that exhibits the pathology before committing a session to either.
