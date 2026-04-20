@@ -41,20 +41,29 @@ value-per-effort, top to bottom.
   `@ExternallyIdempotent(by:)` are exercised by the root test target
   and by every adopter road-test. **Slot 6 — consumer-context
   validation — is fully closed.**
-- **Adopter road-tests**: five rounds completed — `todos-fluent/`,
+- **Adopter road-tests**: **six rounds completed** — `todos-fluent/`,
   `pointfreeco/`, `swift-nio/`, `swift-composable-architecture/`,
-  `swift-aws-lambda-runtime/`. The TCA round closed **all three**
-  cluster-level gaps it surfaced (return-trailing annotation,
-  send-on-closure-parameter, dependency-client declarations) across
-  PRs #17 / #18 / #19; current TCA residual on tip `bc3c05e` is
-  1 replayable / 13 strict, all in known cross-adopter
+  `swift-aws-lambda-runtime/`, **`penny-bot/`**. The TCA round closed
+  **all three** cluster-level gaps it surfaced (return-trailing
+  annotation, send-on-closure-parameter, dependency-client
+  declarations) across PRs #17 / #18 / #19; current TCA residual on
+  tip `bc3c05e` is 1 replayable / 13 strict, all in known cross-adopter
   noise/defensible clusters (`Duration` implicit-member, enum-case /
   `Result { }` constructors, `ContinuousClock.sleep`). The property-
   wrapper receiver resolver (slot 3) is a separate deferred slice,
   still open but no longer blocking TCA cluster 4. The Lambda round
   surfaced a new cluster — response-writer primitives
   (`write` / `finish` on `LambdaResponseWriter` /
-  `LambdaResponseStreamWriter`) — scored as slot 10.
+  `LambdaResponseStreamWriter`) — scored as slot 10. **The Penny
+  round (first production-app target) is the richest yet — 5/5
+  handlers fire, 10 correct-catches, 4 distinct real-bug shapes
+  (coin double-grant, OAuth error-path duplication, sponsor DM
+  duplication, GHHooks error-path duplication). Every real-bug
+  shape maps cleanly to `IdempotencyKey` / `@ExternallyIdempotent(by:)`
+  — first real-adopter validation of the macro surface. Also
+  surfaced a new linter-crash blocker on macOS `/tmp` symlink +
+  duplicate file basenames — scored as slot 12.** See
+  [`penny-bot/trial-findings.md`](penny-bot/trial-findings.md).
 - **Road-test workflow**: reworked to be fork-authoritative (commit
   `bb69729`), first dogfooded end-to-end on the Lambda round
   this session. Trial branches live on `<upstream>-idempotency-trial`
@@ -66,6 +75,10 @@ value-per-effort, top to bottom.
   - `swift-aws-lambda-runtime-idempotency-trial` — **active**;
     carries `trial-lambda` (6 handler annotations, banner),
     default-branch switched. Tip: `349725b`.
+  - **`penny-bot-idempotency-trial` — active**; carries
+    `trial-penny-bot` with `49db411` (Run A state, replayable)
+    and `c309bcb` (Run B tip, strict_replayable). Default-branch
+    switched. Fork hardened per recipe.
   - `hummingbird-examples-idempotency-trial`
   - `pointfreeco-idempotency-trial`
   - `swift-nio-idempotency-trial`
@@ -242,6 +255,44 @@ stdlib-gap (6), type-ctor-gap (5), correct-catch (2) — see
 `swift-aws-lambda-runtime/trial-findings.md` §"Comparison to
 pre-slot-10 baseline" for the per-line delta.
 
+### 12. Linter crash on duplicate file basenames — **in working tree, not yet committed**
+
+Surfaced in the Penny round on the first scan attempt:
+`Fatal error: Duplicate values for key: 'Errors.swift'`.
+`ProjectLinter.makeProjectFile` computes `relativePath` via
+`filePath.hasPrefix(projectRoot + "/")`. On macOS, passing
+`/tmp/penny-scan` as `projectRoot` fails the `hasPrefix` check
+because filesystem enumeration returns
+`/private/tmp/penny-scan/…` (the `/tmp` symlink resolves to
+`/private/tmp`). The fallback is
+`(filePath as NSString).lastPathComponent` — a bare filename.
+Downstream, `applyInlineSuppression` builds
+`Dictionary(uniqueKeysWithValues: …)` keyed by that bare
+filename; any adopter with duplicate filenames across targets
+crashes. Penny has 11 such collisions (`Errors.swift`×3,
+`Constants.swift`×4, `+String.swift`×3, etc.).
+
+**Fix in working tree** (not yet committed; lives on the
+SwiftProjectLint side):
+
+- Canonicalise both `projectRoot` and `filePath` via
+  `URL.resolvingSymlinksInPath()` before the `hasPrefix`
+  comparison (root cause).
+- Fall back to the full resolved path (not `lastPathComponent`)
+  when `hasPrefix` fails (uniqueness preservation).
+- Make `applyInlineSuppression`'s `Dictionary` init use
+  `uniquingKeysWith: { first, _ in first }` as a defensive
+  belt-and-suspenders against any future collision.
+
+**Severity:** blocker for any multi-target macOS codebase with
+duplicate file basenames (Penny, vapor core, hummingbird full,
+NIO full). Trigger evidence is the Penny round. Ship as a
+standalone SwiftProjectLint commit with tests covering both the
+`/tmp` vs `/private/tmp` canonicalisation case and the
+duplicate-basename defensive path. See
+[`penny-bot/trial-findings.md` §"slot 12"](penny-bot/trial-findings.md)
+for the sketch.
+
 ### 11. Housekeeping (small docs/config items) — **done**
 
 All three items from slot 9's retrospective addressed in-session:
@@ -335,16 +386,27 @@ has three entries:
 
 ## Recommended next-session opener
 
-No in-flight slot with urgent triggering evidence. One
-natural move:
+Two in-flight candidates, in value-per-effort order:
 
+- **Ship slot 12 — linter crash fix.** Patch exists in the
+  SwiftProjectLint working tree; commit as a standalone fix +
+  test + PR (per the linter-rule-slice PR convention, treating a
+  safety-critical fix like a slice). Unblocks every future
+  production-adopter round on macOS without a `/private/tmp`
+  workaround. Low effort, high leverage.
 - **New adopter road-test.** Every slot that closed in recent
-  sessions (4, 8, 9, 10, 11) started from a road-test surfacing
-  a concrete cluster. Next natural target: a production SwiftNIO-
-  or Vapor-based application with real side effects, since the
-  awslabs Lambda demos weren't a business-logic-rich corpus
-  (captured in `CLAUDE.md`'s "corpus caveat" under the Lambda
-  round).
+  sessions (4, 8, 9, 10, 11, 12) started from a round. Penny was
+  the first production-app target and its yield was extraordinary
+  (10 correct-catches, 4 real-bug shapes, first macro-surface
+  validation). A second production adopter (Vapor-based CMS, an
+  internal microservice, or another SSWG project) would confirm
+  that the yield generalises and isn't Penny-specific.
+
+**The four Penny real-bug shapes** all map to
+`IdempotencyKey` / `@ExternallyIdempotent(by:)` fixes. Whether
+to file upstream triage issues is a separate, user-gated
+decision — if pursued, add a per-shape entry to
+[`ideas/`](ideas/) matching the pointfreeco triage idea's shape.
 
 Slot 5 (perf fix) and slot 3 (property-wrapper receiver resolution)
 still have no immediate triggering evidence — wait for a corpus
