@@ -5,17 +5,22 @@ value-per-effort, top to bottom.
 
 ## Where things stand
 
-- **Linter** (`Joseph-Cursio/SwiftProjectLint`): main at `5698683`
-  (post-PR #18 merge tip). PR status:
-  - **PR #19 (open)** — closure-typed stored properties become effect
-    declarations. `EffectSymbolTable.merge(source:)` now walks
-    `VariableDeclSyntax` with function-typed annotations and feeds
-    them through the same record path as `FunctionDeclSyntax`.
+- **Linter** (`Joseph-Cursio/SwiftProjectLint`): main at `bc3c05e`
+  (post-PR #19 + #20 merge tip). Recent PRs:
+  - **PR #20 (merged)** — commit `bc3c05e`: `Type.init(...)` member-
+    access form normalised to the bare-ctor whitelist path. Closes
+    slot 2 from prior `next_steps.md`; eliminates one stray diagnostic
+    per framework-response-builder call site that uses the
+    `Foo.init(...)` spelling. Structural, no YAML / no new whitelist
+    entries; +10 tests → 2270/275 green.
+  - **PR #19 (merged)** — commit `0be2d36`: closure-typed stored
+    properties become effect declarations. `EffectSymbolTable.merge`
+    now walks `VariableDeclSyntax` with function-typed annotations
+    (plus `AttributedTypeSyntax`-peel for `@Sendable` / `@MainActor`).
     Unblocks user annotations on `@DependencyClient` structs.
-    Closes TCA cluster 4 (3-of-3 `search` / `forecast` / `fetch`
-    fires) **conditional on the adopter annotating the client**.
-    Annotations are in place on the trial-tca branch — re-run is
-    cheap once PR #19 merges.
+    **Closed TCA cluster 4** (3 of 3 `search` / `forecast` / `fetch`
+    fires eliminated in the post-#19 re-run — see
+    [`swift-composable-architecture/trial-findings.md`](swift-composable-architecture/trial-findings.md)).
   - **PR #18 (merged)** — commit `5698683`: TCA send-closure-parameter
     whitelist. Post-Lambda-round evidence: the PR #18 bare-name
     override shape is TCA-specific. The earlier `idempotentReceiverMethodsByFramework`
@@ -38,13 +43,18 @@ value-per-effort, top to bottom.
   validation — is fully closed.**
 - **Adopter road-tests**: five rounds completed — `todos-fluent/`,
   `pointfreeco/`, `swift-nio/`, `swift-composable-architecture/`,
-  `swift-aws-lambda-runtime/`. The TCA round closed two of the
-  three cluster-level gaps it surfaced (send-on-closure-parameter,
-  dependency-client declarations); the property-wrapper receiver
-  resolver remains open (see §3 below). The Lambda round surfaced
-  a new cluster — response-writer primitives (`write` / `finish`
-  on `LambdaResponseWriter` / `LambdaResponseStreamWriter`) —
-  scored as slot 10.
+  `swift-aws-lambda-runtime/`. The TCA round closed **all three**
+  cluster-level gaps it surfaced (return-trailing annotation,
+  send-on-closure-parameter, dependency-client declarations) across
+  PRs #17 / #18 / #19; current TCA residual on tip `bc3c05e` is
+  1 replayable / 13 strict, all in known cross-adopter
+  noise/defensible clusters (`Duration` implicit-member, enum-case /
+  `Result { }` constructors, `ContinuousClock.sleep`). The property-
+  wrapper receiver resolver (slot 3) is a separate deferred slice,
+  still open but no longer blocking TCA cluster 4. The Lambda round
+  surfaced a new cluster — response-writer primitives
+  (`write` / `finish` on `LambdaResponseWriter` /
+  `LambdaResponseStreamWriter`) — scored as slot 10.
 - **Road-test workflow**: reworked to be fork-authoritative (commit
   `bb69729`), first dogfooded end-to-end on the Lambda round
   this session. Trial branches live on `<upstream>-idempotency-trial`
@@ -76,17 +86,20 @@ value-per-effort, top to bottom.
 
 ## Immediate candidates (small, concrete)
 
-### 2. `.init(...)` member-access form gap
+### 2. `.init(...)` member-access form gap — **done (PR #20)**
 
-Long-running known gap. Firing at ~1/10 rate on todos-fluent,
-~1/10 on pointfreeco. Current type-constructor whitelist matches
-bare-identifier calls only (`JSONDecoder()`, `HTTPError(.notFound)`).
-Extending to `Type.init(...)` member-access form would close one
-diagnostic per framework-response-builder call site.
+Landed as commit `bc3c05e` on SwiftProjectLint. `HeuristicEffectInferrer.
+callParts` now normalises `Type.init(...)` → `(TypeName, nil)` via a
+new `typeIdentifierName(of:)` helper that peels nested types and
+generic specialisations. Purely additive — every downstream consumer
+(whitelist lookup, inference reason, upward inferrer) benefits
+automatically. +10 tests → 2270/275 green.
 
-Low priority in isolation (1 catch per adopter) but the sum
-across rounds is creeping up. Slice when the firing rate exceeds
-~2/round consistently.
+TCA post-#19 re-run confirms no regression: the Duration constructors
+on the TCA corpus are implicit-member-access (`.milliseconds(100)`),
+not `Type.init(...)`, so PR #20 doesn't affect them either way. Effect
+on adopter corpora to be confirmed on the next round that scans a
+codebase using the `.init(...)` spelling on whitelisted types.
 
 ## Deferred slices (open but paused)
 
@@ -250,20 +263,31 @@ All three items from slot 9's retrospective addressed in-session:
 
 ## Follow-ups on what we found
 
-### 7. Verify the pointfreeco findings
+### 7. Verify the pointfreeco findings — **done (runtime-path read)**
 
-The road-test surfaced 4 static patterns matching "Stripe retry →
-duplicate email" in pointfreeco's webhook handlers. Unknown
-whether runtime mitigations (Stripe event-ID dedup, `gift.delivered`
-guards, DB-level constraints) prevent them from firing in
-production. Three possible next moves:
+Completed in one session. Artifact:
+[`pointfreeco/slot7-runtime-verification.md`](pointfreeco/slot7-runtime-verification.md).
 
-- Read `pointfreeco`'s runtime path carefully for dedup guards
-  outside the webhook handlers (database models, job queue layer).
-- Open an issue on pointfreeco with the static findings — let
-  the maintainers confirm or explain.
-- Leave it. The round's value was validating the linter's
-  precision; pursuing adopter bugs is a different project.
+Headline: **the linter is catching real bugs.** None of the three
+defang hypotheses (Stripe event-ID dedup, `gift.delivered` guard,
+DB-level constraints on the UPDATE path) hold for the email-send
+patterns — no `processed_events` table exists, `handlePaymentIntent`
+gates on `gift.deliverAt` (a configuration field, not the
+`delivered` mutation flag), and `sendGiftEmail` has no internal
+dedup. The two `update*` DB diagnostics *are* defanged by
+overwrite-idempotent UPDATE semantics; that's an adopter-side
+annotation matter, not a business-logic concern.
+
+Per-site verdicts in the artifact. Finding #1 (`sendGiftEmail` in
+`handlePaymentIntent`) is the clearest user-visible bug with a
+one-line fix (`&& !gift.delivered`). Findings #2–#4 are correct
+flags but low-impact (admin alert noise, or Stripe-retry email
+policy that's pointfreeco's call to make).
+
+Follow-on — **not done, requires user approval**: opening a
+narrowly-scoped triage issue on pointfreeco for finding #1 only.
+Publicly visible action; deferred until the user decides whether
+pursuing adopter bugs is in scope for this project.
 
 ### 8. Remeasure swift-nio with annotations under the new budget — **done**
 
@@ -310,20 +334,18 @@ has three entries:
 
 ## Recommended next-session opener
 
-No in-flight slot with urgent triggering evidence. Three
+No in-flight slot with urgent triggering evidence. Two
 possibilities, in rough order of ease:
 
-- **Slot 7: verify pointfreeco findings.** The only concrete
-  open-ended thread — 4 static patterns flagged during the
-  pointfreeco round, unknown whether runtime mitigations defang
-  them. Reading the runtime path or opening a triage issue are
-  both finite commits. Pursue if the question "is the linter
-  catching real bugs?" matters more than "does the linter work on
-  real corpora?".
-- **Slot 2: `.init(...)` member-access form gap.** Creeping up
-  in frequency; still under the ~2/round firing-rate threshold
-  that would make it urgent. Promote when the next road-test
-  confirms the trend.
+- **Slot 7 follow-on: open the pointfreeco triage issue.** The
+  runtime-path read closed the "does runtime defang them?"
+  question (no, it doesn't, for the email-send patterns). The
+  remaining move is the publicly-visible one: open a narrowly-
+  scoped issue on `pointfreeco/pointfreeco` for finding #1 only
+  (`sendGiftEmail` missing `!gift.delivered` gate, one-line fix).
+  Requires explicit user approval before filing. See
+  [`pointfreeco/slot7-runtime-verification.md §6`](pointfreeco/slot7-runtime-verification.md)
+  for the recommendation.
 - **New adopter road-test.** Every slot that closed in recent
   sessions (4, 8, 9, 10, 11) started from a road-test surfacing
   a concrete cluster. Next natural target: a production SwiftNIO-
@@ -335,5 +357,7 @@ possibilities, in rough order of ease:
 Slot 5 (perf fix) and slot 3 (property-wrapper receiver resolution)
 still have no immediate triggering evidence — wait for a corpus
 that exhibits the pathology before committing a session to either.
-Slots 4, 6, 8, 9, 10, and 11 are closed out (§4, §6, §8, §9, §10,
-§11 above).
+Slots 2, 4, 6, 7, 8, 9, 10, and 11 are closed out (§2, §4, §6,
+§7, §8, §9, §10, §11 above). Slot 7's publicly-visible follow-on
+(filing an upstream triage issue) is the one remaining step from
+that slot and is gated on user approval.

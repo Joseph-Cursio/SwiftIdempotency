@@ -1,141 +1,180 @@
 # swift-composable-architecture — Trial Findings
 
-Post-fix remeasurement. The initial round on this target ran against
-SwiftProjectLint `114b0bf` and produced **zero diagnostics on the six
-`.run { send in ... }` sites** because doc-comment annotations above
-`return .run { ... }` bound to the `return` keyword, not the call.
-The round surfaced `return-trailing-annotation` as a correctness
-slice; SwiftProjectLint PR #17 landed as commit `4c8623f` and this
-document records the remeasurement.
+Post-PR-#19 remeasurement. This is the third time the TCA corpus has
+been scanned; the evolution tracks three linter slices that each
+surfaced on this round:
 
-Pre-fix findings: replayable = 1, strict = 1 (positive control only).
-Post-fix findings (below): replayable = 7, strict = 22 — **all six
-`.run { }` annotation sites now create analysis sites** and produce
-diagnostics on the calls inside them.
+| Linter tip | Commit | Replayable | Strict | Note |
+|---|---|---:|---:|---|
+| Round-original | `114b0bf` | 1 | 1 | `return`-trailing annotation bug hid all 6 `.run { }` sites |
+| Post-PR #17 | `4c8623f` | 7 | 22 | annotations land; cluster 1 (`send`) + cluster 4 (dep-clients) visible |
+| Post-PR #18 | `5698683` | 1 | 16 | TCA `send` closure-parameter override silences cluster 1 (6 fires) |
+| **Post-PR #19 + #20** | **`bc3c05e`** | **1** | **13** | **closure-property effect declarations close cluster 4 (3 fires)** |
+
+The current scan (this document) reflects tip `bc3c05e` with the
+trial-tca branch carrying `@lint.effect idempotent` annotations on
+`WeatherClient.search`, `WeatherClient.forecast`, and
+`FactClient.fetch` as closure properties — exactly the shape PR #19
+teaches `EffectSymbolTable.merge(source:)` to recognise.
 
 ## Run A — replayable mode
 
 Source transcript:
 [`trial-transcripts/replayable.txt`](trial-transcripts/replayable.txt).
-**7 diagnostics.**
+**1 diagnostic.**
 
 | # | File:line | Callee | Verdict |
 |---|---|---|---|
 | 1 | `Examples/Todos/Todos/Todos.swift:15` | `trialSendNotification` | positive control — fires correctly |
-| 2 | `Examples/Todos/Todos/Todos.swift:90` | `send` | defensible (TCA `Send<Action>` closure parameter — see §Adoption gap) |
-| 3 | `Examples/Todos/Todos/Todos.swift:101` | `send` | defensible (same shape) |
-| 4 | `Examples/Search/Search/SearchView.swift:86` | `send` | defensible (same shape) |
-| 5 | `Examples/Search/Search/SearchView.swift:103` | `send` | defensible (same shape) |
-| 6 | `Examples/CaseStudies/SwiftUICaseStudies/03-Effects-Basics.swift:54` | `send` | defensible (same shape, ternary-branch placement) |
-| 7 | `Examples/CaseStudies/SwiftUICaseStudies/03-Effects-Basics.swift:78` | `send` | defensible (same shape) |
 
-**Yield**: 7 catches / 7 annotated sites (positive control + 6
-`.run { }`) = **1.00 including silent**. Zero sites are silent under
-the fix — every annotation produces at least one diagnostic.
+**Yield**: 1 catch / 7 annotated sites (positive control + 6
+`.run { }`) = **0.14 including silent**. The 6 `.run { }` sites are
+silent because their only previously-flagged `send(.action)` callee
+is now classified `idempotent` via the TCA bare-name override
+(PR #18) — the effect closures are no longer flagged anywhere in
+replayable mode.
 
-Every `.run { send in ... }` closure contains a `send(...)` call. The
-heuristic reads bare `send` and infers `non_idempotent` from the
-callee name. Semantically this is a false positive — `send` in a TCA
-effect closure is the `Send<Action>` closure parameter that
-dispatches actions, not an external-effect "send email" method. The
-annotation is now being recognised, which is the round's primary
-validation. The downstream precision question is tracked as a
-separate slice candidate (see §Adoption gap).
+Silent does not mean a gap. The closures reach `send(...)` (TCA
+action dispatch — pure state transition), `weatherClient.search(...)`
+/ `factClient.fetch(...)` (now annotated `idempotent`), and
+`clock.sleep(...)` (observational by framework contract). Under
+replayable tier — where the `nonIdempotentInRetryContext` rule fires
+only on provably non-idempotent callees — none of these warrant a
+diagnostic. The positive control confirms the visitor is walking
+these bodies.
 
 ## Run B — strict_replayable mode
 
 Source transcript:
 [`trial-transcripts/strict-replayable.txt`](trial-transcripts/strict-replayable.txt).
-**22 diagnostics** (7 carried from Run A + 15 strict-only).
+**13 diagnostics** (1 carried from Run A + 12 strict-only).
 
-### Carried from Run A (7)
+### Carried from Run A (1)
 
-Same 7 diagnostics as replayable mode, re-labelled `strict_replayable`.
-No new fires from the `nonIdempotentInRetryContext` rule.
+Same as Run A: `trialHandleMoveEffect` → `trialSendNotification`,
+relabelled `strict_replayable`.
 
-### Strict-only (15)
+### Strict-only (12)
 
 Fires on unclassified callees inside the annotated `.run { }`
 closures. All produce the `unannotatedInStrictReplayableContext`
 diagnostic.
 
-| # | File:line | Callee | Verdict |
-|---|---|---|---|
-| 8 | `Todos.swift:89` | `sleep` | defensible — `ContinuousClock.sleep` via TCA `@Dependency(\.continuousClock)`; stdlib clock sleep is observational in a retry context |
-| 9 | `Todos.swift:89` | `milliseconds` | noise — `.milliseconds(100)` `Duration` constructor |
-| 10 | `Todos.swift:100` | `sleep` | same as (8) |
-| 11 | `Todos.swift:100` | `seconds` | noise — `Duration` constructor |
-| 12 | `SearchView.swift:86` | `searchResponse` | noise — enum case constructor `Action.searchResponse(...)` |
-| 13 | `SearchView.swift:86` | `Result` | noise — `Result { try await ... }` constructor |
-| 14 | `SearchView.swift:86` | `search` | **adoption gap** — `weatherClient.search(query:)` via `@Dependency(\.weatherClient)`. Idiomatic TCA dependency-client call; GET-shape. Classifiable with receiver-type resolution + dependency-keypath awareness. |
-| 15 | `SearchView.swift:104` | `forecastResponse` | noise — enum case constructor |
-| 16 | `SearchView.swift:106` | `Result` | noise — `Result { ... }` constructor |
-| 17 | `SearchView.swift:106` | `forecast` | **adoption gap** — same shape as (14), `weatherClient.forecast(location:)` |
-| 18 | `03-Effects-Basics.swift:53` | `sleep` | same as (8) |
-| 19 | `03-Effects-Basics.swift:53` | `seconds` | noise — `Duration` constructor |
-| 20 | `03-Effects-Basics.swift:78` | `numberFactResponse` | noise — enum case constructor |
-| 21 | `03-Effects-Basics.swift:78` | `Result` | noise — `Result { ... }` constructor |
-| 22 | `03-Effects-Basics.swift:78` | `fetch` | **adoption gap** — `factClient.fetch` via `@Dependency(\.factClient)` |
+| # | File:line | Callee | Cluster | Verdict |
+|---|---|---|---|---|
+| 2 | `Todos.swift:89` | `sleep` | clock | defensible — `ContinuousClock.sleep` via TCA `@Dependency(\.continuousClock)`; observational in retry context |
+| 3 | `Todos.swift:89` | `milliseconds` | Duration | noise — `.milliseconds(100)` `Duration` implicit-member |
+| 4 | `Todos.swift:100` | `sleep` | clock | same as (2) |
+| 5 | `Todos.swift:100` | `seconds` | Duration | noise — `.seconds(1)` `Duration` implicit-member |
+| 6 | `SearchView.swift:86` | `searchResponse` | enum-case | noise — `Action.searchResponse(...)` enum-case constructor |
+| 7 | `SearchView.swift:86` | `Result` | Result-init | noise — `Result { try await ... }` throwing-init |
+| 8 | `SearchView.swift:104` | `forecastResponse` | enum-case | noise — `Action.forecastResponse(...)` |
+| 9 | `SearchView.swift:106` | `Result` | Result-init | noise — same as (7) |
+| 10 | `03-Effects-Basics.swift:53` | `sleep` | clock | same as (2) |
+| 11 | `03-Effects-Basics.swift:53` | `seconds` | Duration | noise |
+| 12 | `03-Effects-Basics.swift:78` | `numberFactResponse` | enum-case | noise |
+| 13 | `03-Effects-Basics.swift:78` | `Result` | Result-init | noise |
 
 ### Decomposition into named slice clusters
 
-1. **`send`-on-closure-parameter** (6 fires, already called out
-   in Run A): bare-name `send` matches the non-idempotent heuristic
-   but in TCA refers to `Send<Action>.callAsFunction(_:)` — an
-   action dispatcher, not a side-effectful method. Fix directions:
-   receiver-type resolution on closure parameter types, or a
-   `composableArchitecture` framework whitelist gated on
-   `import ComposableArchitecture`.
-2. **`Duration` constructors** (3 fires): `.milliseconds(100)`,
-   `.seconds(1)`. Sits under the existing `.init(...)` member-access
-   form gap already tracked in
-   [`../next_steps.md`](../next_steps.md) slot 4 — stdlib `Duration`
-   constructors match the same `Type.method(value:)` shape as
-   `JSONDecoder()`. Would close cleanly alongside that slice.
-3. **Enum case constructors** (4 fires): `.searchResponse`,
-   `.forecastResponse`, `.numberFactResponse`, `Result { }`. All are
-   pure data constructors — noise, not adoption gap. Could be
-   silenced via `@lint.effect idempotent` on the enum cases if
-   adopters care, but this isn't a heuristic problem.
-4. **Dependency-client method calls** (3 fires —
-   `weatherClient.search`, `weatherClient.forecast`,
-   `factClient.fetch`): TCA's core testability pattern. The
-   linter sees `self.weatherClient.search(query:)` but cannot
-   classify it because the `@Dependency(\.weatherClient)`
-   property wrapper hides the receiver's real type from syntactic
-   analysis. A TCA-specific adoption gap; a generic
-   receiver-type-via-property-wrapper improvement would unlock
-   this class of dispatches for any `@propertyWrapper`-based
-   DSL (SwiftUI `@Environment`, etc.).
-5. **`sleep` on `ContinuousClock`** (3 fires): defensible —
-   sleep is observational, but the linter doesn't know that
-   without a stdlib whitelist entry. Small, targeted slice;
-   likely worthwhile.
+The five clusters named in the round-original findings evolved across
+three slices. Current state:
 
-## Comparison to pre-fix measurement
+1. **`send`-on-closure-parameter** — **closed** by PR #18
+   (commit `5698683`, bare-name override gated on
+   `import ComposableArchitecture`). 6 of 6 fires eliminated.
+2. **`Duration` constructors** — **3 fires remain** (`.milliseconds(100)`,
+   `.seconds(1)`, `.seconds(1)`). These are implicit-member-access
+   expressions (`.milliseconds(100)`), *not* `Type.init(...)` form, so
+   PR #20 (`.init(...)` normalisation) does not address them. The
+   leaf shape is: callee is `MemberAccessExpr` with `base == nil` and
+   `declName == "milliseconds"`/`"seconds"`. Would slice cleanly under
+   a stdlib-type-member whitelist gated on `Duration` as the inferred
+   contextual type — but that inference doesn't exist and building it
+   is a bigger slice than the ~1-fire-per-corpus impact justifies. See
+   §Follow-up slice candidates.
+3. **Enum case constructors + `Result { }`** — **6 fires remain**
+   (4 enum case, 2 `Result`). Same shape as cluster 2 (implicit-member
+   plus bare-identifier for `Result`). Noise, not adoption gap — these
+   are genuinely idempotent data constructors with no effect. Closable
+   via adopter-side `@lint.effect idempotent` annotations on individual
+   cases, or a stdlib-type-member whitelist for `Result`. Neither is
+   slice-worthy at current volumes.
+4. **Dependency-client method calls** — **closed** by PR #19
+   (commit `0be2d36`, closure-property declarations). 3 of 3 fires
+   eliminated via `@lint.effect idempotent` on the `@DependencyClient`
+   struct closure properties on trial-tca.
+5. **`sleep` on `ContinuousClock`** — **3 fires remain**. Same count
+   as round-original. Would close under a stdlib-clock-primitive
+   whitelist entry — targeted, low risk. Not sliced yet because the
+   defensible verdict is stable (no false positives, no false
+   negatives); slicing it is a precision-polish move, not a
+   correctness-unblock.
 
-| Metric | Pre-fix (`114b0bf`) | Post-fix (`4c8623f`) |
-|---|---:|---:|
-| Annotated sites recognised | 1 / 7 | 7 / 7 |
-| Replayable diagnostics | 1 | 7 |
-| Strict diagnostics | 1 | 22 |
-| Sites producing ≥1 diagnostic | 1 / 7 (14%) | 7 / 7 (100%) |
-| New named slice clusters | 1 (`return-trailing-annotation`) | 2 (`send`-on-closure-param; dependency-client receiver resolution) |
+## Comparison to prior measurements
 
-The slice closed the visibility gap completely — every annotated
-site now creates an analysis site. The remeasurement re-opens the
-round's primary research question: now that the linter can reach
-the `.run { }` bodies, what's inside them? Answer: two new slice
-candidates (1 and 4 above).
+| Metric | Round-original (`114b0bf`) | Post-#17 (`4c8623f`) | Post-#18 (`5698683`) | **Post-#19+#20 (`bc3c05e`)** |
+|---|---:|---:|---:|---:|
+| Annotated sites recognised | 1 / 7 | 7 / 7 | 7 / 7 | 7 / 7 |
+| Replayable diagnostics | 1 | 7 | 1 | **1** |
+| Strict diagnostics | 1 | 22 | 16 | **13** |
+| Sites producing ≥1 diagnostic | 1 / 7 | 7 / 7 | 1 / 7 (strict only) | 1 / 7 (strict only) |
+| Open named adoption gaps | 1 (visibility) | 2 (clusters 1, 4) | 1 (cluster 4) | **0** |
 
-## Current verdict summary
+**The round is fully closed on adoption-gap terms.** All three linter
+slices that originated in this round (return-trailing annotation,
+TCA `send` override, closure-property declarations) have landed and
+remeasured cleanly. The residual 13 strict diagnostics decompose
+into three known noise/defensible clusters (Duration, enum-case +
+Result, clock-sleep) that track as cross-adopter patterns, not
+TCA-specific gaps.
 
-- **1 correct catch** — positive control on `trialHandleMoveEffect`.
-- **6 defensible** — `send` on closure parameter across all TCA
-  effects; shape is semantically safe but the heuristic can't tell.
-- **7 noise** — stdlib/enum constructors; category already tracked
-  under existing slots.
-- **3 adoption gaps** — dependency-client method dispatch via
-  `@Dependency` property wrappers. New TCA-specific slice.
-- **3 defensible** — `ContinuousClock.sleep` uses; small stdlib
-  whitelist slice would silence.
+## Follow-up slice candidates
+
+These are **noise-reduction** slices, not correctness-unblocks. Each
+would close a row in the 12-strict residual above. Priority is set by
+cross-adopter recurrence, not this-round volume.
+
+1. **`ContinuousClock.sleep` whitelist entry** (3 fires here). Gated
+   on `_Concurrency` import presence — `ContinuousClock` / `SuspendingClock`
+   / `ClockOf` are the stdlib clock types whose `.sleep(for:)` is
+   observational-by-contract. Smallest slice; candidate for "stdlib
+   whitelist group" if other stdlib clock / time-primitive patterns
+   surface in future rounds.
+2. **Stdlib `Duration` / time-primitive implicit-member whitelist**
+   (3 fires here). The implicit-member shape `.seconds(1)` /
+   `.milliseconds(100)` is a `DurationProtocol` factory method on a
+   type the parser can't resolve without type-checking. Either:
+   (a) pattern-match the callee names (`seconds`, `milliseconds`,
+   `nanoseconds`, `microseconds`) as bare-name idempotent when receiver
+   is nil — risky, collides with any user function of the same name;
+   (b) defer to a future type-resolution improvement. (b) is correct
+   long-term; (a) is too risky for the yield.
+3. **Enum-case constructor + `Result { }` recognition** (6 fires
+   here; widespread across Swift). `Result(catching:)` is a stdlib
+   codec-shape. Enum case constructors are generally pure data
+   constructors — classifying them as idempotent requires recognising
+   the `.caseName(...)` implicit-member shape as an enum case
+   constructor vs. an arbitrary method call, which the linter can't
+   do without type-checking. Adopter-side `@lint.effect idempotent`
+   on specific enum cases works today.
+
+No single candidate exceeds the ~2-fire-per-round threshold used for
+slot-2-style promotion in [`../next_steps.md`](../next_steps.md). The
+residual is the expected tail for strict-mode inference without full
+type-resolution, and the "why was this unannotated?" diagnostic prose
+already tells adopters what to do: add `/// @lint.effect idempotent`.
+
+## Source state on trial-tca
+
+Annotations on the `trial-tca` branch as scanned:
+
+- 7 × `/// @lint.context strict_replayable` — positive control +
+  6 `.run { }` sites across Todos / Search / CaseStudies.
+- 1 × `/// @lint.effect non_idempotent` — `trialSendNotification`
+  (positive control target).
+- 3 × `/// @lint.effect idempotent` — `WeatherClient.search`,
+  `WeatherClient.forecast`, `FactClient.fetch` (closure properties
+  on `@DependencyClient` structs; the shape PR #19 unlocked).
+
+No logic edits to TCA; annotation-only diff.

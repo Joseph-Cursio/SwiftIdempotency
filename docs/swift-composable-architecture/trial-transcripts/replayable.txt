@@ -1,26 +1,14 @@
-=== /tmp/swift-composable-architecture/Examples/Todos ===
+=== /tmp/tca-rerun/tca/Examples/Todos ===
 Todos.swift:15: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'trialHandleMoveEffect' is declared `@lint.context replayable` but calls 'trialSendNotification', which is declared `@lint.effect non_idempotent`.
   suggestion: Replace 'trialSendNotification' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
-Todos.swift:90: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'closure' is declared `@lint.context replayable` but calls 'send', whose effect is inferred `non_idempotent` from the callee name `send`. If the inference is wrong, annotate 'send' explicitly with `/// @lint.effect <tier>` to override.
-  suggestion: Replace 'send' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
-Todos.swift:101: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'closure' is declared `@lint.context replayable` but calls 'send', whose effect is inferred `non_idempotent` from the callee name `send`. If the inference is wrong, annotate 'send' explicitly with `/// @lint.effect <tier>` to override.
-  suggestion: Replace 'send' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
 
-Found 3 issues (3 errors)
+Found 1 issue (1 error)
 
-=== /tmp/swift-composable-architecture/Examples/Search ===
-SearchView.swift:86: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'closure' is declared `@lint.context replayable` but calls 'send', whose effect is inferred `non_idempotent` from the callee name `send`. If the inference is wrong, annotate 'send' explicitly with `/// @lint.effect <tier>` to override.
-  suggestion: Replace 'send' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
-SearchView.swift:103: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'closure' is declared `@lint.context replayable` but calls 'send', whose effect is inferred `non_idempotent` from the callee name `send`. If the inference is wrong, annotate 'send' explicitly with `/// @lint.effect <tier>` to override.
-  suggestion: Replace 'send' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+=== /tmp/tca-rerun/tca/Examples/Search ===
 
-Found 2 issues (2 errors)
+No issues found.
 
-=== /tmp/swift-composable-architecture/Examples/CaseStudies ===
-03-Effects-Basics.swift:54: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'closure' is declared `@lint.context replayable` but calls 'send', whose effect is inferred `non_idempotent` from the callee name `send`. If the inference is wrong, annotate 'send' explicitly with `/// @lint.effect <tier>` to override.
-  suggestion: Replace 'send' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
-03-Effects-Basics.swift:78: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'closure' is declared `@lint.context replayable` but calls 'send', whose effect is inferred `non_idempotent` from the callee name `send`. If the inference is wrong, annotate 'send' explicitly with `/// @lint.effect <tier>` to override.
-  suggestion: Replace 'send' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+=== /tmp/tca-rerun/tca/Examples/CaseStudies ===
 
-Found 2 issues (2 errors)
+No issues found.
 
