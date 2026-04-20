@@ -11,17 +11,18 @@ the first real-adopter validation of that macro surface.
 One **new linter bug** was also surfaced and fixed in the same
 session (see slot 12 below): the linter crashed on Penny's
 first-pass scan with `Duplicate values for key: 'Errors.swift'`
-due to a macOS `/tmp` symlink canonicalisation mismatch. Fix is
-a 4-line patch to `ProjectLinter.makeProjectFile` using
-`URL.resolvingSymlinksInPath()`. The round is the first ever to
+due to a macOS `/tmp` symlink canonicalisation mismatch. Fixed
+on SwiftProjectLint `6200514` via `URL.resolvingSymlinksInPath()`
+on `ProjectLinter.makeProjectFile` + a defensive `uniquingKeysWith:`
+on the inline-suppression dedup. The round is the first ever to
 exercise a codebase with duplicate file basenames across targets.
 
 ## Pinned context
 
-- **Linter:** `SwiftProjectLint` @ `bc3c05e` + working-tree patch
-  (`ProjectLinter.swift`: symlink-resolving relativePath +
-  defensive `uniquingKeysWith` on inline-suppression dedup).
-  Patch not yet committed upstream — scored as slot 12.
+- **Linter:** `SwiftProjectLint` @ `bc3c05e` during the round.
+  The round's scan-blocker (symlink-resolving `relativePath` +
+  defensive `uniquingKeysWith` on inline-suppression dedup) landed
+  as commit `6200514` (slot 12) alongside this round's close-out.
 - **Target:** `vapor/penny-bot` → forked to
   `Joseph-Cursio/penny-bot-idempotency-trial` @
   `trial-penny-bot`.
@@ -145,10 +146,11 @@ corpora. The FP rate (1 / 20 = 5% noise) is lower than expected;
 the 6 defensible catches are all resolvable via adopter annotation,
 not linter-fix work.
 
-## Newly surfaced actionable slice — slot 12
+## Newly surfaced actionable slice — slot 12 (closed, SwiftProjectLint `6200514`)
 
 **Linter crash on duplicate file basenames** (fix applied
-in-session, not yet committed upstream).
+in-session and landed upstream on SwiftProjectLint main before
+this round's close-out commit — `6200514`).
 
 **Shape:** `ProjectLinter.makeProjectFile(filePath:projectRoot:)`
 computes `relativePath` via `filePath.hasPrefix(projectRoot + "/")`.
@@ -163,7 +165,9 @@ on adopters with duplicate filenames across targets
 `+String.swift`×3, etc.), this crashes with
 `Fatal error: Duplicate values for key: 'Errors.swift'`.
 
-**Fix (in working tree):**
+**Fix (committed as SwiftProjectLint `6200514`, +2 regression tests
+in `Tests/CoreTests/Suppression/SymlinkAndDuplicateBasenameTests.swift`
+— full suite 2272 / 276):**
 
 ```swift
 // ProjectLinter.swift makeProjectFile(...)
@@ -186,13 +190,12 @@ the prefix comparison is symlink-insensitive (the root cause);
 (b) make the inline-suppression dedup collision-tolerant as a
 belt-and-suspenders guard.
 
-**Severity:** blocker for any multi-target Swift codebase with
-duplicate basenames on macOS. **Trigger evidence:** first
-production-target round. Not just Penny — any realistic
-multi-target adopter (vapor core, NIO, hummingbird examples in
-full form, etc.) likely trips it. Score for commit as a
-standalone linter PR; tests should cover the /tmp-vs-/private/tmp
-path canonicalisation and the duplicate-basename case.
+**Severity:** was a blocker for any multi-target Swift codebase
+with duplicate basenames on macOS (Penny, vapor core, NIO,
+hummingbird examples in full form). Closed on commit `6200514`
+with regression coverage for both the `/tmp` vs `/private/tmp`
+canonicalisation path (macOS-gated) and the duplicate-basename
+defensive dedup.
 
 ## Pre-committed question answers
 

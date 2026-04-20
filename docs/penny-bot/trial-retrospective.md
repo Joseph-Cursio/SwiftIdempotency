@@ -13,9 +13,10 @@ crashed on the first attempt (`Fatal error: Duplicate values for
 key: 'Errors.swift'`), blocking measurement entirely. Two-line
 diagnostic to find the root cause, then a four-line fix to
 `ProjectLinter.makeProjectFile` (symlink canonicalisation +
-defensive `uniquingKeysWith`). The fix lives in the SwiftProjectLint
-working tree but hasn't been committed yet — scored as slot 12
-in [`../next_steps.md`](../next_steps.md) and sketched in the
+defensive `uniquingKeysWith`). The fix landed on SwiftProjectLint
+main as commit `6200514` with +2 regression tests (2272 / 276
+green), scored as slot 12 in
+[`../next_steps.md`](../next_steps.md) and documented in the
 findings doc.
 
 This is a first in the round series: a scope that's genuinely
@@ -196,9 +197,10 @@ fix.
 - `docs/penny-bot/trial-transcripts/replayable.txt` (Run A)
 - `docs/penny-bot/trial-transcripts/strict-replayable.txt` (Run B)
 
-Linter working-tree patch lives at
-`/Users/joecursio/xcode_projects/SwiftProjectLint/Packages/SwiftProjectLintEngine/Sources/SwiftProjectLintEngine/ProjectLinter.swift`
-(slot 12; commit in a separate PR).
+Linter fix landed as SwiftProjectLint `6200514`:
+`Packages/SwiftProjectLintEngine/Sources/SwiftProjectLintEngine/ProjectLinter.swift`
++ `Tests/CoreTests/Suppression/SymlinkAndDuplicateBasenameTests.swift`
+(slot 12).
 
 Fork branch `Joseph-Cursio/penny-bot-idempotency-trial/trial-penny-bot`
 carries `49db411` (Run A state) and `c309bcb` (Run B tip).

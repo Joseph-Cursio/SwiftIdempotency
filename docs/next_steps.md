@@ -62,7 +62,8 @@ value-per-effort, top to bottom.
   shape maps cleanly to `IdempotencyKey` / `@ExternallyIdempotent(by:)`
   — first real-adopter validation of the macro surface. Also
   surfaced a new linter-crash blocker on macOS `/tmp` symlink +
-  duplicate file basenames — scored as slot 12.** See
+  duplicate file basenames — fixed as slot 12 on SwiftProjectLint
+  `6200514`.** See
   [`penny-bot/trial-findings.md`](penny-bot/trial-findings.md).
 - **Road-test workflow**: reworked to be fork-authoritative (commit
   `bb69729`), first dogfooded end-to-end on the Lambda round
@@ -255,25 +256,24 @@ stdlib-gap (6), type-ctor-gap (5), correct-catch (2) — see
 `swift-aws-lambda-runtime/trial-findings.md` §"Comparison to
 pre-slot-10 baseline" for the per-line delta.
 
-### 12. Linter crash on duplicate file basenames — **in working tree, not yet committed**
+### 12. Linter crash on duplicate file basenames — **done (SwiftProjectLint `6200514`)**
 
 Surfaced in the Penny round on the first scan attempt:
 `Fatal error: Duplicate values for key: 'Errors.swift'`.
-`ProjectLinter.makeProjectFile` computes `relativePath` via
+`ProjectLinter.makeProjectFile` computed `relativePath` via
 `filePath.hasPrefix(projectRoot + "/")`. On macOS, passing
-`/tmp/penny-scan` as `projectRoot` fails the `hasPrefix` check
+`/tmp/penny-scan` as `projectRoot` failed the `hasPrefix` check
 because filesystem enumeration returns
 `/private/tmp/penny-scan/…` (the `/tmp` symlink resolves to
-`/private/tmp`). The fallback is
+`/private/tmp`). The fallback was
 `(filePath as NSString).lastPathComponent` — a bare filename.
-Downstream, `applyInlineSuppression` builds
+Downstream, `applyInlineSuppression` built
 `Dictionary(uniqueKeysWithValues: …)` keyed by that bare
 filename; any adopter with duplicate filenames across targets
-crashes. Penny has 11 such collisions (`Errors.swift`×3,
+crashed. Penny has 11 such collisions (`Errors.swift`×3,
 `Constants.swift`×4, `+String.swift`×3, etc.).
 
-**Fix in working tree** (not yet committed; lives on the
-SwiftProjectLint side):
+**Fix landed as SwiftProjectLint commit `6200514`:**
 
 - Canonicalise both `projectRoot` and `filePath` via
   `URL.resolvingSymlinksInPath()` before the `hasPrefix`
@@ -283,15 +283,14 @@ SwiftProjectLint side):
 - Make `applyInlineSuppression`'s `Dictionary` init use
   `uniquingKeysWith: { first, _ in first }` as a defensive
   belt-and-suspenders against any future collision.
+- +2 tests in
+  `Tests/CoreTests/Suppression/SymlinkAndDuplicateBasenameTests.swift`
+  covering the non-canonical `/tmp/…` root path (macOS-gated)
+  and the canonical-root defensive-dedup path. Full suite 2272 / 276.
 
-**Severity:** blocker for any multi-target macOS codebase with
-duplicate file basenames (Penny, vapor core, hummingbird full,
-NIO full). Trigger evidence is the Penny round. Ship as a
-standalone SwiftProjectLint commit with tests covering both the
-`/tmp` vs `/private/tmp` canonicalisation case and the
-duplicate-basename defensive path. See
-[`penny-bot/trial-findings.md` §"slot 12"](penny-bot/trial-findings.md)
-for the sketch.
+Unblocks any multi-target macOS scan with duplicate file basenames
+(Penny, vapor core, hummingbird full, NIO full). No further action
+required on this slot.
 
 ### 11. Housekeeping (small docs/config items) — **done**
 
@@ -386,14 +385,10 @@ has three entries:
 
 ## Recommended next-session opener
 
-Two in-flight candidates, in value-per-effort order:
+No in-flight slot with urgent triggering evidence. Slot 12
+(linter crash fix) landed on SwiftProjectLint `6200514` alongside
+this round's close-out. The natural next move:
 
-- **Ship slot 12 — linter crash fix.** Patch exists in the
-  SwiftProjectLint working tree; commit as a standalone fix +
-  test + PR (per the linter-rule-slice PR convention, treating a
-  safety-critical fix like a slice). Unblocks every future
-  production-adopter round on macOS without a `/private/tmp`
-  workaround. Low effort, high leverage.
 - **New adopter road-test.** Every slot that closed in recent
   sessions (4, 8, 9, 10, 11, 12) started from a round. Penny was
   the first production-app target and its yield was extraordinary
