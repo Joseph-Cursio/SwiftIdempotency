@@ -21,14 +21,21 @@ value-per-effort, top to bottom.
     override shape is TCA-specific. The earlier `idempotentReceiverMethodsByFramework`
     infrastructure (commit `040f186`, Hummingbird) is what
     generalises across frameworks — see slot 10.
-- **Macros** (this repo): shipped; plus a new consumer sample at
-  `examples/webhook-handler-sample/` (commit `359db69`) exercising
-  `IdempotencyKey` end-to-end in a downstream SPM package. The
-  `@Idempotent`, `@NonIdempotent`, `@Observational`,
-  `@ExternallyIdempotent(by:)`, `@IdempotencyTests`,
-  `#assertIdempotent`, and `IdempotencyKey` surfaces ship; only
-  `@IdempotencyTests` and `#assertIdempotent` remain un-exercised
-  in a consumer context (see slot 6).
+- **Macros** (this repo): shipped; three consumer samples under
+  `examples/` exercise the full user-facing surface end-to-end in
+  downstream SPM packages:
+  - `examples/webhook-handler-sample/` (commit `359db69`) —
+    `IdempotencyKey` type safety.
+  - `examples/idempotency-tests-sample/` — `@IdempotencyTests`
+    extension-role expansion on a `@Suite` type (3 generated tests
+    + 2 direct tests, green).
+  - `examples/assert-idempotent-sample/` — `#assertIdempotent` at
+    call-site covering every row of the sync/async × throwing/pure
+    effect matrix (6 tests, green).
+  `@Idempotent` / `@NonIdempotent` / `@Observational` /
+  `@ExternallyIdempotent(by:)` are exercised by the root test target
+  and by every adopter road-test. **Slot 6 — consumer-context
+  validation — is fully closed.**
 - **Adopter road-tests**: five rounds completed — `todos-fluent/`,
   `pointfreeco/`, `swift-nio/`, `swift-composable-architecture/`,
   `swift-aws-lambda-runtime/`. The TCA round closed two of the
@@ -58,11 +65,14 @@ value-per-effort, top to bottom.
   `trial-<slug>` branch lands. See `road_test_plan.md` for the
   full pre-flight recipe (now validated end-to-end — one gap
   surfaced, captured as a housekeeping item below).
-- **Macro-form end-to-end validation**: ticked on `todos-fluent`
-  (attribute-form A/B supplement) and now on the webhook-handler
-  sample (`IdempotencyKey` in a real consumer SPM). Two macros
-  still un-exercised in consumer context:
-  `@IdempotencyTests`, `#assertIdempotent` (see slot 6).
+- **Macro-form end-to-end validation**: complete. Ticked on
+  `todos-fluent` (attribute-form A/B supplement), on the
+  webhook-handler sample (`IdempotencyKey`), on the
+  idempotency-tests sample (`@IdempotencyTests` extension-role
+  expansion compiles + runs green under Swift Testing in a
+  downstream package), and on the assert-idempotent sample
+  (`#assertIdempotent` overload resolution + effect propagation
+  verified at consumer call sites).
 
 ## Immediate candidates (small, concrete)
 
@@ -145,30 +155,34 @@ corpora is incomplete even with the budget.
 Requires profiling + algorithm work. Probably 1-2 sessions.
 Unlocks full correctness on swift-nio-scale codebases.
 
-### 6. Macro-form validation: remaining surfaces
+### 6. Macro-form validation: remaining surfaces — **done**
 
-`IdempotencyKey` is now ticked by the webhook-handler sample
-(`examples/webhook-handler-sample/`, commit `359db69`). Two
-consumer-surface gaps remain:
+All three consumer-surface gaps closed in one session:
 
-- **`@IdempotencyTests` sample**: extension macro on a test type.
-  Would need a small test-target example that applies
-  `@IdempotencyTests` and asserts the generated tests compile
-  and run. Natural home: a new sample under
-  `examples/idempotency-tests-sample/` following the same
-  shape as the webhook-handler sample.
-- **`#assertIdempotent` sample**: freestanding expression macro
-  that expands against `SwiftIdempotencyTestSupport`. Similar
-  sample package would cover it.
+- **`IdempotencyKey`** — `examples/webhook-handler-sample/`
+  (commit `359db69`).
+- **`@IdempotencyTests`** — `examples/idempotency-tests-sample/`.
+  `@Suite @IdempotencyTests` on a three-member type; the
+  extension-role expansion produces three generated `@Test` methods
+  (sync, sync-value-return, async) that Swift Testing picks up as
+  ordinary test declarations. All five tests (3 generated + 2
+  hand-written direct) pass under `swift test`.
+- **`#assertIdempotent`** — `examples/assert-idempotent-sample/`.
+  Four call sites, one per row of the sync/async × throwing/pure
+  effect matrix, all green. **One doc-drift finding**: the
+  freestanding macro's runtime helpers (`__idempotencyAssertRunTwice`,
+  `__idempotencyAssertRunTwiceAsync`) actually live in the public
+  `SwiftIdempotency` target, not in `SwiftIdempotencyTestSupport` as
+  the original slot description implied — consumers only need a
+  single `import SwiftIdempotency`. `SwiftIdempotencyTestSupport`
+  is currently a placeholder; confirmed by the sample's
+  `Package.swift` (no dependency on that product).
 
-Adopter-integration sub-path (carried over from the original slot 6):
-
-- **Annotate a real webhook adopter** — add `IdempotencyKey` to
-  pointfreeco's `handlePaymentIntent` (or similar). Refactor-heavy;
-  requires running the code to confirm; crosses from measurement
-  into production changes. Slot 9 (AWS Lambda) is probably a more
-  natural fit since SQS message IDs are the canonical
-  `@ExternallyIdempotent(by:)` case.
+The adopter-integration sub-path (annotating a real webhook adopter
+with `IdempotencyKey`) remains a distinct, refactor-heavy move that
+crosses from measurement into production changes. Parked alongside
+slot 7 below; pursue as an adopter-engagement activity, not a
+macro-coverage task.
 
 ### 9. AWS Lambda adopter road-test — **done**
 
@@ -296,15 +310,30 @@ has three entries:
 
 ## Recommended next-session opener
 
-One natural option remains:
+No in-flight slot with urgent triggering evidence. Three
+possibilities, in rough order of ease:
 
-- **Slot 6 remaining samples: `@IdempotencyTests` or
-  `#assertIdempotent`.** Similar scope to the webhook-handler
-  sample that just shipped (~1-2 hours each). Finishes the
-  macro-form validation story in consumer context.
+- **Slot 7: verify pointfreeco findings.** The only concrete
+  open-ended thread — 4 static patterns flagged during the
+  pointfreeco round, unknown whether runtime mitigations defang
+  them. Reading the runtime path or opening a triage issue are
+  both finite commits. Pursue if the question "is the linter
+  catching real bugs?" matters more than "does the linter work on
+  real corpora?".
+- **Slot 2: `.init(...)` member-access form gap.** Creeping up
+  in frequency; still under the ~2/round firing-rate threshold
+  that would make it urgent. Promote when the next road-test
+  confirms the trend.
+- **New adopter road-test.** Every slot that closed in recent
+  sessions (4, 8, 9, 10, 11) started from a road-test surfacing
+  a concrete cluster. Next natural target: a production SwiftNIO-
+  or Vapor-based application with real side effects, since the
+  awslabs Lambda demos weren't a business-logic-rich corpus
+  (captured in `CLAUDE.md`'s "corpus caveat" under the Lambda
+  round).
 
 Slot 5 (perf fix) and slot 3 (property-wrapper receiver resolution)
 still have no immediate triggering evidence — wait for a corpus
 that exhibits the pathology before committing a session to either.
-Slots 4, 8, 9, 10, and 11 are closed out (§4, §8, §9, §10, §11
-above).
+Slots 4, 6, 8, 9, 10, and 11 are closed out (§4, §6, §8, §9, §10,
+§11 above).
