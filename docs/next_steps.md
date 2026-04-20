@@ -398,10 +398,12 @@ this round's close-out. The natural next move:
   that the yield generalises and isn't Penny-specific.
 
 **The four Penny real-bug shapes** all map to
-`IdempotencyKey` / `@ExternallyIdempotent(by:)` fixes. Whether
-to file upstream triage issues is a separate, user-gated
-decision — if pursued, add a per-shape entry to
-[`ideas/`](ideas/) matching the pointfreeco triage idea's shape.
+`IdempotencyKey` / `@ExternallyIdempotent(by:)` fixes. Filing
+upstream triage issues is a separate, user-gated decision —
+parked as
+[`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md)
+with three filing-strategy options (one consolidated, four
+separate, or #1-only) and an explicit promotion trigger.
 
 Slot 5 (perf fix) and slot 3 (property-wrapper receiver resolution)
 still have no immediate triggering evidence — wait for a corpus
