@@ -403,37 +403,28 @@ All three items from slot 9's retrospective addressed in-session:
   the session-start clean+test+lint. Environment fix; captured
   here as a breadcrumb if the hook ever gets rewritten.
 
-### 15. Housekeeping from isowords retrospective — **open**
+### 15. Housekeeping from isowords retrospective — **done**
 
-Two template-fold items surfaced in
+Both template-fold items from
 [`isowords/trial-retrospective.md`](isowords/trial-retrospective.md)
-§"Policy notes":
+§"Policy notes" landed in `road_test_plan.md`:
 
-- **`road_test_plan.md` — SQL ground-truth audit pass.** For
-  DB-write-heavy adopters, a Swift-surface audit ("this looks
-  like an insert, so it's non-idempotent") is insufficient. The
-  SQL the adopter actually runs — `ON CONFLICT ... DO UPDATE`,
-  `WHERE col IS NULL` guards, unique-index-backed upserts —
-  determines whether a retry is observationally safe. Isowords'
-  Run A would have been mis-scored as "3 real-bug catches"
-  without this pass (actual: 1 real catch + 3 defensible-by-
-  design upserts). Proposed addition to the "Audit" section:
-  locate the concrete query site (`*DatabaseLive.swift` or
-  equivalent), verify each write-style verdict against the SQL.
+- **SQL ground-truth audit pass** — new subsection under "Audit"
+  titled "SQL ground-truth pass (DB-heavy adopters)". Enumerates
+  the four SQL shapes that flip a "correct catch" to
+  "defensible by design" (`ON CONFLICT DO UPDATE`,
+  `ON CONFLICT DO NOTHING`, `WHERE col IS NULL` guard,
+  unique-indexed `INSERT ... RETURNING *`). Cites the isowords
+  Run A scoring-correction evidence and notes Penny-style
+  DynamoDB-bare-writes as the contrast case.
+- **git-lfs pre-flight note** — added to the "Pre-flight" section
+  with the `git -c filter.lfs.*=` bypass clone command, explicit
+  note that LFS-tracked assets are binary (never Swift sources)
+  so the linter doesn't need them, and guidance on when to
+  actually install `git-lfs` vs. use the bypass.
 
-- **`road_test_plan.md` — git-lfs pre-flight note.** Isowords
-  uses git-lfs for asset files; the session host lacked
-  `git-lfs`, and `git clone` failed halfway through checkout
-  with "remote helper 'https' aborted session". Required
-  `git -c filter.lfs.{smudge,clean,process}=
-  -c filter.lfs.required=false clone <url>` workaround. Swift
-  sources aren't LFS-tracked, so the workaround is safe for
-  linter scans. Proposed addition to the "Pre-flight" section:
-  check for `.gitattributes` with `filter=lfs` and document the
-  workaround when `git-lfs` isn't installed.
-
-Both are small single-session edits. Fold into `road_test_plan.md`
-before the next DB-heavy / LFS-using adopter round.
+Ready for the next DB-heavy / LFS-using adopter round without
+re-discovering either gap from scratch.
 
 ## Follow-ups on what we found
 
@@ -509,22 +500,20 @@ has three entries:
 
 ## Recommended next-session opener
 
-Slot 13 is landed and remeasured (merge `2fbb171`; isowords Run A
-yield now 5/5 matching Penny). Next-session options, in
-value-per-effort order:
+Slots 13 and 15 landed this session (PR #21 merged + template
+folds into `road_test_plan.md`). No open linter-slice backlog.
+Next-session options, in value-per-effort order:
 
-- **Slot 15 — `road_test_plan.md` template folds.** Two template
-  items surfaced in the isowords retrospective: SQL ground-truth
-  audit pass for DB-heavy adopters + git-lfs pre-flight
-  workaround note. Single-session edit; pays off on the next
-  DB-heavy / LFS-using adopter round. Lowest-risk, highest-
-  readiness next slice.
 - **New adopter round (production-app #3).** Validation direction
   remains production apps; a third user-chosen prod adopter
-  continues the Penny/isowords series and provides the
-  third-adopter data point that would justify promoting slot 14
-  (HttpPipeline) from "deferred" to "ship" if the adopter is
-  Point-Free-stack, or surface a genuinely new cluster otherwise.
+  continues the Penny/isowords series. If the adopter is
+  Point-Free-stack, the round doubles as the third-adopter data
+  point that promotes slot 14 (HttpPipeline) from "deferred" to
+  "ship". Otherwise it either surfaces a new cluster or produces
+  the first "no new slice" round — either outcome is a useful
+  signal. The `road_test_plan.md` template now includes the SQL
+  ground-truth pass and git-lfs pre-flight note, so a DB-heavy /
+  LFS-using adopter won't re-discover either gap.
 - **Slot 14 promotion (HttpPipeline whitelist) — eligible now.**
   Two-adopter evidence (isowords + pointfreeco www) is already
   on the books. Can ship standalone without a third adopter if
@@ -548,6 +537,6 @@ shapes parked in
 isowords' two shapes can be similarly parked if the user wants
 upstream engagement (not auto-promoted).
 
-Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, **13** are closed out. Slot 7's
-publicly-visible follow-on is parked in
+Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, **15** are closed out.
+Slot 7's publicly-visible follow-on is parked in
 [`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md).

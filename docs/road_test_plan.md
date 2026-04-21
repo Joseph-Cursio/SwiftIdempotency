@@ -40,6 +40,25 @@ blend packages in one directory.
   Pin the commit SHA in the scope doc.
 - Verify the target clone is clean and on a known SHA or tag. Pin
   both in the scope doc.
+- **git-lfs check.** If the target uses git-lfs (check
+  `.gitattributes` for `filter=lfs`, typical for adopters with
+  image/audio assets like `isowords`) and the local machine lacks
+  `git-lfs`, a plain `git clone` aborts midway with "remote helper
+  'https' aborted session". Bypass with:
+
+  ```sh
+  git -c filter.lfs.smudge= \
+      -c filter.lfs.clean= \
+      -c filter.lfs.process= \
+      -c filter.lfs.required=false \
+      clone <url>
+  ```
+
+  Safe for idempotency scans — LFS-tracked assets are binary
+  (images, audio, archives), never Swift sources, so nothing the
+  linter needs is skipped. Install `git-lfs` locally if the
+  adopter's build toolchain will be invoked (e.g. `swift build`
+  on the target); not required for read-only linter scans.
 - Create a `<upstream>-idempotency-trial` fork on your GitHub
   (naming convention, e.g.
   `swift-composable-architecture-idempotency-trial`). Harden it:
@@ -133,6 +152,36 @@ Every diagnostic gets a one-line verdict:
 Cap the per-round audit at 30 diagnostics. If strict mode exceeds
 30, decompose the excess by class in the findings doc without
 per-diagnostic verdicts.
+
+#### SQL ground-truth pass (DB-heavy adopters)
+
+For adopters with a DB layer, a Swift-surface audit ("this looks
+like an insert, so it's non-idempotent") is insufficient — the
+actual SQL determines whether a retry is observationally safe.
+After the initial Swift-surface audit, locate the concrete query
+sites (commonly `*DatabaseLive.swift`, `*Repository.swift`, Fluent
+model extensions, or equivalent) and re-verify each write-style
+verdict against the query text.
+
+Flip a "correct catch" to "defensible by design" when the SQL
+shows any of:
+
+- `ON CONFLICT (...) DO UPDATE SET ...` — upsert, retry-safe.
+- `ON CONFLICT (...) DO NOTHING` — dedup on unique key.
+- `UPDATE ... WHERE col IS NULL` — guard clause making retry a
+  no-op on already-set rows.
+- `INSERT ... RETURNING *` against a table with a unique index on
+  the natural key being inserted — DB rejects duplicates before
+  the row lands.
+
+Evidence from this round's experience: isowords Run A would have
+been mis-scored as 3 real-bug catches without this pass (actual:
+1 real catch + 3 defensible-by-design upserts). Penny's Run A
+didn't need the pass because its DynamoDB access uses bare
+`createCoinEntry`-style calls without server-side dedup — so the
+pass is adopter-dependent, but cheap enough to run unconditionally
+on any adopter whose call graph touches a DB layer. Matters
+especially for Vapor / PostgreSQL / Fluent adopters.
 
 ## Documents to produce
 
