@@ -47,9 +47,9 @@ value-per-effort, top to bottom.
   `@ExternallyIdempotent(by:)` are exercised by the root test target
   and by every adopter road-test. **Slot 6 — consumer-context
   validation — is fully closed.**
-- **Adopter road-tests**: **eight rounds completed** — `todos-fluent/`,
+- **Adopter road-tests**: **nine rounds completed** — `todos-fluent/`,
   `pointfreeco/`, `swift-nio/`, `swift-composable-architecture/`,
-  `swift-aws-lambda-runtime/`, `penny-bot/`, `isowords/`, **`spi-server/`**. The TCA
+  `swift-aws-lambda-runtime/`, `penny-bot/`, `isowords/`, `spi-server/`, **`prospero/`**. The TCA
   round closed **all three** cluster-level gaps it surfaced (return-
   trailing annotation, send-on-closure-parameter, dependency-client
   declarations) across PRs #17 / #18 / #19; current TCA residual on
@@ -102,6 +102,24 @@ value-per-effort, top to bottom.
   accumulating candidate: `AppMetrics.push` as Prometheus-
   Pushgateway observational shape (1-adopter). See
   [`spi-server/trial-findings.md`](spi-server/trial-findings.md).
+  **The prospero round (fourth production-app target —
+  `samalone/prospero`, first Hummingbird prod app, first phase-2
+  / single-contributor target) was the second consecutive
+  plateau — Completion Criterion #2 now at 2/3.** Run A 10 /
+  Run B 62; **1 real-bug catch** (`ActivityPattern.save` on
+  create — Migration lacks unique constraint; maps to
+  `@ExternallyIdempotent(by:)`, 7-for-7 cross-adopter shape
+  coverage). New evidence-accumulating candidate: slot 16 —
+  **Hummingbird Router DSL whitelist** (`router.get/post` etc.
+  on `Router` / `RouterGroup` receivers), 14 Run B fires, 1-
+  adopter. Key **usability finding**: the enclosing-function
+  annotation (`/// @lint.context` on `addXRoutes(to router:)`
+  helpers) walks into trailing closures, which means Hummingbird
+  adopters aren't blocked by the inline-trailing-closure gap —
+  workaround is documented. See
+  [`prospero/trial-findings.md`](prospero/trial-findings.md) and
+  the updated
+  [`ideas/inline-trailing-closure-annotation-gap.md`](ideas/inline-trailing-closure-annotation-gap.md).
 - **Road-test workflow**: reworked to be fork-authoritative (commit
   `bb69729`), first dogfooded end-to-end on the Lambda round
   this session. Trial branches live on `<upstream>-idempotency-trial`
@@ -121,10 +139,14 @@ value-per-effort, top to bottom.
     `trial-isowords` with `a71c993` (Run A state, replayable)
     and `4e3cc83` (Run B tip, strict_replayable). Default-branch
     switched. Fork hardened per recipe.
-  - **`SwiftPackageIndex-Server-idempotency-trial` — active**;
+  - `SwiftPackageIndex-Server-idempotency-trial` — **active**;
     carries `trial-spi-server` with `57f11d727` (Run A state,
     replayable) and `c57b424b8` (Run B tip, strict_replayable).
     Default-branch switched. Fork hardened per recipe.
+  - **`prospero-idempotency-trial` — active**; carries
+    `trial-prospero` with `353753f` (Run A state, replayable) and
+    `56d676f` (Run B tip, strict_replayable). Default-branch
+    switched. Fork hardened per recipe.
   - `hummingbird-examples-idempotency-trial`
   - `pointfreeco-idempotency-trial`
   - `swift-nio-idempotency-trial`
@@ -518,57 +540,59 @@ has three entries:
 
 ## Recommended next-session opener
 
-Three production-app rounds complete (Penny, isowords, SPI-Server).
-**SPI-Server was the first plateau round** — zero new named slices
-— so Completion Criterion #2 stands at **1/3** consecutive
-plateaus. Next-session options, in value-per-effort order:
+Four production-app rounds complete (Penny, isowords, SPI-Server,
+prospero). **Completion Criterion #2 now at 2/3 consecutive
+plateaus** — one more zero-named-slice round ships the adoption-
+gap-stability ship criterion. Next-session options, in
+value-per-effort order:
 
-- **Fourth production-app round — continue the plateau count.**
-  Either shape:
-  - *Another battle-tested adopter* to push toward 2/3 plateaus.
-    Good candidates: a Hummingbird-based production app (never
-    scanned; would validate Hummingbird whitelist from `040f186`
-    in a prod context), or a Point-Free-stack prod app if one
-    surfaces (would also promote slot 14 to 3-adopter ship-ready).
-  - *Phase-2 shift* per `project_validation_phase2.md` memory —
-    obscure single-contributor Vapor / Hummingbird app. FP-rate
-    data on battle-tested projects is converging (Penny 5%,
-    isowords 12.5%, SPI-Server 57% — but SPI-Server's "noise"
-    is all one observational-metrics cluster, not true noise).
-  The plateau hypothesis gets stronger with each round that
-  surfaces no new named slice.
-- **Slot 14 promotion (HttpPipeline whitelist) — still eligible.**
-  Two-adopter evidence (isowords + pointfreeco www). Would close
-  the cross-adopter `writeStatus` / `writeHeader` / `writeBody` /
-  `send` residual. Can ship standalone without a third Point-
-  Free-stack adopter.
-- **`AppMetrics.push` / Prometheus Pushgateway shape** (evidence
-  accumulating, 1-adopter from SPI-Server). Re-scanning Penny at
-  merge tip `2fbb171` would clarify whether Penny's Prometheus-
-  style metrics calls also fire — if so, this becomes 2-adopter
-  evidence for a new framework whitelist slice. Lightweight
-  remeasurement (~30 min, similar to slot 13 close-out).
+- **Fifth production-app round — close Completion Criterion #2 at
+  3/3.** The round needs to produce zero new named slices to
+  advance. Good shapes:
+  - *Another Hummingbird adopter* to push slot 16 (Router DSL
+    whitelist) from 1-adopter to 2-adopter evidence and promote
+    to ship-ready. Would also re-test the enclosing-function
+    annotation workaround.
+  - *A Vapor routing-DSL-heavy adopter* — prospero's `router.get/post`
+    noise cluster is plausibly cross-framework; Vapor's
+    `app.get/post` / `routes.post(...)` shape is structurally
+    similar. If it recurs there, slot 16 generalises beyond
+    Hummingbird (receiver name becomes `RouteBuilder` etc.).
+  - *Another phase-2 single-contributor app* (any framework) —
+    continues the obscure-project validation thread from the
+    memory.
+- **Slot 14 promotion (HttpPipeline whitelist) — still eligible
+  standalone.** Two-adopter evidence (isowords + pointfreeco
+  www). Would close the `writeStatus` / `writeHeader` / etc.
+  residual. Can ship without a third adopter if desired.
+- **Slot 16 promotion (Hummingbird Router DSL whitelist) —
+  eligible after one more Hummingbird adopter confirms.**
+  Would silence `router.get/post/put/patch/delete` on
+  Router/RouterGroup receivers. Likely also generalises to
+  Vapor's `app.get/post` via parameterised framework gating.
+- **`AppMetrics.push` / Prometheus Pushgateway shape**
+  (1-adopter from SPI-Server). Re-scanning Penny at merge tip
+  `2fbb171` would clarify if Penny's Prometheus-style metrics
+  calls also fire. ~30 min lightweight.
 
 Deferred — no urgent triggering evidence:
 
-- Slot 5 (perf fix) — SPI-Server's 349-file corpus scanned in <1s
-  with no budget trigger; still no corpus stressing this.
-- Slot 3 (property-wrapper receiver resolution) — wait for a
-  corpus that surfaces a real `(name, labels)` collision with
-  differing tiers. SPI-Server had 5 `run(using:signature:)`
-  handlers with identical signatures but no collision (they
-  resolved to distinct owning types via the Symbol table; tier
-  was uniform).
+- Slot 5 (perf fix) — no corpus has stressed the wall-clock
+  budget. Prospero scanned instantly (29 files).
+- Slot 3 (property-wrapper receiver resolution) — prospero's
+  9 handler closures had no `(name, labels)` tier-conflict
+  collisions.
 
-**Six real-bug shapes across Penny + isowords** all map to
-`IdempotencyKey` / `@ExternallyIdempotent(by:)` (unchanged by
-SPI-Server round — 0 new shapes, 0 new catches). Filing upstream
-triage issues is a separate, user-gated decision — Penny's four
-shapes parked in
+**Seven real-bug shapes across Penny + isowords + prospero** all
+map to `IdempotencyKey` / `@ExternallyIdempotent(by:)`
+(prospero added one: `ActivityPattern.save` on create, no unique
+constraint). 7-for-7 macro-surface coverage across four
+production adopters. Filing upstream triage issues is a separate,
+user-gated decision — Penny's four shapes parked in
 [`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md);
-isowords' two shapes can be similarly parked if the user wants
-upstream engagement (not auto-promoted). SPI-Server has no triage
-issues to file.
+isowords' two shapes and prospero's one shape can be similarly
+parked if user wants upstream engagement (not auto-promoted).
+SPI-Server has no triage issues to file.
 
 Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 15 are closed out. Slot 7's
 publicly-visible follow-on is parked in

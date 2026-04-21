@@ -91,3 +91,19 @@ Promote this idea to an active plan when one of:
 3. A new grammar feature is being designed that needs argument-position annotation attachment for a different rule, making the inline-closure case a free rider on the broader work.
 
 None of those triggers exist as of the post-R6 closure-binding-slice shipping date. The refactor-to-named-binding workaround is the sanctioned path until evidence says otherwise.
+
+## 2026-04-21 update: prospero round (production-app #4)
+
+**Trigger #2 met, but severity is LOWER than predicted.** Prospero (`samalone/prospero`, a Hummingbird 2.x production app — first Hummingbird prod road-test) uses the inline-trailing-closure form as its *primary* handler shape: every HTTP handler lives inside `router.get/post { request, context in ... }` closures registered from `addXRoutes(to router:, ...)` helper functions. This is **adoption-blocking volume on a non-Lambda corpus**, disconfirming the "unlikely" parenthetical above.
+
+**However**, the prospero round also surfaced a mitigating finding that significantly reduces the severity. The linter's body walker **does traverse trailing closures inside an annotated enclosing function's body**. Annotating the *enclosing registration function* — `addPatternRoutes`, `addForecastRoutes`, `addCalendarRoutes` — with `/// @lint.context replayable` produces diagnostics on all internal calls inside the 7+ trailing closures it registers (9 diagnostics from a single annotation on `addPatternRoutes`, covering `pattern.save`, `pattern.delete`, `hueService.recomputeHues`, and router-DSL false positives). **The enclosing-function annotation is a viable workaround.**
+
+Caveats:
+
+1. **Coarse-grained tier only.** All closures inside the annotated function share the same context tier. Adopters wanting per-route differentiation (e.g. `replayable` POSTs + `observational` GET health-checks in one registrar) must split into separate helper functions or refactor to named handlers. Prospero didn't need this granularity — its `addXRoutes` helpers each cover a single tier's worth of routes.
+2. **Diagnostic UX.** The linter reports `addPatternRoutes calls pattern.save` with the line number of the `pattern.save` call (inside the closure). Adopters reading the diagnostic need to map the line back to the specific closure that contains it. Not a correctness issue, a readability one.
+3. **Depends on the body-walker behaviour remaining stable.** If a future refactor of the call-graph walker restricts itself to direct-body call sites (no descent into closure literals), this workaround breaks. Low risk given the current visitor design, but worth a test-case to lock in.
+
+Given the workaround, this idea is **reclassified from "deferred pending adopter demand" to "deferred — workaround viable, documented"**. Active promotion is still blocked on trigger #1 (an adopter that refuses the enclosing-function annotation path, which requires a codebase where even the `addXRoutes` helpers don't exist — all routes registered inline at top-level). Prospero doesn't fit that: its `addXRoutes` structure is idiomatic Hummingbird, and the workaround composes cleanly with it.
+
+See [`../prospero/trial-findings.md`](../prospero/trial-findings.md) §"Trailing-closure workaround effectiveness" for the workaround's evidence + measurement.
