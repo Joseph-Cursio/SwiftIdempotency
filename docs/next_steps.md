@@ -41,11 +41,11 @@ value-per-effort, top to bottom.
   `@ExternallyIdempotent(by:)` are exercised by the root test target
   and by every adopter road-test. **Slot 6 — consumer-context
   validation — is fully closed.**
-- **Adopter road-tests**: **six rounds completed** — `todos-fluent/`,
+- **Adopter road-tests**: **seven rounds completed** — `todos-fluent/`,
   `pointfreeco/`, `swift-nio/`, `swift-composable-architecture/`,
-  `swift-aws-lambda-runtime/`, **`penny-bot/`**. The TCA round closed
-  **all three** cluster-level gaps it surfaced (return-trailing
-  annotation, send-on-closure-parameter, dependency-client
+  `swift-aws-lambda-runtime/`, `penny-bot/`, **`isowords/`**. The TCA
+  round closed **all three** cluster-level gaps it surfaced (return-
+  trailing annotation, send-on-closure-parameter, dependency-client
   declarations) across PRs #17 / #18 / #19; current TCA residual on
   tip `bc3c05e` is 1 replayable / 13 strict, all in known cross-adopter
   noise/defensible clusters (`Duration` implicit-member, enum-case /
@@ -55,7 +55,7 @@ value-per-effort, top to bottom.
   surfaced a new cluster — response-writer primitives
   (`write` / `finish` on `LambdaResponseWriter` /
   `LambdaResponseStreamWriter`) — scored as slot 10. **The Penny
-  round (first production-app target) is the richest yet — 5/5
+  round (first production-app target) was the richest yet — 5/5
   handlers fire, 10 correct-catches, 4 distinct real-bug shapes
   (coin double-grant, OAuth error-path duplication, sponsor DM
   duplication, GHHooks error-path duplication). Every real-bug
@@ -65,20 +65,39 @@ value-per-effort, top to bottom.
   duplicate file basenames — fixed as slot 12 on SwiftProjectLint
   `6200514`.** See
   [`penny-bot/trial-findings.md`](penny-bot/trial-findings.md).
+  **The isowords round (second production-app target) answered the
+  Penny-generalisation question: yield is codebase-dependent, not
+  linter-dependent.** 4/5 handlers fire in Run A (vs Penny's 5/5),
+  with 2 real-bug shapes (`insertSharedGame` + `startDailyChallenge`
+  — duplicate-row inserts without `ON CONFLICT`). Isowords'
+  PostgreSQL schema uses pervasive upsert guards, so 3/5 Run A
+  diagnostics are defensible-by-design once the SQL is read.
+  **Six-for-six**: every real-bug shape across Penny + isowords
+  (6 distinct shapes) maps to the `IdempotencyKey` /
+  `@ExternallyIdempotent(by:)` surface. Round surfaced one new
+  adoption-gap slice (slot 13 — prefix-lexicon gap for `submit*`
+  / `start*` / `complete*` / `send*` / `register*`) and one
+  framework-whitelist candidate accumulating evidence (slot 14 —
+  HttpPipeline `writeStatus`, now 2-adopter). See
+  [`isowords/trial-findings.md`](isowords/trial-findings.md).
 - **Road-test workflow**: reworked to be fork-authoritative (commit
   `bb69729`), first dogfooded end-to-end on the Lambda round
   this session. Trial branches live on `<upstream>-idempotency-trial`
   forks under the user's GitHub, not on ephemeral `/tmp` clones.
-  Five forks provisioned so far:
+  Six forks provisioned so far:
   - `swift-composable-architecture-idempotency-trial` — **active**;
     carries `trial-tca` (setup + `@DependencyClient` annotations
     + banner), default-branch switched.
   - `swift-aws-lambda-runtime-idempotency-trial` — **active**;
     carries `trial-lambda` (6 handler annotations, banner),
     default-branch switched. Tip: `349725b`.
-  - **`penny-bot-idempotency-trial` — active**; carries
+  - `penny-bot-idempotency-trial` — **active**; carries
     `trial-penny-bot` with `49db411` (Run A state, replayable)
     and `c309bcb` (Run B tip, strict_replayable). Default-branch
+    switched. Fork hardened per recipe.
+  - **`isowords-idempotency-trial` — active**; carries
+    `trial-isowords` with `a71c993` (Run A state, replayable)
+    and `4e3cc83` (Run B tip, strict_replayable). Default-branch
     switched. Fork hardened per recipe.
   - `hummingbird-examples-idempotency-trial`
   - `pointfreeco-idempotency-trial`
@@ -87,8 +106,8 @@ value-per-effort, top to bottom.
   disabled, sandbox description) but have no trial branch yet.
   Banner + default-branch switch apply per-round when a
   `trial-<slug>` branch lands. See `road_test_plan.md` for the
-  full pre-flight recipe (now validated end-to-end — one gap
-  surfaced, captured as a housekeeping item below).
+  full pre-flight recipe (now validated end-to-end — two gaps
+  surfaced so far, both captured as housekeeping items below).
 - **Macro-form end-to-end validation**: complete. Ticked on
   `todos-fluent` (attribute-form A/B supplement), on the
   webhook-handler sample (`IdempotencyKey`), on the
@@ -292,6 +311,72 @@ Unblocks any multi-target macOS scan with duplicate file basenames
 (Penny, vapor core, hummingbird full, NIO full). No further action
 required on this slot.
 
+### 13. Prefix-lexicon gap for server-app verbs — **open (isowords round)**
+
+**Shape:** `HeuristicEffectInferrer`'s non-idempotent prefix list
+currently covers `create|insert|update|delete` (CRUD-style verbs,
+common in DB-code-gen output). Production server apps use a wider
+vocabulary that the current lexicon misses:
+
+| Prefix | Example callees | Evidence |
+|---|---|---|
+| `submit*` | `submitLeaderboardScore` (isowords), `submitGameMiddleware`, `submitPayment`-shape | 2 adopters (isowords + Penny Q3) |
+| `start*` | `startDailyChallenge` (isowords), `startSession` | 1 adopter (isowords) — **missed a real bug in Run A** |
+| `complete*` | `completeDailyChallenge` (isowords), `completeOnboarding`, `completeOrder` | 1 adopter (isowords) |
+| `send*` | `sendMessage` (Penny via body-walk not prefix), `sendWelcomeEmail` | 2 adopters (Penny, generic shape) |
+| `register*` | `registerPushToken`, `registerDevice` | 1 adopter (isowords) |
+
+**Triggering evidence:** isowords Run A silently classified
+`startDailyChallenge` as idempotent because `start*` isn't in the
+lexicon — the linter missed a real `INSERT` without `ON CONFLICT`
+against `dailyChallengePlays`. Strict mode recovered it, but
+strict isn't the recommended default tier, so the gap is a quiet
+correctness hole on the lower-friction default.
+
+**Fix direction:**
+- Add `submit|start|complete|send|register` to
+  `HeuristicEffectInferrer`'s non-idempotent prefix list.
+- Pre-slice: scan `swift-nio` and TCA corpora for regression risk
+  (neither should have strong `submit*`/`start*` surface, but
+  confirm).
+- Fixture tests per prefix classification.
+- Watch FP rate on the isowords Run A re-run — expect 3 new fires
+  (`startDailyChallenge` real catch + `submitLeaderboardScore` and
+  `completeDailyChallenge` defensible). Defensible noise is
+  acceptable; catching `start*` real bugs is the point.
+
+**Severity: medium.** Unblocks `start*`/`submit*`-shaped real-bug
+catches on the default `replayable` tier. One-session slice.
+See [`isowords/trial-findings.md`](isowords/trial-findings.md)
+§"Newly surfaced actionable slice — slot 13".
+
+### 14. `HttpPipeline` framework whitelist — **deferred (evidence accumulating)**
+
+**Shape:** `writeStatus(.ok)` / `writeStatus(.badRequest)` fires
+10 times in isowords Run B, identical shape to the pointfreeco
+www round's `writeStatus` residual. The primitive is part of
+`pointfreeco/swift-web`'s `HttpPipeline` module (public API:
+`writeStatus`, `writeHeader`, `writeBody`, `send`). Writing
+response headers is observationally replay-safe — same status /
+headers / body on retry produces the same response.
+
+**Evidence:** 2 adopters (isowords + pointfreeco www), ~20
+combined fires. Same infrastructure shape as the closed slot 10
+Lambda response-writer slice and the `040f186` Hummingbird slice.
+
+**Fix direction** (same pattern as slot 10): add entries to
+`idempotentReceiverMethodsByFramework` gated on
+`import HttpPipeline`. Probable entries: `(nil, "writeStatus")`,
+`(nil, "writeHeader")`, `(nil, "writeBody")`, `(nil, "send")`.
+Receiver may be `Conn<...>` or free-function via `|>`; verify
+shape before picking the gate.
+
+**Status: deferred.** Two-adopter evidence is enough to slice,
+but validation direction is production-app rounds; a third
+Point-Free-stack adopter is unlikely to surface soon. If a
+user-owned Point-Free-stack app lands, this slice pays off
+immediately.
+
 ### 11. Housekeeping (small docs/config items) — **done**
 
 All three items from slot 9's retrospective addressed in-session:
@@ -310,6 +395,38 @@ All three items from slot 9's retrospective addressed in-session:
   `$HOME/xcode_projects/*` so sandbox-fork commits in `/tmp` skip
   the session-start clean+test+lint. Environment fix; captured
   here as a breadcrumb if the hook ever gets rewritten.
+
+### 15. Housekeeping from isowords retrospective — **open**
+
+Two template-fold items surfaced in
+[`isowords/trial-retrospective.md`](isowords/trial-retrospective.md)
+§"Policy notes":
+
+- **`road_test_plan.md` — SQL ground-truth audit pass.** For
+  DB-write-heavy adopters, a Swift-surface audit ("this looks
+  like an insert, so it's non-idempotent") is insufficient. The
+  SQL the adopter actually runs — `ON CONFLICT ... DO UPDATE`,
+  `WHERE col IS NULL` guards, unique-index-backed upserts —
+  determines whether a retry is observationally safe. Isowords'
+  Run A would have been mis-scored as "3 real-bug catches"
+  without this pass (actual: 1 real catch + 3 defensible-by-
+  design upserts). Proposed addition to the "Audit" section:
+  locate the concrete query site (`*DatabaseLive.swift` or
+  equivalent), verify each write-style verdict against the SQL.
+
+- **`road_test_plan.md` — git-lfs pre-flight note.** Isowords
+  uses git-lfs for asset files; the session host lacked
+  `git-lfs`, and `git clone` failed halfway through checkout
+  with "remote helper 'https' aborted session". Required
+  `git -c filter.lfs.{smudge,clean,process}=
+  -c filter.lfs.required=false clone <url>` workaround. Swift
+  sources aren't LFS-tracked, so the workaround is safe for
+  linter scans. Proposed addition to the "Pre-flight" section:
+  check for `.gitattributes` with `filter=lfs` and document the
+  workaround when `git-lfs` isn't installed.
+
+Both are small single-session edits. Fold into `road_test_plan.md`
+before the next DB-heavy / LFS-using adopter round.
 
 ## Follow-ups on what we found
 
@@ -385,31 +502,44 @@ has three entries:
 
 ## Recommended next-session opener
 
-No in-flight slot with urgent triggering evidence. Slot 12
-(linter crash fix) landed on SwiftProjectLint `6200514` alongside
-this round's close-out. The natural next move:
+The isowords round surfaced a concrete, one-session linter slice
+(slot 13) with two-adopter supporting evidence (isowords + Penny
+Q3). That's the highest value-per-effort next move:
 
-- **New adopter road-test.** Every slot that closed in recent
-  sessions (4, 8, 9, 10, 11, 12) started from a round. Penny was
-  the first production-app target and its yield was extraordinary
-  (10 correct-catches, 4 real-bug shapes, first macro-surface
-  validation). A second production adopter (Vapor-based CMS, an
-  internal microservice, or another SSWG project) would confirm
-  that the yield generalises and isn't Penny-specific.
+- **Slot 13 — prefix-lexicon expansion.** Add
+  `submit|start|complete|send|register` to
+  `HeuristicEffectInferrer`'s non-idempotent prefix list. Pre-slice
+  regression scan on `swift-nio` + TCA (both already measured, so
+  the delta is observable). Fixture tests per prefix. Expected
+  isowords Run A delta: `startDailyChallenge` real catch recovered
+  (net +1 correct-catch on default tier); `submitLeaderboardScore`
+  + `completeDailyChallenge` become defensible-noise (adopter
+  annotation closes). One-session slice on SwiftProjectLint.
 
-**The four Penny real-bug shapes** all map to
-`IdempotencyKey` / `@ExternallyIdempotent(by:)` fixes. Filing
-upstream triage issues is a separate, user-gated decision —
-parked as
-[`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md)
-with three filing-strategy options (one consolidated, four
-separate, or #1-only) and an explicit promotion trigger.
+Deferred — no urgent triggering evidence:
 
-Slot 5 (perf fix) and slot 3 (property-wrapper receiver resolution)
-still have no immediate triggering evidence — wait for a corpus
-that exhibits the pathology before committing a session to either.
-Slots 2, 4, 6, 7, 8, 9, 10, and 11 are closed out (§2, §4, §6,
-§7, §8, §9, §10, §11 above). Slot 7's publicly-visible follow-on
-(filing an upstream triage issue) has been moved to
-[`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md)
-with an explicit promotion trigger.
+- Slot 5 (perf fix) — wait for a corpus that exercises the
+  wall-clock budget beyond the current safety-net behaviour.
+- Slot 3 (property-wrapper receiver resolution) — wait for a
+  corpus that surfaces a real `(name, labels)` collision with
+  differing tiers (isowords didn't trigger it; neither did
+  Penny).
+- Slot 14 (HttpPipeline whitelist) — wait for a third Point-Free-
+  stack adopter, or promote after slot 13 ships if the
+  cross-adopter evidence from the two existing rounds justifies
+  it standalone.
+- Slot 15 (road-test plan template folds — SQL audit pass +
+  git-lfs pre-flight note) — single-session edit; can fold any
+  time, lowest priority.
+
+**Six real-bug shapes across Penny + isowords** all map to
+`IdempotencyKey` / `@ExternallyIdempotent(by:)`. Filing upstream
+triage issues is a separate, user-gated decision — Penny's four
+shapes parked in
+[`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md);
+isowords' two shapes can be similarly parked if the user wants
+upstream engagement (not auto-promoted).
+
+Slots 2, 4, 6, 7, 8, 9, 10, 11, 12 are closed out. Slot 7's
+publicly-visible follow-on is parked in
+[`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md).
