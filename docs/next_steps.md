@@ -47,9 +47,9 @@ value-per-effort, top to bottom.
   `@ExternallyIdempotent(by:)` are exercised by the root test target
   and by every adopter road-test. **Slot 6 — consumer-context
   validation — is fully closed.**
-- **Adopter road-tests**: **seven rounds completed** — `todos-fluent/`,
+- **Adopter road-tests**: **eight rounds completed** — `todos-fluent/`,
   `pointfreeco/`, `swift-nio/`, `swift-composable-architecture/`,
-  `swift-aws-lambda-runtime/`, `penny-bot/`, **`isowords/`**. The TCA
+  `swift-aws-lambda-runtime/`, `penny-bot/`, `isowords/`, **`spi-server/`**. The TCA
   round closed **all three** cluster-level gaps it surfaced (return-
   trailing annotation, send-on-closure-parameter, dependency-client
   declarations) across PRs #17 / #18 / #19; current TCA residual on
@@ -88,11 +88,25 @@ value-per-effort, top to bottom.
   accumulating evidence (slot 14 — HttpPipeline `writeStatus`, now
   2-adopter, still deferred). See
   [`isowords/trial-findings.md`](isowords/trial-findings.md).
+  **The SPI-Server round (third production-app target — Swift
+  Package Index server, Vapor+Fluent+PostgreSQL) produced the
+  first "no new slice" plateau.** 7 Run A / 39 Run B; 0 real-bug
+  catches, 3 defensible (Fluent `.unique(on:)` Migration dedup +
+  FS idempotent ops), 4 noise (all `AppMetrics.push` — Prometheus
+  Pushgateway observational shape). **The fresh
+  `AsyncCommand.run(using:signature:)` handler shape walked
+  cleanly without a framework whitelist entry** — the receiver-
+  agnostic symbol table handles it out of the box (quiet win for
+  linter generality). Zero new named slices; **Completion
+  Criterion #2 now at 1/3 consecutive plateaus.** New evidence-
+  accumulating candidate: `AppMetrics.push` as Prometheus-
+  Pushgateway observational shape (1-adopter). See
+  [`spi-server/trial-findings.md`](spi-server/trial-findings.md).
 - **Road-test workflow**: reworked to be fork-authoritative (commit
   `bb69729`), first dogfooded end-to-end on the Lambda round
   this session. Trial branches live on `<upstream>-idempotency-trial`
   forks under the user's GitHub, not on ephemeral `/tmp` clones.
-  Six forks provisioned so far:
+  Seven forks provisioned so far:
   - `swift-composable-architecture-idempotency-trial` — **active**;
     carries `trial-tca` (setup + `@DependencyClient` annotations
     + banner), default-branch switched.
@@ -103,10 +117,14 @@ value-per-effort, top to bottom.
     `trial-penny-bot` with `49db411` (Run A state, replayable)
     and `c309bcb` (Run B tip, strict_replayable). Default-branch
     switched. Fork hardened per recipe.
-  - **`isowords-idempotency-trial` — active**; carries
+  - `isowords-idempotency-trial` — **active**; carries
     `trial-isowords` with `a71c993` (Run A state, replayable)
     and `4e3cc83` (Run B tip, strict_replayable). Default-branch
     switched. Fork hardened per recipe.
+  - **`SwiftPackageIndex-Server-idempotency-trial` — active**;
+    carries `trial-spi-server` with `57f11d727` (Run A state,
+    replayable) and `c57b424b8` (Run B tip, strict_replayable).
+    Default-branch switched. Fork hardened per recipe.
   - `hummingbird-examples-idempotency-trial`
   - `pointfreeco-idempotency-trial`
   - `swift-nio-idempotency-trial`
@@ -500,43 +518,58 @@ has three entries:
 
 ## Recommended next-session opener
 
-Slots 13 and 15 landed this session (PR #21 merged + template
-folds into `road_test_plan.md`). No open linter-slice backlog.
-Next-session options, in value-per-effort order:
+Three production-app rounds complete (Penny, isowords, SPI-Server).
+**SPI-Server was the first plateau round** — zero new named slices
+— so Completion Criterion #2 stands at **1/3** consecutive
+plateaus. Next-session options, in value-per-effort order:
 
-- **New adopter round (production-app #3).** Validation direction
-  remains production apps; a third user-chosen prod adopter
-  continues the Penny/isowords series. If the adopter is
-  Point-Free-stack, the round doubles as the third-adopter data
-  point that promotes slot 14 (HttpPipeline) from "deferred" to
-  "ship". Otherwise it either surfaces a new cluster or produces
-  the first "no new slice" round — either outcome is a useful
-  signal. The `road_test_plan.md` template now includes the SQL
-  ground-truth pass and git-lfs pre-flight note, so a DB-heavy /
-  LFS-using adopter won't re-discover either gap.
-- **Slot 14 promotion (HttpPipeline whitelist) — eligible now.**
-  Two-adopter evidence (isowords + pointfreeco www) is already
-  on the books. Can ship standalone without a third adopter if
-  the user wants to close the cross-adopter `writeStatus` /
-  `writeHeader` / `writeBody` / `send` residual now.
+- **Fourth production-app round — continue the plateau count.**
+  Either shape:
+  - *Another battle-tested adopter* to push toward 2/3 plateaus.
+    Good candidates: a Hummingbird-based production app (never
+    scanned; would validate Hummingbird whitelist from `040f186`
+    in a prod context), or a Point-Free-stack prod app if one
+    surfaces (would also promote slot 14 to 3-adopter ship-ready).
+  - *Phase-2 shift* per `project_validation_phase2.md` memory —
+    obscure single-contributor Vapor / Hummingbird app. FP-rate
+    data on battle-tested projects is converging (Penny 5%,
+    isowords 12.5%, SPI-Server 57% — but SPI-Server's "noise"
+    is all one observational-metrics cluster, not true noise).
+  The plateau hypothesis gets stronger with each round that
+  surfaces no new named slice.
+- **Slot 14 promotion (HttpPipeline whitelist) — still eligible.**
+  Two-adopter evidence (isowords + pointfreeco www). Would close
+  the cross-adopter `writeStatus` / `writeHeader` / `writeBody` /
+  `send` residual. Can ship standalone without a third Point-
+  Free-stack adopter.
+- **`AppMetrics.push` / Prometheus Pushgateway shape** (evidence
+  accumulating, 1-adopter from SPI-Server). Re-scanning Penny at
+  merge tip `2fbb171` would clarify whether Penny's Prometheus-
+  style metrics calls also fire — if so, this becomes 2-adopter
+  evidence for a new framework whitelist slice. Lightweight
+  remeasurement (~30 min, similar to slot 13 close-out).
 
 Deferred — no urgent triggering evidence:
 
-- Slot 5 (perf fix) — wait for a corpus that exercises the
-  wall-clock budget beyond the current safety-net behaviour.
+- Slot 5 (perf fix) — SPI-Server's 349-file corpus scanned in <1s
+  with no budget trigger; still no corpus stressing this.
 - Slot 3 (property-wrapper receiver resolution) — wait for a
   corpus that surfaces a real `(name, labels)` collision with
-  differing tiers (isowords didn't trigger it; neither did
-  Penny).
+  differing tiers. SPI-Server had 5 `run(using:signature:)`
+  handlers with identical signatures but no collision (they
+  resolved to distinct owning types via the Symbol table; tier
+  was uniform).
 
 **Six real-bug shapes across Penny + isowords** all map to
-`IdempotencyKey` / `@ExternallyIdempotent(by:)`. Filing upstream
+`IdempotencyKey` / `@ExternallyIdempotent(by:)` (unchanged by
+SPI-Server round — 0 new shapes, 0 new catches). Filing upstream
 triage issues is a separate, user-gated decision — Penny's four
 shapes parked in
 [`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md);
 isowords' two shapes can be similarly parked if the user wants
-upstream engagement (not auto-promoted).
+upstream engagement (not auto-promoted). SPI-Server has no triage
+issues to file.
 
-Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, **15** are closed out.
-Slot 7's publicly-visible follow-on is parked in
+Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 15 are closed out. Slot 7's
+publicly-visible follow-on is parked in
 [`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md).
