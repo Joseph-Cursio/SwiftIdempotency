@@ -5,8 +5,14 @@ value-per-effort, top to bottom.
 
 ## Where things stand
 
-- **Linter** (`Joseph-Cursio/SwiftProjectLint`): main at `bc3c05e`
-  (post-PR #19 + #20 merge tip). Recent PRs:
+- **Linter** (`Joseph-Cursio/SwiftProjectLint`): main at `2fbb171`
+  (post-PR #21 merge tip). Recent PRs:
+  - **PR #21 (merged, 2026-04-21)** — commit `2fbb171`: prefix
+    lexicon expanded (`submit`, `start`, `complete`, `register`
+    added to `HeuristicEffectInferrer.nonIdempotentNames`). Closes
+    slot 13. Isowords Run A remeasured at merge tip: 5 → 8 fires,
+    4/5 → 5/5 handler coverage, missed-bug `startDailyChallenge`
+    recovered. +14 tests → 2286/276 green.
   - **PR #20 (merged)** — commit `bc3c05e`: `Type.init(...)` member-
     access form normalised to the bare-ctor whitelist path. Closes
     slot 2 from prior `next_steps.md`; eliminates one stray diagnostic
@@ -67,18 +73,20 @@ value-per-effort, top to bottom.
   [`penny-bot/trial-findings.md`](penny-bot/trial-findings.md).
   **The isowords round (second production-app target) answered the
   Penny-generalisation question: yield is codebase-dependent, not
-  linter-dependent.** 4/5 handlers fire in Run A (vs Penny's 5/5),
+  linter-dependent.** Post-slot-13 remeasurement (merge tip
+  `2fbb171`): **5/5 handlers fire in Run A** (matching Penny),
   with 2 real-bug shapes (`insertSharedGame` + `startDailyChallenge`
-  — duplicate-row inserts without `ON CONFLICT`). Isowords'
-  PostgreSQL schema uses pervasive upsert guards, so 3/5 Run A
-  diagnostics are defensible-by-design once the SQL is read.
-  **Six-for-six**: every real-bug shape across Penny + isowords
-  (6 distinct shapes) maps to the `IdempotencyKey` /
-  `@ExternallyIdempotent(by:)` surface. Round surfaced one new
-  adoption-gap slice (slot 13 — prefix-lexicon gap for `submit*`
-  / `start*` / `complete*` / `send*` / `register*`) and one
-  framework-whitelist candidate accumulating evidence (slot 14 —
-  HttpPipeline `writeStatus`, now 2-adopter). See
+  — duplicate-row inserts without `ON CONFLICT`, both caught in Run
+  A). Isowords' PostgreSQL schema uses pervasive upsert guards, so
+  5/8 Run A diagnostics are defensible-by-design once the SQL is
+  read. **Six-for-six**: every real-bug shape across Penny +
+  isowords (6 distinct shapes) maps to the `IdempotencyKey` /
+  `@ExternallyIdempotent(by:)` surface. Round surfaced one
+  adoption-gap slice that landed in-round (slot 13 — prefix-lexicon
+  gap for `submit*` / `start*` / `complete*` / `register*`, PR #21
+  merged as `2fbb171`) and one framework-whitelist candidate
+  accumulating evidence (slot 14 — HttpPipeline `writeStatus`, now
+  2-adopter, still deferred). See
   [`isowords/trial-findings.md`](isowords/trial-findings.md).
 - **Road-test workflow**: reworked to be fork-authoritative (commit
   `bb69729`), first dogfooded end-to-end on the Lambda round
@@ -311,44 +319,43 @@ Unblocks any multi-target macOS scan with duplicate file basenames
 (Penny, vapor core, hummingbird full, NIO full). No further action
 required on this slot.
 
-### 13. Prefix-lexicon gap for server-app verbs — **open (isowords round)**
+### 13. Prefix-lexicon gap for server-app verbs — **done (SwiftProjectLint `2fbb171`)**
 
-**Shape:** `HeuristicEffectInferrer`'s non-idempotent prefix list
-currently covers `create|insert|update|delete` (CRUD-style verbs,
-common in DB-code-gen output). Production server apps use a wider
-vocabulary that the current lexicon misses:
+Shipped as branch `slot13-prefix-lexicon` → **PR #21** → merge
+commit **`2fbb171`** (2026-04-21). `submit`, `start`, `complete`,
+`register` added to `HeuristicEffectInferrer.nonIdempotentNames`
+(+docstring update). `send` was already there. Bare-name +
+camelCase-gated prefix-match, identical treatment to the existing
+`create|insert|update|delete` entries. Linter test suite:
+2272 → 2286 (+14 new).
 
-| Prefix | Example callees | Evidence |
-|---|---|---|
-| `submit*` | `submitLeaderboardScore` (isowords), `submitGameMiddleware`, `submitPayment`-shape | 2 adopters (isowords + Penny Q3) |
-| `start*` | `startDailyChallenge` (isowords), `startSession` | 1 adopter (isowords) — **missed a real bug in Run A** |
-| `complete*` | `completeDailyChallenge` (isowords), `completeOnboarding`, `completeOrder` | 1 adopter (isowords) |
-| `send*` | `sendMessage` (Penny via body-walk not prefix), `sendWelcomeEmail` | 2 adopters (Penny, generic shape) |
-| `register*` | `registerPushToken`, `registerDevice` | 1 adopter (isowords) |
+**Measured deltas at merge tip `2fbb171`:**
 
-**Triggering evidence:** isowords Run A silently classified
-`startDailyChallenge` as idempotent because `start*` isn't in the
-lexicon — the linter missed a real `INSERT` without `ON CONFLICT`
-against `dailyChallengePlays`. Strict mode recovered it, but
-strict isn't the recommended default tier, so the gap is a quiet
-correctness hole on the lower-friction default.
+- **Isowords Run A**: 5 → 8 diagnostics; 4/5 → **5/5 handlers
+  fire**. Predicted outcome reproduced exactly:
+  - +1 correct catch: `startDailyChallenge` at
+    `DailyChallengeMiddleware.swift:117` (the Run A real-bug miss
+    recovered — **100% recall at merge tip**).
+  - +2 defensible: `submitLeaderboardScore` at `:112`,
+    `completeDailyChallenge` at `:149` (both upsert-backed;
+    adopter annotation closes).
+  See
+  [`isowords/trial-findings.md`](isowords/trial-findings.md)
+  §"Run A — replayable context" for the updated 8-row audit.
+- **Isowords Run B**: 162 → 162 total (unchanged); rule
+  distribution reshuffles from 157/5 (`[Unannotated]`/`[Non-Idempotent]`)
+  to 154/8 as the 3 prefix additions reclassify across tiers.
+  No regression.
+- **TCA regression check**: 13 strict → 13 strict (per-example:
+  Todos 5 / Search 4 / CaseStudies 4 — all unchanged). No TCA
+  handler's transitive call graph contains a `submit*` /
+  `start*` / `complete*` / `register*` method. No update needed
+  to `swift-composable-architecture/trial-findings.md`.
 
-**Fix direction:**
-- Add `submit|start|complete|send|register` to
-  `HeuristicEffectInferrer`'s non-idempotent prefix list.
-- Pre-slice: scan `swift-nio` and TCA corpora for regression risk
-  (neither should have strong `submit*`/`start*` surface, but
-  confirm).
-- Fixture tests per prefix classification.
-- Watch FP rate on the isowords Run A re-run — expect 3 new fires
-  (`startDailyChallenge` real catch + `submitLeaderboardScore` and
-  `completeDailyChallenge` defensible). Defensible noise is
-  acceptable; catching `start*` real bugs is the point.
-
-**Severity: medium.** Unblocks `start*`/`submit*`-shaped real-bug
-catches on the default `replayable` tier. One-session slice.
-See [`isowords/trial-findings.md`](isowords/trial-findings.md)
-§"Newly surfaced actionable slice — slot 13".
+The `IdempotencyKey` / `@ExternallyIdempotent(by:)` macro-surface
+cross-adopter tally is now **6/6 real-bug shapes** across Penny
+(4) + isowords (2), with isowords' Run A handler coverage
+matching Penny's at 5/5.
 
 ### 14. `HttpPipeline` framework whitelist — **deferred (evidence accumulating)**
 
@@ -502,19 +509,27 @@ has three entries:
 
 ## Recommended next-session opener
 
-The isowords round surfaced a concrete, one-session linter slice
-(slot 13) with two-adopter supporting evidence (isowords + Penny
-Q3). That's the highest value-per-effort next move:
+Slot 13 is landed and remeasured (merge `2fbb171`; isowords Run A
+yield now 5/5 matching Penny). Next-session options, in
+value-per-effort order:
 
-- **Slot 13 — prefix-lexicon expansion.** Add
-  `submit|start|complete|send|register` to
-  `HeuristicEffectInferrer`'s non-idempotent prefix list. Pre-slice
-  regression scan on `swift-nio` + TCA (both already measured, so
-  the delta is observable). Fixture tests per prefix. Expected
-  isowords Run A delta: `startDailyChallenge` real catch recovered
-  (net +1 correct-catch on default tier); `submitLeaderboardScore`
-  + `completeDailyChallenge` become defensible-noise (adopter
-  annotation closes). One-session slice on SwiftProjectLint.
+- **Slot 15 — `road_test_plan.md` template folds.** Two template
+  items surfaced in the isowords retrospective: SQL ground-truth
+  audit pass for DB-heavy adopters + git-lfs pre-flight
+  workaround note. Single-session edit; pays off on the next
+  DB-heavy / LFS-using adopter round. Lowest-risk, highest-
+  readiness next slice.
+- **New adopter round (production-app #3).** Validation direction
+  remains production apps; a third user-chosen prod adopter
+  continues the Penny/isowords series and provides the
+  third-adopter data point that would justify promoting slot 14
+  (HttpPipeline) from "deferred" to "ship" if the adopter is
+  Point-Free-stack, or surface a genuinely new cluster otherwise.
+- **Slot 14 promotion (HttpPipeline whitelist) — eligible now.**
+  Two-adopter evidence (isowords + pointfreeco www) is already
+  on the books. Can ship standalone without a third adopter if
+  the user wants to close the cross-adopter `writeStatus` /
+  `writeHeader` / `writeBody` / `send` residual now.
 
 Deferred — no urgent triggering evidence:
 
@@ -524,13 +539,6 @@ Deferred — no urgent triggering evidence:
   corpus that surfaces a real `(name, labels)` collision with
   differing tiers (isowords didn't trigger it; neither did
   Penny).
-- Slot 14 (HttpPipeline whitelist) — wait for a third Point-Free-
-  stack adopter, or promote after slot 13 ships if the
-  cross-adopter evidence from the two existing rounds justifies
-  it standalone.
-- Slot 15 (road-test plan template folds — SQL audit pass +
-  git-lfs pre-flight note) — single-session edit; can fold any
-  time, lowest priority.
 
 **Six real-bug shapes across Penny + isowords** all map to
 `IdempotencyKey` / `@ExternallyIdempotent(by:)`. Filing upstream
@@ -540,6 +548,6 @@ shapes parked in
 isowords' two shapes can be similarly parked if the user wants
 upstream engagement (not auto-promoted).
 
-Slots 2, 4, 6, 7, 8, 9, 10, 11, 12 are closed out. Slot 7's
+Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, **13** are closed out. Slot 7's
 publicly-visible follow-on is parked in
 [`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md).

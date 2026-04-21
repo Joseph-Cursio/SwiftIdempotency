@@ -2,36 +2,44 @@
 
 ## TL;DR
 
+**Merge-tip remeasurement (2026-04-21).** Slot 13 landed as
+SwiftProjectLint PR #21 (merge commit `2fbb171`); the prefix-lexicon
+gap that left `startDailyChallenge` silent in Run A is closed. At
+merge tip, **5/5 handlers fire in Run A** (matching Penny's
+handler-coverage yield), the previously-missed `startDailyChallenge`
+bug is caught on the default `replayable` tier, and the numbers
+below reflect this remeasurement against tip `2fbb171`.
+
 **The linter's yield on isowords is an order of magnitude lower than
 Penny's — and that's the answer to the research question.** 2 real-
-bug catches across 5 annotated handlers (vs Penny's 10). The
-difference is not linter-quality: the two bug-shape categories the
-linter found (`insertSharedGame` + `startDailyChallenge` → duplicate
-row inserts without `ON CONFLICT` guards) both map cleanly onto
-`IdempotencyKey` / `@ExternallyIdempotent(by:)`, same as Penny's
-shapes.
+bug catches in Run A across 5 annotated handlers (vs Penny's 10).
+The two bug-shape categories the linter found (`insertSharedGame` +
+`startDailyChallenge` → duplicate row inserts without `ON CONFLICT`
+guards) both map cleanly onto `IdempotencyKey` /
+`@ExternallyIdempotent(by:)`, same as Penny's shapes.
 
 The difference is **target codebase carefulness**. isowords'
 PostgreSQL schema uses `ON CONFLICT DO UPDATE` (upsert) and
-`WHERE col IS NULL` (guard) patterns pervasively — `submitLeaderboardScore`,
-`insertPushToken`, `updateAppleReceipt`, `completeDailyChallenge`
-are all already retry-safe at the SQL layer. The three Run A
-diagnostics that looked like bugs on the Swift surface (`createPlatformEndpoint`,
-`insertPushToken`, `updateAppleReceipt`) are all **defensible by
+`WHERE col IS NULL` (guard) patterns pervasively —
+`submitLeaderboardScore`, `insertPushToken`, `updateAppleReceipt`,
+`completeDailyChallenge` are all already retry-safe at the SQL
+layer. Five of the eight Run A diagnostics are **defensible by
 design** once the SQL is read. Penny inserts freely; isowords
 upserts pervasively.
 
-**One new adoption-gap slice surfaced:** the prefix lexicon
-(`create|insert|update|delete` → non-idempotent) is narrower than
+**Adoption-gap slice — now shipped.** The prefix lexicon
+(`create|insert|update|delete` → non-idempotent) was narrower than
 the verbs production server apps use. `submit*`, `start*`,
-`complete*`, `send*` are all invisible to Run A inference. Strict
-mode recovers the miss — `startDailyChallenge` did fire in Run B.
-See slot 13 below.
+`complete*`, `register*` were invisible to Run A inference; strict
+mode was the only safety net. Slot 13 added these to
+`HeuristicEffectInferrer.nonIdempotentNames` — see slot 13 below for
+the measured delta.
 
 ## Pinned context
 
-- **Linter:** `SwiftProjectLint` @ `6200514` (same tip as Penny
-  round; `swift test` green at 2272/276).
+- **Linter:** `SwiftProjectLint` @ `2fbb171` (PR #21 merge tip,
+  2026-04-21; `swift test` green at 2286/276). Prior measurement
+  was taken against tip `6200514` (pre-slot-13).
 - **Target:** `pointfreeco/isowords` @
   `c727d3a7c49cf0c98f2fa4f24c562f81e30165f7` → forked to
   `Joseph-Cursio/isowords-idempotency-trial` @ `trial-isowords`.
@@ -45,19 +53,19 @@ See slot 13 below.
 
 ## Run A — replayable context
 
-**5 diagnostics.** Per-handler headline:
+**8 diagnostics.** Per-handler headline:
 
 | Handler | Fires | Status |
 |---|---|---|
-| `submitGameMiddleware` | 1 | Only fire is on `verify` (pure) — noise |
+| `submitGameMiddleware` | 3 | `verify` (noise), `submitLeaderboardScore` (defensible, upsert), `completeDailyChallenge` (defensible, guarded) |
 | `submitSharedGameMiddleware` | 1 | `insertSharedGame` — real bug (no ON CONFLICT) |
 | `registerPushTokenMiddleware` | 2 | Both defensible (SNS create + DB upsert) |
 | `verifyReceiptMiddleware` | 1 | `updateAppleReceipt` — defensible (upsert) |
-| `startDailyChallengeMiddleware` | 0 | **silent** — `start*` prefix gap; real bug missed |
+| `startDailyChallengeMiddleware` | 1 | `startDailyChallenge` — real bug (no ON CONFLICT); recovered at merge tip |
 
-**Yield: 4/5 handlers fire (0.80).** Compare Penny 5/5 (1.00).
+**Yield: 5/5 handlers fire (1.00).** Matches Penny's 5/5.
 
-### Per-diagnostic audit (5 ≤ 30, full audit)
+### Per-diagnostic audit (8 ≤ 30, full audit)
 
 Ground truth verified against `Sources/DatabaseLive/DatabaseLive.swift`
 SQL — the actual `ON CONFLICT`/`WHERE` clauses determine whether a
@@ -66,40 +74,51 @@ retry is observably safe, independent of the Swift-layer method name.
 | # | File:Line | Callee | Verdict | Notes |
 |---|---|---|---|---|
 | 1 | `SubmitGameMiddleware.swift:105` | `verify` | **noise** | `verify(moves:playedOn:isValidWord:)` is a pure mathematical move-validator (`Sources/SharedModels/Verify.swift`). Inferrer body-walks 3 hops into it and reaches a mutation, misclassifying the whole function. Same shape as Penny's `unicodesPrefix` finding — pure helper mislabeled via body-walk. |
-| 2 | `ShareGameMiddleware.swift:39` | `insertSharedGame` | **correct catch / real bug** | DB SQL: `INSERT INTO "sharedGames" ... RETURNING *` — no `ON CONFLICT` clause. Every retry creates a new row with a fresh auto-generated code. User-visible impact is minor (duplicate rows, but client uses only the returned code), but the call is genuinely non-idempotent. **Fix: `IdempotencyKey(rawValue: completedGame.hash)` — `@ExternallyIdempotent(by: "idempotencyKey")` on `submitSharedGameMiddleware`'s request type.** |
-| 3 | `PushTokenMiddleware.swift:47` | `createPlatformEndpoint` | **defensible** | AWS SNS `createPlatformEndpoint` is documented as idempotent: the same `(PlatformApplicationArn, Token)` pair returns the same `EndpointArn`. Adopter should annotate `@lint.effect idempotent`. |
-| 4 | `PushTokenMiddleware.swift:55` | `insertPushToken` | **defensible** | DB SQL: `INSERT ... ON CONFLICT ("token") DO UPDATE SET build=..., authorizationStatus=..., updatedAt=NOW()`. Upsert on the token column — retry-safe. Adopter should annotate. |
-| 5 | `VerifyReceiptMiddleware.swift:58` | `updateAppleReceipt` | **defensible** | DB SQL: `INSERT ... ON CONFLICT ("playerId") DO UPDATE SET receipt=...`. Overwrite-idempotent by upsert. Adopter should annotate. |
+| 2 | `SubmitGameMiddleware.swift:112` | `submitLeaderboardScore` | **defensible** | DB SQL: `INSERT ... ON CONFLICT ("puzzle", "playerId") DO UPDATE SET language=...`. Upsert — retry-safe. Words-insert loop also upserts on `(leaderboardScoreId, word)`. Newly surfaced at merge tip (slot 13 prefix addition: `submit*`). |
+| 3 | `SubmitGameMiddleware.swift:149` | `completeDailyChallenge` | **defensible** | DB SQL: `UPDATE "dailyChallengePlays" SET completedAt=NOW() WHERE ... AND "completedAt" IS NULL`. Guard clause makes retry a no-op. Newly surfaced at merge tip (slot 13 prefix addition: `complete*`). |
+| 4 | `ShareGameMiddleware.swift:39` | `insertSharedGame` | **correct catch / real bug** | DB SQL: `INSERT INTO "sharedGames" ... RETURNING *` — no `ON CONFLICT` clause. Every retry creates a new row with a fresh auto-generated code. User-visible impact is minor (duplicate rows, but client uses only the returned code), but the call is genuinely non-idempotent. **Fix: `IdempotencyKey(rawValue: completedGame.hash)` — `@ExternallyIdempotent(by: "idempotencyKey")` on `submitSharedGameMiddleware`'s request type.** |
+| 5 | `PushTokenMiddleware.swift:47` | `createPlatformEndpoint` | **defensible** | AWS SNS `createPlatformEndpoint` is documented as idempotent: the same `(PlatformApplicationArn, Token)` pair returns the same `EndpointArn`. Adopter should annotate `@lint.effect idempotent`. |
+| 6 | `PushTokenMiddleware.swift:55` | `insertPushToken` | **defensible** | DB SQL: `INSERT ... ON CONFLICT ("token") DO UPDATE SET build=..., authorizationStatus=..., updatedAt=NOW()`. Upsert on the token column — retry-safe. Adopter should annotate. |
+| 7 | `VerifyReceiptMiddleware.swift:58` | `updateAppleReceipt` | **defensible** | DB SQL: `INSERT ... ON CONFLICT ("playerId") DO UPDATE SET receipt=...`. Overwrite-idempotent by upsert. Adopter should annotate. |
+| 8 | `DailyChallengeMiddleware.swift:117` | `startDailyChallenge` | **correct catch / real bug** | DB SQL: `INSERT INTO "dailyChallengePlays" ... RETURNING *` — no `ON CONFLICT`. Retry creates duplicate play rows with fresh IDs. Natural unique key exists (`dailyChallengeId`, `playerId`) — only one play per player per challenge is meaningful. **Fix: `ON CONFLICT ("dailyChallengeId", "playerId") DO NOTHING RETURNING *` in SQL, or `@ExternallyIdempotent(by: "playerId")` on the call.** Newly surfaced at merge tip (slot 13 prefix addition: `start*`) — closes the Run A miss from the pre-slot-13 measurement. |
 
 ### Run A tally
 
-- **Correct catches (real bugs with concrete fix shape):** **1** (position 2)
-- **Defensible (retry-safe by SQL design; adopter should annotate):** 3 (3, 4, 5)
+- **Correct catches (real bugs with concrete fix shape):** **2** (positions 4, 8)
+- **Defensible (retry-safe by SQL design; adopter should annotate):** **5** (2, 3, 5, 6, 7)
 - **Noise (pure-function body-walk):** 1 (position 1)
-- **Missed real bugs:** **1** — `startDailyChallenge` at line 117 is an INSERT without `ON CONFLICT` against the `dailyChallengePlays` table. Retry creates duplicate play rows. Invisible to Run A because `start*` isn't in the prefix lexicon.
+- **Missed real bugs:** **0** — both known `insertSharedGame` and `startDailyChallenge` bugs are now caught in Run A at merge tip.
 
-**Precision (catches ÷ fires):** 1/5 = 20% real-bug-shaped
+**Precision (catches ÷ fires):** 2/8 = 25% real-bug-shaped
 (compare Penny 10/20 = 50%). **Recall, counting ground truth:**
-1 caught / 2 actual bugs = 50% (the `insertSharedGame` and
-`startDailyChallenge` bugs were both present; the linter caught
-one).
+2 caught / 2 actual bugs = **100%** at merge tip (the pre-slot-13
+measurement was 50%; the slot 13 prefix-lexicon addition recovers
+the second bug).
 
 ## Run B — strict_replayable context
 
-**162 diagnostics.** Exceeds the 30-diagnostic audit cap;
-decomposed by cluster below. Rule distribution: 157
-`[Unannotated In Strict Replayable Context]` + 5
-`[Non-Idempotent In Retry Context]` (the same 5 Run A positions,
-restated under strict framing).
+**162 diagnostics at merge tip** (unchanged from pre-slot-13). Rule
+distribution shifts from 157 `[Unannotated]` + 5 `[Non-Idempotent]`
+(pre-slot-13) to **154 `[Unannotated]` + 8 `[Non-Idempotent]`** at
+merge tip — the three prefix-lexicon additions
+(`startDailyChallenge`, `submitLeaderboardScore`,
+`completeDailyChallenge`) reclassify from unannotated to
+non-idempotent under strict framing, but the total count and
+per-cluster decomposition are invariant. Exceeds the 30-diagnostic
+audit cap; decomposed by cluster below.
 
-### Strict-only real business calls (recovered via strict walk)
+### Real business calls (cross-tier at merge tip)
+
+All entries below fire in both tiers at merge tip. Pre-slot-13, the
+three write-shape entries were strict-only; slot 13's prefix-lexicon
+expansion pulled them into Run A.
 
 | # | File:Line | Callee | Verdict | Notes |
 |---|---|---|---|---|
-| 1 | `DailyChallengeMiddleware.swift:117` | `startDailyChallenge` | **correct catch / real bug** | **Recovered in strict mode.** SQL: `INSERT INTO "dailyChallengePlays" ... RETURNING *` — no `ON CONFLICT`. Retry creates duplicate play rows with fresh IDs. Natural unique key exists (`dailyChallengeId`, `playerId`) — only one play per player per challenge is meaningful. **Fix: `ON CONFLICT ("dailyChallengeId", "playerId") DO NOTHING RETURNING *` in SQL, or `@ExternallyIdempotent(by: "playerId")` on the call.** |
-| 2 | `SubmitGameMiddleware.swift:112` | `submitLeaderboardScore` | defensible | SQL: `INSERT ... ON CONFLICT ("puzzle", "playerId") DO UPDATE SET language=...`. Upsert — retry-safe. Words-insert loop also upserts on `(leaderboardScoreId, word)`. |
-| 3 | `SubmitGameMiddleware.swift:149` | `completeDailyChallenge` | defensible | SQL: `UPDATE "dailyChallengePlays" SET completedAt=NOW() WHERE ... AND "completedAt" IS NULL`. Guard clause makes retry a no-op. |
-| 4-8 | fetch* (5 call sites) | `fetchDailyChallengeById`, `fetchSharedGame`, `fetchDailyChallengeResult`, `fetchLeaderboardSummary`, `fetchTodaysDailyChallenges` | adoption-gap | Pure SELECT reads; adopter should annotate `@lint.effect idempotent`. |
+| 1 | `DailyChallengeMiddleware.swift:117` | `startDailyChallenge` | **correct catch / real bug** | SQL: `INSERT INTO "dailyChallengePlays" ... RETURNING *` — no `ON CONFLICT`. Retry creates duplicate play rows with fresh IDs. Natural unique key exists (`dailyChallengeId`, `playerId`) — only one play per player per challenge is meaningful. **Fix: `ON CONFLICT ("dailyChallengeId", "playerId") DO NOTHING RETURNING *` in SQL, or `@ExternallyIdempotent(by: "playerId")` on the call.** Run-A-visible at merge tip via slot 13 `start*` prefix addition. |
+| 2 | `SubmitGameMiddleware.swift:112` | `submitLeaderboardScore` | defensible | SQL: `INSERT ... ON CONFLICT ("puzzle", "playerId") DO UPDATE SET language=...`. Upsert — retry-safe. Words-insert loop also upserts on `(leaderboardScoreId, word)`. Run-A-visible at merge tip via slot 13 `submit*` prefix addition. |
+| 3 | `SubmitGameMiddleware.swift:149` | `completeDailyChallenge` | defensible | SQL: `UPDATE "dailyChallengePlays" SET completedAt=NOW() WHERE ... AND "completedAt" IS NULL`. Guard clause makes retry a no-op. Run-A-visible at merge tip via slot 13 `complete*` prefix addition. |
+| 4-8 | fetch* (5 call sites) | `fetchDailyChallengeById`, `fetchSharedGame`, `fetchDailyChallengeResult`, `fetchLeaderboardSummary`, `fetchTodaysDailyChallenges` | adoption-gap | Pure SELECT reads; adopter should annotate `@lint.effect idempotent`. Strict-only. |
 
 ### Decomposition of the 162 strict diagnostics
 
@@ -145,54 +164,49 @@ constructs: `IdempotencyKey` + `@ExternallyIdempotent(by:)`. The
 **macro surface's six-for-six generalisation** is the strongest
 cross-adopter signal the round produced.
 
-## Newly surfaced actionable slice — slot 13 (open)
+## Surfaced and landed — slot 13 (merged, PR #21)
 
 **Prefix-lexicon gap for server-app verbs.**
 
-**Shape:** `HeuristicEffectInferrer` currently classifies a callee
-as non-idempotent when its name starts with `create|insert|update|delete`
-(and a few other known write verbs). These are the CRUD-style
-verbs — common in DB-code-gen output. But production server apps
-use a **wider** vocabulary for non-idempotent operations:
+**Landed** as SwiftProjectLint **PR #21 → merge commit `2fbb171`**
+(2026-04-21). `submit`, `start`, `complete`, `register` added to
+`HeuristicEffectInferrer.nonIdempotentNames` (`send` was already
+present). Bare-name + camelCase-gated prefix-match, identical
+treatment to the existing `create|insert|update|delete` entries.
+Linter test suite: 2272 → 2286 (+14 tests).
 
-| Prefix | Example callees (in isowords) | Verdict |
-|---|---|---|
-| `submit*` | `submitLeaderboardScore`, `submitGameMiddleware` (also Penny-style: `submitPayment`) | INSERT or mutate-on-behalf-of-user |
-| `start*` | `startDailyChallenge`, `startSession` | Row-create ("start a play/trial/run") |
-| `complete*` | `completeDailyChallenge`, `completeOnboarding`, `completeOrder` | State-transition mutate |
-| `send*` | `sendMessage` (Penny), `sendWelcomeEmail` | External-dispatch |
-| `register*` | `registerPushToken`, `registerDevice` | Client-side registration that writes |
-| `dispatch*` / `schedule*` / `enqueue*` | — (not in isowords but cross-adopter-plausible) | Job-queue writes |
+**Measured delta on isowords Run A at merge tip** (this remeasurement):
 
-**Evidence**:
-- isowords Run A missed `startDailyChallenge` (the real bug) because
-  `start*` wasn't lexical. Strict mode recovered it, but
-  strict-mode noise floor (162 diagnostics for 5 handlers) makes
-  `strict_replayable` a high-friction default for adopters. Every
-  adopter that defaults to `replayable` will miss `start*` /
-  `submit*` / `complete*` real bugs.
-- Penny round had `submitLeaderboardScore`-shaped calls nowhere;
-  its vocabulary leaned on `create*`/`insert*`/`update*`/`add*` —
-  which happens to overlap the current lexicon. So Penny's
-  high-yield outcome partly reflects *prefix-lexicon alignment*
-  between the codebase and the heuristic, not just codebase bug
-  density.
+| Metric | Pre-slot-13 (`6200514`) | Merge tip (`2fbb171`) | Δ |
+|---|---|---|---|
+| Run A diagnostics | 5 | **8** | +3 |
+| Handlers firing | 4/5 | **5/5** | +1 |
+| Correct catches (real bugs) | 1 | **2** | +1 (`startDailyChallenge` recovered) |
+| Defensible | 3 | **5** | +2 (`submitLeaderboardScore`, `completeDailyChallenge`) |
+| Noise | 1 | 1 | unchanged |
+| Missed real bugs | 1 | **0** | −1 |
+| Recall | 50% | **100%** | +50pp |
 
-**Fix direction:**
-- Add `submit|start|complete|send|register` to the non-idempotent
-  prefix list in `HeuristicEffectInferrer`.
-- Gate individual additions on per-adopter evidence — `submit*` has
-  two-adopter evidence now (isowords + mentioned in Penny's Q3),
-  `start*` has one-adopter evidence (isowords), etc.
-- Before shipping: check FP rate on `swift-nio` and TCA — neither
-  has strong `submit*`/`start*` surface, so regression risk is
-  low, but worth a pre-slice scan.
-- Linter test addition: fixture tests for `submit*` / `start*` /
-  `complete*` / `send*` / `register*` prefix classification.
+**Run B delta:** total 162 unchanged; rule distribution shifts from
+157/5 (`[Unannotated]`/`[Non-Idempotent]`) to **154/8** as the three
+prefix-lexicon additions reclassify. No regression — all 162
+diagnostics stable across tips, just under different rule IDs.
 
-**Severity: medium.** It's not a blocker — strict mode already
-catches these — but adopters don't default to strict, so the gap
-is a quiet correctness hole in the lower-friction default tier.
+**Original slice rationale** (for historical reference) — `start*`
+wasn't in the prefix lexicon, so Run A inference missed
+`startDailyChallenge` despite the `INSERT` without `ON CONFLICT`
+ground truth. Strict mode recovered it, but `strict_replayable`'s
+noise floor (162 for 5 handlers) makes strict a high-friction
+default. Every adopter defaulting to `replayable` would have missed
+`start*` / `submit*` / `complete*` real bugs. Slot 13 closes that
+hole.
+
+**Cross-round:** Penny's vocabulary leaned on
+`create*`/`insert*`/`update*`/`add*` (overlapping the pre-slot-13
+lexicon), which is part of why Penny's Run A yield was so high
+relative to isowords'. Post-slot-13, lexicon alignment is no longer
+a confound; absolute yield differences trace to codebase
+carefulness.
 
 ## Newly surfaced deferred slice — slot 14 (evidence accumulating)
 
@@ -227,21 +241,24 @@ slice pays off immediately.
 ## Pre-committed question answers
 
 **Q1 — Does yield generalise?** **Yes, with important nuance.**
-The linter's precision is consistent (real-bug catches are
-real-bug-shaped; noise rate is 1/5 ≈ 20%, comparable to Penny's
-1/20 = 5% after adjusting for defensible-by-design catches). But
-**absolute yield depends on target codebase carefulness**:
+At merge tip, the linter's precision is consistent (real-bug
+catches are real-bug-shaped; noise rate is 1/8 = 12.5%, comparable
+to Penny's 1/20 = 5% after adjusting for defensible-by-design
+catches). Handler coverage matches Penny at 5/5. But **absolute
+yield (fires and real-bug count) still depends on target codebase
+carefulness**:
 
-|  | Penny | isowords |
+|  | Penny | isowords (merge tip `2fbb171`) |
 |---|---|---|
 | Handlers | 5 | 5 |
-| Run A fires | 20 | 5 |
-| Run A real-bug catches | 10 | 1 |
-| Run A defensible | 6 | 3 |
+| Run A fires | 20 | 8 |
+| Run A real-bug catches | 10 | 2 |
+| Run A defensible | 6 | 5 |
 | Run A noise | 1 | 1 |
 | Run A adoption-gap | 3 | 0 |
+| Run A handler coverage | 5/5 | **5/5** |
 | Real-bug shapes (distinct) | 4 | 2 |
-| Missed real bugs (Run A) | 0 known | 1 (`startDailyChallenge`) |
+| Missed real bugs (Run A) | 0 known | **0** (prior: 1; recovered via slot 13) |
 | Codebase ON CONFLICT / guarded SQL | none observed | pervasive |
 
 Penny writes without upserts; isowords upserts pervasively. The
@@ -286,22 +303,24 @@ likely **Discord-bot-shape-specific**, not universal production
 patterns. The double-insert shape IS universal (appears in both
 rounds).
 
-**Q4 — Adoption-gap slices.** **One new slice: prefix lexicon
-gap** (slot 13 above). Residual is otherwise known cross-adopter
-noise. No new cluster shapes beyond what Penny + Lambda +
-pointfreeco-www already surfaced.
+**Q4 — Adoption-gap slices.** **One new slice surfaced and landed
+in-round: prefix-lexicon gap** (slot 13 above — PR #21, merge
+`2fbb171`). Residual is otherwise known cross-adopter noise. No
+new cluster shapes beyond what Penny + Lambda + pointfreeco-www
+already surfaced.
 
 ## Comparison to prior rounds
 
-| Metric | Lambda demos (R9) | Penny (prod #1) | isowords (prod #2) |
+| Metric | Lambda demos (R9) | Penny (prod #1) | isowords (prod #2, merge tip) |
 |---|---|---|---|
 | Handlers annotated | 6 | 5 | 5 |
-| Run A catches | 0 | 20 | 5 |
-| Run A correct-catches | 0 | 10 | 1 |
-| Run A real-bug shapes | 0 | 4 | 1 (+1 missed via prefix gap) |
+| Run A catches | 0 | 20 | **8** |
+| Run A correct-catches | 0 | 10 | **2** |
+| Run A real-bug shapes | 0 | 4 | 2 |
+| Run A handler coverage | 0/6 | 5/5 | **5/5** |
 | Run B count | 16 → 11 post-slot-10 | 71 | 162 |
-| New adoption-gap slices | slot 10 | slot 12 (crash) | **slot 13 (prefix-lexicon)** |
-| Framework whitelist candidate | slot 10 (landed) | 0 | slot 14 (HttpPipeline) |
+| New adoption-gap slices | slot 10 (landed) | slot 12 (landed) | **slot 13 (landed)** |
+| Framework whitelist candidate | slot 10 (landed) | 0 | slot 14 (HttpPipeline, deferred) |
 | IdempotencyKey / @Externally coverage | 0/0 | 4/4 | **2/2** |
 
 **Every real-bug shape surfaced across three rounds maps cleanly
