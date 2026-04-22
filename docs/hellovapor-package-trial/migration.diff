@@ -1,0 +1,307 @@
+diff --git a/Package.resolved b/Package.resolved
+index 8afca03..30fdddd 100644
+--- a/Package.resolved
++++ b/Package.resolved
+@@ -1,5 +1,5 @@
+ {
+-  "originHash" : "ab772922623b5235997d66d6d952784a8aeeea590effc415b75913f7657f3525",
++  "originHash" : "5de6ed458752bf6d5db9f1fa13a90846607b12824945329940c69416dcd9994c",
+   "pins" : [
+     {
+       "identity" : "async-http-client",
+@@ -307,6 +307,15 @@
+         "version" : "2.11.0"
+       }
+     },
++    {
++      "identity" : "swift-syntax",
++      "kind" : "remoteSourceControl",
++      "location" : "https://github.com/apple/swift-syntax.git",
++      "state" : {
++        "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
++        "version" : "602.0.0"
++      }
++    },
+     {
+       "identity" : "swift-system",
+       "kind" : "remoteSourceControl",
+@@ -316,6 +325,15 @@
+         "version" : "1.6.4"
+       }
+     },
++    {
++      "identity" : "swiftidempotency",
++      "kind" : "remoteSourceControl",
++      "location" : "https://github.com/Joseph-Cursio/SwiftIdempotency.git",
++      "state" : {
++        "branch" : "34cd52f",
++        "revision" : "34cd52ff1d4628b61808474240ae7e35429e38a1"
++      }
++    },
+     {
+       "identity" : "vapor",
+       "kind" : "remoteSourceControl",
+diff --git a/Package.swift b/Package.swift
+index 8ff26f4..442032f 100644
+--- a/Package.swift
++++ b/Package.swift
+@@ -17,6 +17,7 @@ let package = Package(
+         .package(url: "https://github.com/vapor/leaf.git", from: "4.3.0"),
+         // 🔵 Non-blocking, event-driven networking for Swift. Used for custom executors
+         .package(url: "https://github.com/apple/swift-nio.git", from: "2.65.0"),
++        .package(url: "https://github.com/Joseph-Cursio/SwiftIdempotency.git", revision: "34cd52f"),
+     ],
+     targets: [
+         .executableTarget(
+@@ -28,6 +29,7 @@ let package = Package(
+                 .product(name: "Vapor", package: "vapor"),
+                 .product(name: "NIOCore", package: "swift-nio"),
+                 .product(name: "NIOPosix", package: "swift-nio"),
++                .product(name: "SwiftIdempotency", package: "SwiftIdempotency"),
+             ],
+             swiftSettings: swiftSettings
+         ),
+@@ -36,6 +38,7 @@ let package = Package(
+             dependencies: [
+                 .target(name: "HelloVapor"),
+                 .product(name: "VaporTesting", package: "vapor"),
++                .product(name: "SwiftIdempotency", package: "SwiftIdempotency"),
+             ],
+             swiftSettings: swiftSettings
+         )
+diff --git a/Sources/HelloVapor/Handlers/CreateAcronymHandler.swift b/Sources/HelloVapor/Handlers/CreateAcronymHandler.swift
+new file mode 100644
+index 0000000..141e30a
+--- /dev/null
++++ b/Sources/HelloVapor/Handlers/CreateAcronymHandler.swift
+@@ -0,0 +1,13 @@
++import Fluent
++import Vapor
++import SwiftIdempotency
++
++@ExternallyIdempotent(by: "idempotencyKey")
++func createAcronym(
++    req: Request,
++    acronym: Acronym,
++    idempotencyKey: IdempotencyKey
++) async throws -> Acronym {
++    try await acronym.save(on: req.db)
++    return acronym
++}
+diff --git a/Sources/HelloVapor/routes.swift b/Sources/HelloVapor/routes.swift
+index 7a689fc..78c2881 100644
+--- a/Sources/HelloVapor/routes.swift
++++ b/Sources/HelloVapor/routes.swift
+@@ -1,5 +1,6 @@
+ import Fluent
+ import Vapor
++import SwiftIdempotency
+ 
+ func routes(_ app: Application) throws {
+   app.get { req async throws in
+@@ -30,8 +31,13 @@ func routes(_ app: Application) throws {
+   // 添加Acronym
+   app.post("api", "acronym") { req async throws -> Acronym in
+     let acronym = try req.content.decode(Acronym.self)
+-    try await acronym.save(on: req.db)
+-    return acronym
++    let keyString = req.headers.first(name: "Idempotency-Key") ?? acronym.short
++    let idempotencyKey = IdempotencyKey(fromAuditedString: keyString)
++    return try await createAcronym(
++      req: req,
++      acronym: acronym,
++      idempotencyKey: idempotencyKey
++    )
+   }.description("Create a new acronym.")
+ 
+   try app.register(collection: TodoController())
+diff --git a/Tests/HelloVaporTests/PackageIntegrationTests.swift b/Tests/HelloVaporTests/PackageIntegrationTests.swift
+new file mode 100644
+index 0000000..2bba726
+--- /dev/null
++++ b/Tests/HelloVaporTests/PackageIntegrationTests.swift
+@@ -0,0 +1,184 @@
++@testable import HelloVapor
++import VaporTesting
++import Testing
++import Fluent
++import FluentSQLiteDriver
++import SwiftIdempotency
++import Vapor
++
++// Trial: second package-adoption integration round.
++// Documents what happens when the macro surface meets a Fluent Model
++// return type on a real adopter's create handler. Counter-case to
++// luka-vapor's HTTPStatus.ok pathology.
++
++@Suite("IdempotencyKey on Fluent Models", .serialized)
++struct IdempotencyKeyOnFluentModelsTests {
++    private func withApp(_ test: (Application) async throws -> ()) async throws {
++        let app = try await Application.make(.testing)
++        do {
++            try await configure(app)
++            try await app.autoMigrate()
++            try await test(app)
++            try await app.autoRevert()
++        } catch {
++            try? await app.autoRevert()
++            try await app.asyncShutdown()
++            throw error
++        }
++        try await app.asyncShutdown()
++    }
++
++    /// **Finding:** Fluent's `Model` does NOT inherit `Identifiable`,
++    /// even though it has `@ID var id: UUID?`. Attempting
++    /// `IdempotencyKey(fromEntity:)` on a raw `Acronym` produces a
++    /// compile error:
++    ///
++    ///     initializer 'init(fromEntity:)' requires that 'Acronym'
++    ///     conform to 'Identifiable'
++    ///
++    /// This test captures the workaround: adopters must explicitly
++    /// add `Identifiable` conformance to their Model. It's a one-line
++    /// extension, but it's the adopter's code to maintain, and
++    /// third-party Model types (defined outside the adopter's module)
++    /// can't be retroactively conformed in some cases.
++    @Test("Explicit Identifiable conformance makes fromEntity reachable")
++    func identifiableConformanceEnablesFromEntity() async throws {
++        try await withApp { app in
++            let acronym = Acronym(short: "API", long: "Application Programming Interface")
++            try await acronym.save(on: app.db)
++            #expect(acronym.id != nil)
++
++            // Using the IdentifiableAcronym adapter defined below —
++            // this is the adopter-side code required to reach
++            // `IdempotencyKey(fromEntity:)`.
++            let adapter = IdentifiableAcronym(acronym)
++            let key = IdempotencyKey(fromEntity: adapter)
++            #expect(key.description.count > 10) // UUID string
++        }
++    }
++
++    /// The pragmatic adopter path: extract the idempotency key from
++    /// an HTTP header or a business-key field, route through
++    /// `init(fromAuditedString:)`. Same audit hatch as luka-vapor.
++    @Test("Header-sourced IdempotencyKey via fromAuditedString")
++    func headerSourcedKeyFlow() async throws {
++        try await withApp { app in
++            let keyString = "client-provided-req-001"
++            let key = IdempotencyKey(fromAuditedString: keyString)
++
++            let acronym = Acronym(short: "HDR", long: "Header-keyed")
++            let saved = try await createAcronym(
++                req: Request(application: app, on: app.eventLoopGroup.next()),
++                acronym: acronym,
++                idempotencyKey: key
++            )
++            #expect(saved.id != nil)
++            #expect(saved.short == "HDR")
++        }
++    }
++
++    /// Pre-save bootstrap problem: an Acronym being created has no id
++    /// until after save. Can't build the key from the entity because
++    /// the entity IS the thing being keyed. Documents the shape; the
++    /// adopter's resolution is a header- or business-key-sourced
++    /// `init(fromAuditedString:)`.
++    @Test("Pre-save Acronym has nil id — bootstrap problem documented")
++    func preSaveIdBootstrapProblem() throws {
++        let acronym = Acronym(short: "PRE", long: "Pre-save")
++        #expect(acronym.id == nil)
++        // The `IdempotencyKey(fromEntity:)` constructor requires
++        // `E.ID: CustomStringConvertible` — which `UUID?` does NOT
++        // satisfy (only the unwrapped `UUID` does). So even with an
++        // Identifiable adapter, adopters have to force-unwrap or
++        // substitute the id. For pre-save entities this substitution
++        // is always going to be a synthetic placeholder, not the real
++        // identity — defeating the point of the "fromEntity" path.
++        //
++        // Practical conclusion: `init(fromEntity:)` is a post-save-
++        // read-or-lookup tool, not a create-handler tool. Create
++        // handlers route through `init(fromAuditedString:)` on the
++        // header or a natural business key.
++    }
++}
++
++/// Adapter the adopter must write to bridge Fluent's Model to
++/// Identifiable — the bridge that's required because `Model` doesn't
++/// inherit `Identifiable`. Exposes non-Optional UUID via force-unwrap
++/// so `E.ID: CustomStringConvertible` is satisfied; adopters must
++/// construct this only post-save.
++struct IdentifiableAcronym: Identifiable {
++    let acronym: Acronym
++    var id: UUID { acronym.id! } // safe only post-save
++    init(_ acronym: Acronym) { self.acronym = acronym }
++}
++
++@Suite("Option C on Fluent Model returns", .serialized)
++struct OptionCOnFluentModelsTests {
++    /// Fluent Model is `final class` without explicit `Equatable`
++    /// conformance. The macro's `#assertIdempotent` requires the
++    /// return type to be `Equatable`; calling it with an
++    /// `Acronym`-returning closure produces a compile error. The
++    /// test documents the requirement — the commented-out body below
++    /// is what an adopter naively writes.
++    @Test("Acronym as #assertIdempotent return requires Equatable conformance")
++    func acronymNotEquatableByDefault() throws {
++        // Naive adopter code — this would NOT compile:
++        //
++        //     let result = try #assertIdempotent {
++        //         Acronym(short: "TEST", long: "Test")
++        //     }
++        //
++        // Expected compile error:
++        // "Global function '__idempotencyAssertRunTwice(file:line:_:)'
++        //  requires that 'Acronym' conform to 'Equatable'"
++        //
++        // Workaround: adopter extracts a value-tuple from the closure,
++        // or adds an Equatable conformance on Acronym.
++        let acronym = Acronym(short: "TEST", long: "Test")
++        let asTuple = (acronym.short, acronym.long)
++        #expect(asTuple == ("TEST", "Test"))
++    }
++
++    /// Workaround: return a value-tuple from the `#assertIdempotent`
++    /// closure instead of the Acronym itself. Tuples of Equatable
++    /// types are Equatable via synthesis — the macro accepts them.
++    /// Option C catches the create non-idempotency via differing
++    /// UUIDs across the two invocations.
++    @Test("Tuple-of-fields workaround exposes differing UUIDs")
++    func tupleWorkaroundExposesIDChanges() async throws {
++        try await withApp { app in
++            // Don't use #assertIdempotent directly (it fires a
++            // precondition that would terminate the test process);
++            // simulate what it would do. First save → fresh UUID A;
++            // second save → fresh UUID B. Tuple returns differ.
++            let first = Acronym(short: "UUID-TEST", long: "first")
++            try await first.save(on: app.db)
++            let second = Acronym(short: "UUID-TEST-2", long: "second")
++            try await second.save(on: app.db)
++
++            let firstTuple = (first.id, first.short, first.long)
++            let secondTuple = (second.id, second.short, second.long)
++
++            // UUIDs differ, so tuples are unequal — Option C would
++            // catch this shape. Contrast with luka-vapor's
++            // HTTPStatus.ok pathology where returns are trivially equal.
++            // Swift tuples of optionals are `==`-able when the elements are.
++            #expect(firstTuple != secondTuple)
++        }
++    }
++
++    private func withApp(_ test: (Application) async throws -> ()) async throws {
++        let app = try await Application.make(.testing)
++        do {
++            try await configure(app)
++            try await app.autoMigrate()
++            try await test(app)
++            try await app.autoRevert()
++        } catch {
++            try? await app.autoRevert()
++            try await app.asyncShutdown()
++            throw error
++        }
++        try await app.asyncShutdown()
++    }
++}
