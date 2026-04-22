@@ -1,0 +1,6 @@
+Sources/App/Application+build.swift:20: info: [Could Be Private] 'AppRequestContext' is only used in its declaring file and could be private
+  suggestion: Add `private` access to narrow the scope of 'AppRequestContext'.
+Sources/App/Application+build.swift:94: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'buildRouter' is declared `@lint.context replayable` but calls 'post', whose effect is inferred `non_idempotent` from the callee name `post`. If the inference is wrong, annotate 'post' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'post' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+
+Found 2 issues (1 error, 1 info)

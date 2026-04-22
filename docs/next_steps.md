@@ -144,6 +144,20 @@ value-per-effort, top to bottom.
   criteria are now met (framework coverage ✅, adoption-gap
   stability ✅, macro-form evidence ✅).** See
   [`myfavquotes-api/trial-findings.md`](myfavquotes-api/trial-findings.md).
+  **The hummingbird-examples/open-telemetry round (first
+  slice-driven round post-criteria-close — targeting slot 16
+  promotion) closed slot 16 at 2-adopter ship-eligibility.**
+  Run A 1 / Run B 12; zero real-bug catches (no persistence in
+  this OTel demo). 1× `router.post` Run A fire + 2× `router.get`
+  Run B fire match prospero's two-path cluster shape exactly;
+  slot 16 advances from 1-adopter (prospero-only) to 2-adopter
+  → linter team may now draft the Hummingbird Router DSL
+  whitelist PR. Four new 1-adopter below-threshold candidates
+  surfaced incidentally (`addMiddleware`, `context.parameters.require`
+  receiver-chain gap, Swift Distributed Tracing `withSpan`,
+  Swift Concurrency `Task.sleep`/`Duration.seconds`); none
+  ship-eligible, all parked for next-round observation. See
+  [`hummingbird-examples-open-telemetry/trial-findings.md`](hummingbird-examples-open-telemetry/trial-findings.md).
 - **Road-test workflow**: reworked to be fork-authoritative (commit
   `bb69729`), first dogfooded end-to-end on the Lambda round
   this session. Trial branches live on `<upstream>-idempotency-trial`
@@ -175,10 +189,14 @@ value-per-effort, top to bottom.
     `trial-myfavquotes` with `8ae0c78` (Run A state, replayable)
     and `579c1a4` (Run B tip, strict_replayable). Default-branch
     switched. Fork hardened per recipe.
-  - `hummingbird-examples-idempotency-trial`
+  - **`hummingbird-examples-idempotency-trial` — active**; carries
+    `trial-open-telemetry` with `9a7edb8` (Run A state, replayable)
+    and `674935a` (Run B tip, strict_replayable). Banner at
+    `9b5a662`. First slice-driven round; targeted slot 16
+    promotion on the `open-telemetry/` subdirectory.
   - `pointfreeco-idempotency-trial`
   - `swift-nio-idempotency-trial`
-  The latter three are pre-provisioned (hardened: issues/wiki/projects
+  The latter two are pre-provisioned (hardened: issues/wiki/projects
   disabled, sandbox description) but have no trial branch yet.
   Banner + default-branch switch apply per-round when a
   `trial-<slug>` branch lands. See `road_test_plan.md` for the
@@ -601,16 +619,19 @@ it just stops blocking on new targets."* So future rounds become
 **criterion-driven** (close a ship gate). Options, in
 value-per-effort order:
 
-- **Slot 16 promotion (Hummingbird Router DSL whitelist) — still
-  1-adopter (prospero only).** myfavquotes-api did NOT push it to
-  2-adopter because it uses method-reference handler binding
-  (`use: self.show`), not inline trailing closures. Three paths to
-  promote: (a) find another inline-closure Hummingbird adopter
-  (e.g. hummingbird-examples auth/CRUD examples often use
-  closures), (b) retro-pass on myfavquotes-api fork annotating
-  `addRoutes(to:)` registration helpers, (c) ship 1-adopter on
-  prospero alone if the linter team is comfortable with that
-  evidence threshold.
+- **Slot 16 (Hummingbird Router DSL whitelist) — closed at
+  2-adopter ship-eligibility.** The hummingbird-examples/open-telemetry
+  round (path (a) from the three-path framing) produced exact-shape
+  corroboration: 1× `router.post` Run A fire + 2× `router.get`
+  Run B fire, matching prospero's 3+11 cluster ratio. Linter
+  team's next move: draft the `SwiftProjectLint` PR adding
+  `router.{get,post,put,patch,delete}` to `FrameworkWhitelist`
+  under the `Hummingbird` gate, analogous to the slot-14
+  HttpPipeline whitelist (merged in PR #22). Two corroborating
+  trial tips to cite: `Joseph-Cursio/prospero-idempotency-trial`
+  `56d676f` (prospero Run B) and
+  `Joseph-Cursio/hummingbird-examples-idempotency-trial`
+  `674935a` (open-telemetry Run B).
 - **Cross-adopter triage filing** — eight real-bug shapes have
   been documented across five adopters. Penny's four shapes are
   parked in [`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md);
