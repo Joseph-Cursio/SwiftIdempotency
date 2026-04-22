@@ -742,6 +742,62 @@ value-per-effort order:
   Same verdict as Prometheus Pushgateway — each observability
   library is its own receiver; defer until 2-adopter evidence.
 
+- **Package release prep (v0.1.0 → SPI submission) — in flight.**
+  Apache-2.0 license landed (SwiftIdempotency `13b1a24`); README
+  pre-release review prompted a new
+  [`package_adoption_test_plan.md`](package_adoption_test_plan.md)
+  workstream distinct from the linter road-tests. Progress:
+  - **luka-vapor package trial** (`d9e8c1e`) — first adopter-
+    integration validation. Migrated `start-live-activity` handler;
+    5/5 tests pass; confirmed Option C pathology on `HTTPStatus.ok`
+    returns as P0 finding; build-time delta within noise. README
+    updated (`34cd52f`) with Option C pathology section, inline-
+    closure migration guide, and `SwiftIdempotencyTestSupport`
+    stale-ref fix. See
+    [`luka-vapor-package-trial/`](luka-vapor-package-trial/).
+  - **hellovapor package trial** (`ca29198`) — second adopter-
+    integration, Fluent-Model counter-case. Migrated `createAcronym`
+    handler; 5/5 tests pass; surfaced **four new findings** — two
+    P0 on `IdempotencyKey(fromEntity:)` constraints (Fluent `Model`
+    not `Identifiable`, `CustomStringConvertible` rejecting Optional
+    IDs), one P1 linter gate mismatch (see slot 19 below), one P3
+    filename collision. Option C working set characterised across
+    both trials: sharp on synthesised-`Equatable` struct returns;
+    blind on trivial returns (`HTTPStatus.ok`, `Void`) and on non-
+    Equatable class returns without adopter workarounds. See
+    [`hellovapor-package-trial/`](hellovapor-package-trial/).
+  - **Pending v0.1.0 blocker:** README "Using with Fluent ORM"
+    section. Documents the `Identifiable` adapter workaround, the
+    Optional-ID force-unwrap pattern, tuple workarounds for non-
+    Equatable Model returns, and the header-sourced key flow as the
+    idiomatic path. ~40 lines. Most urgent documentation gap — Fluent
+    is the biggest Vapor-ecosystem persistence library.
+  - **Pending post-v0.1.0:** `IdempotencyKey(fromEntity:)` API
+    relaxation. Drop the `CustomStringConvertible` constraint on
+    `E.ID` (or add a Fluent-shaped constructor) so the path reaches
+    Fluent Models without adapter code. Needs a third adopter trial
+    (non-Fluent Identifiable type — Core Data, SwiftData) to confirm
+    the Optional-ID pattern recurs outside Fluent before committing.
+  - **Pending post-v0.1.0:** Option B (dep-injected mock effects)
+    promotion from deferred. Would catch the non-idempotency shapes
+    Option C is blind to — the characterisation above gives concrete
+    design constraints for what Option B would need to verify.
+
+- **Slot 19 candidate (SwiftProjectLint) — FluentKit gate
+  `import Fluent` alias.** Surfaced by the hellovapor package
+  trial's linter parity check. Idiomatic Vapor code uses the
+  `Fluent` meta-package, not `FluentKit`. The linter's FluentKit
+  gate matches the literal import name only; `import Fluent` silences
+  the Fluent-ORM-verb classification. Evidence: hellovapor scan went
+  silent on `save(on:)` inside an `@ExternallyIdempotent`-marked
+  body under `import Fluent`, fired correctly (1
+  `idempotencyViolation`) after swapping to `import FluentKit`.
+  Cross-adopter check recommended before shipping: re-run prospero /
+  myfavquotes-api / SPI-Server / hummingbird-examples linter trials
+  at a slot-19 tip and measure catch-count deltas — probably
+  meaningfully higher given how widely adopters use `import Fluent`.
+  Shape: same as slots 13-18, data-table addition. Low cost.
+
 Deferred — no urgent triggering evidence:
 
 - Slot 5 (perf fix) — no corpus has stressed the wall-clock
@@ -755,6 +811,10 @@ myfavquotes-api + luka-vapor + hellovapor** all map to
 `IdempotencyKey` / `@ExternallyIdempotent(by:)`. **10-for-10
 macro-surface coverage across six production adopters.**
 
-Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, **18** are
-closed out. Slot 7's publicly-visible follow-on is parked in
+Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 are
+closed out. **Slot 19 (FluentKit `import Fluent` alias) is the
+next queued linter candidate.** Package-side v0.1.0 release prep
+is the next queued SwiftIdempotency workstream — see the
+"Package release prep" bullet above for the full slice list.
+Slot 7's publicly-visible follow-on is parked in
 [`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md).
