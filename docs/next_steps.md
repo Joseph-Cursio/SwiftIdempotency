@@ -618,10 +618,13 @@ value-per-effort order:
   (`UsersController.login` token-persistence)** could be similarly
   parked. Filing publicly is user-gated (not auto-promoted);
   surfacing them as a batch is one option for adopter engagement.
-- **`AppMetrics.push` / Prometheus Pushgateway shape**
-  (1-adopter from SPI-Server). Re-scan Penny at merge tip
-  `2fbb171` to see if Penny's metrics calls fire same shape.
-  ~30 min lightweight.
+- **`AppMetrics.push` / Prometheus Pushgateway shape — closed
+  (SPI-Server-specific).** Penny re-scan at slot 14 tip
+  (`698081e`) returned **0 `push` fires, 0 AppMetrics references**.
+  Penny Run B unchanged at 71 issues (no slot 14 regression).
+  Penny uses CloudWatch via Lambda runtime + swift-log, not
+  Prometheus. Shape stays at 1-adopter; won't promote without a
+  third Vapor+Prometheus adopter (unlikely soon).
 - **Bcrypt-crypto-gap** (1-adopter, 1 fire from myfavquotes-api).
   Single-fire shape — only matters if a future Hummingbird/Vapor
   adopter with auth flows fires the same shape and pushes to
