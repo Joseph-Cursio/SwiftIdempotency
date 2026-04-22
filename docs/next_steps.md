@@ -657,8 +657,8 @@ value-per-effort order:
   Single-fire shape — only matters if a future Hummingbird/Vapor
   adopter with auth flows fires the same shape and pushes to
   2-adopter slice volume. No action until then.
-- **Slot 17 (Vapor routing DSL whitelist) — PR #24 open
-  (SwiftProjectLint `afbc67c`, pending merge).** Five receiver-
+- **Slot 17 (Vapor routing DSL whitelist) — shipped
+  (SwiftProjectLint `e38df30`, PR #24 merged 2026-04-22).** Five receiver-
   method pairs `(app, get|post|put|patch|delete) → Vapor` added
   to `idempotentReceiverMethodsByFramework` with `FrameworkWhitelist.vapor`
   constant. Re-scans at slot-17 tip:
@@ -732,7 +732,6 @@ myfavquotes-api + luka-vapor + hellovapor** all map to
 `IdempotencyKey` / `@ExternallyIdempotent(by:)`. **10-for-10
 macro-surface coverage across six production adopters.**
 
-Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 are closed
-out. Slot 17 is in-flight (PR #24 pending merge). Slot 7's
-publicly-visible follow-on is parked in
+Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, **17** are
+closed out. Slot 7's publicly-visible follow-on is parked in
 [`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md).
