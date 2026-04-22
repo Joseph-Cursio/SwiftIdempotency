@@ -25,14 +25,22 @@ in
 — trigger #2 met, but severity is LOWER than predicted because
 the workaround works.
 
-**New evidence-accumulating candidate**: 14 Run B fires on
-Hummingbird Router DSL methods (`router.get` × 11, `router.post`
+**New evidence-accumulating candidate**: 9 Run B fires on
+Hummingbird Router DSL methods (`router.get` × 6, `router.post`
 × 3) — route-registration calls, not HTTP calls. Prime candidate
 for a framework whitelist gated on `import Hummingbird`
-(`(nil, "get" | "post" | "put" | "patch" | "delete")` on
-`Router` / `RouterGroup` receivers). One-adopter evidence;
-deferred, awaits second Hummingbird adopter or Vapor-route-DSL
-analog.
+(`(router, "get" | "post" | "put" | "patch" | "delete")`
+receiver-method pairs). One-adopter evidence; deferred, awaits
+second Hummingbird adopter or Vapor-route-DSL analog.
+
+> **Correction (post slot-16 re-scan, 2026-04-22):** The original
+> "14-fire cluster" tally conflated two distinct (receiver, method)
+> pairs: the 9 `router.get/post` registration calls (true slot-16
+> shape) plus 5 `parameters.get(...)` / `queryParameters.get(...)`
+> calls in the handler bodies (a *separate* Hummingbird primitive
+> pair, structurally analogous to the existing `parameters.require`
+> whitelist entry but not itself whitelisted). The cluster
+> decomposition below has been corrected to split the two.
 
 ## Pinned context
 
@@ -118,12 +126,13 @@ diagnostic audit cap; decomposed by cluster.
 
 | Cluster | Count | Shape | Verdict |
 |---|---|---|---|
-| **Hummingbird Router DSL (new)** | 14 | `router.get` (11), `router.post` (3) | **New cluster — one-adopter evidence for slot 16.** Route-registration DSL methods; false positives / unannotated-under-strict. Not seen in prior rounds (Penny/SPI-Server use different handler shapes; isowords uses HttpPipeline not Hummingbird router). |
+| **Hummingbird Router DSL (new)** | 9 | `router.get` (6), `router.post` (3) | **New cluster — one-adopter evidence for slot 16.** Route-registration DSL methods; false positives / unannotated-under-strict. Not seen in prior rounds (Penny/SPI-Server use different handler shapes; isowords uses HttpPipeline not Hummingbird router). |
+| **Hummingbird parameters primitives (new)** | 5 | `context.parameters.get` (4), `request.uri.queryParameters.get` (1) | **Separate 1-adopter candidate.** Structurally analogous to the existing `(parameters, require) → Hummingbird` whitelist entry but on the `.get(_:as:)` method. Distinct from slot 16 (different receiver-method pair). Deferred pending cross-adopter evidence. |
 | **Type ctors / static factories** | 28 | `PageContext` (5), `redirect` (3), `TideClient` (2), `URLEncodedFormDecoder` (2), `PatternMatcher` (2), `PatternFormPage` (2), `OpenMeteoClient` (2), `ForecastAssembler` (2), plus 1-count ctors (`TideStationsService`, `Response`, `PatternListPage`, `PatternHueService`, `PageLayout`, `init`, `ForecastResultsPage`, `CalendarView`, `toModel`) | Cross-adopter recurrence of the type-ctor-gap cluster (same shape as Lambda/isowords/SPI-Server residuals). No new slice. |
 | **Stdlib helpers / domain lookups** | 13 | `sort` (4), `mountURL` (3), `decode` (2), `findWindows` (1), `assemble` (1), `apply` (1), `PatternMatcher` (already counted — decomposed correctly) | Stdlib / domain-lookup cluster. No new shape. |
 | **Real business calls** | 7 | `recomputeHues` (3), `save` (2), `delete` (1), `fetchHourlyForecast` (1) | Run A positions — defensible + 1 real catch. |
 
-Sum: 14 + 28 + 13 + 7 = **62** ✓
+Sum: 9 + 5 + 28 + 13 + 7 = **62** ✓
 
 ### Trailing-closure workaround effectiveness
 
@@ -145,7 +154,7 @@ surface?** **Not relevant — the 040f186 whitelist was for
 Hummingbird's `handle`/`run` shapes on application/service types;
 prospero's primary shape is `router.get/post { ... }` closures
 within `addXRoutes` helpers. Different surface, no overlap with
-the existing whitelist.** The new cluster (14 fires on
+the existing whitelist.** The new cluster (9 fires on
 `router.get`/`router.post`) argues for a separate Router-DSL
 whitelist (slot 16 candidate below).
 

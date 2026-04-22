@@ -24,9 +24,12 @@ which is a fundamentally different shape — it's the Hummingbird
 routing DSL, not the application/service lifecycle. The
 `040f186` whitelist neither helps nor hurts here; it's orthogonal.
 
-The new cluster this round surfaced (14 Run B fires on
-`router.get/post`) argues for a **separate** framework whitelist
-slice (slot 16 candidate), not an extension of 040f186.
+The new cluster this round surfaced (9 Run B fires on
+`router.get/post` — see [trial-findings.md correction](trial-findings.md)
+for the over-count post-mortem: the originally-reported 14 conflated
+5 `parameters.get` / `queryParameters.get` fires into the router
+cluster) argues for a **separate** framework whitelist slice (slot
+16 candidate), not an extension of 040f186.
 
 ### Q2: Does the enclosing-function annotation workaround work?
 
@@ -118,7 +121,7 @@ stability" ship criterion.
   memory's hypothesis is validated.
 - **If Router DSL methods (`get`, `post`, etc.) had been in the
   idempotent-name lexicon.** The 3 Run A false positives on
-  `router.post` wouldn't fire; the 11 Run B `router.get` fires
+  `router.post` wouldn't fire; the 6 Run B `router.get` fires
   would be silent. Clean slice, deferred as slot 16 until
   2-adopter evidence accumulates.
 

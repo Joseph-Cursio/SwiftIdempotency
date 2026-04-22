@@ -111,8 +111,11 @@ value-per-effort, top to bottom.
   `@ExternallyIdempotent(by:)`, 7-for-7 cross-adopter shape
   coverage). New evidence-accumulating candidate: slot 16 —
   **Hummingbird Router DSL whitelist** (`router.get/post` etc.
-  on `Router` / `RouterGroup` receivers), 14 Run B fires, 1-
-  adopter. Key **usability finding**: the enclosing-function
+  on `Router` / `RouterGroup` receivers), 9 Run B fires, 1-
+  adopter (originally reported as 14; 5 of those fires were
+  actually chained-receiver `parameters.get` / `queryParameters.get`
+  calls, corrected in the trial-findings post-mortem). Key
+  **usability finding**: the enclosing-function
   annotation (`/// @lint.context` on `addXRoutes(to router:)`
   helpers) walks into trailing closures, which means Hummingbird
   adopters aren't blocked by the inline-trailing-closure gap —
@@ -153,8 +156,8 @@ value-per-effort, top to bottom.
   slot 16 advances from 1-adopter (prospero-only) to 2-adopter
   → linter team may now draft the Hummingbird Router DSL
   whitelist PR. Four new 1-adopter below-threshold candidates
-  surfaced incidentally (`addMiddleware`, `context.parameters.require`
-  receiver-chain gap, Swift Distributed Tracing `withSpan`,
+  surfaced incidentally (`addMiddleware`, `queryParameters.require`
+  sibling-pair gap, Swift Distributed Tracing `withSpan`,
   Swift Concurrency `Task.sleep`/`Duration.seconds`); none
   ship-eligible, all parked for next-round observation. See
   [`hummingbird-examples-open-telemetry/trial-findings.md`](hummingbird-examples-open-telemetry/trial-findings.md).
@@ -623,7 +626,7 @@ value-per-effort order:
   2-adopter ship-eligibility.** The hummingbird-examples/open-telemetry
   round (path (a) from the three-path framing) produced exact-shape
   corroboration: 1× `router.post` Run A fire + 2× `router.get`
-  Run B fire, matching prospero's 3+11 cluster ratio. Linter
+  Run B fire, matching prospero's 3+6 cluster ratio. Linter
   team's next move: draft the `SwiftProjectLint` PR adding
   `router.{get,post,put,patch,delete}` to `FrameworkWhitelist`
   under the `Hummingbird` gate, analogous to the slot-14

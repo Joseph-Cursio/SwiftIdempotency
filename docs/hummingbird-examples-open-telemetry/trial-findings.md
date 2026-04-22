@@ -43,9 +43,9 @@ traced sleep. Correct silence.
 
 | Cluster | Count | Callees | Evidence category |
 |---|---|---|---|
-| **Slot 16 — Hummingbird Router DSL (continuation)** | **2** | `get` (line 85), `get` (line 89) | Same rule path as prospero's 11× `router.get` Run B cluster. 2-adopter corroboration. |
+| **Slot 16 — Hummingbird Router DSL (continuation)** | **2** | `get` (line 85), `get` (line 89) | Same rule path as prospero's 6× `router.get` Run B cluster. 2-adopter corroboration. |
 | Hummingbird Router primitive | 1 | `addMiddleware` (line 76) | New single-adopter candidate — `router.addMiddleware { ... }` registration-time call. Below cross-adopter threshold. |
-| Hummingbird primitive (receiver-chain gap) | 1 | `require` (line 95) | `context.parameters.require(...)` — member-access chained receiver. The existing slot-14-era whitelist pairs `require` on a bare `parameters` receiver; `context.parameters.require` doesn't match. Record as whitelist-gap candidate. |
+| Hummingbird primitive (different receiver) | 1 | `require` (line 95) | `request.uri.queryParameters.require(...)` — the immediate receiver is `queryParameters`, not `parameters`, so the existing `(parameters, require) → Hummingbird` whitelist correctly doesn't match. Record as a candidate for a sibling `(queryParameters, require) → Hummingbird` pair. |
 | Type-constructor `.init(...)` gap | 4 | `Router` (line 74), `MetricsMiddleware` (line 78), `TracingMiddleware` (line 80), `LogRequestsMiddleware(.debug)` (line 82) | Same long-running `.init(...)` member-access gap documented in todos-fluent findings (1/6 there). 4/12 here — this corpus raises the cross-adopter fire count noticeably. |
 | Swift Distributed Tracing | 1 | `withSpan` (line 97) | New candidate — `withSpan("sleep") { ... }` scoping primitive, structurally analogous to `Task { ... }` / `.task { ... }`. Candidate for Observational whitelist. Below cross-adopter threshold. |
 | Swift Concurrency (stdlib) | 2 | `sleep` (line 99), `seconds` (line 99) | `try await Task.sleep(for: .seconds(time))`. `sleep` is the async suspend primitive, `seconds` is the `Duration.seconds(_:)` factory. Both below cross-adopter threshold; `Task.sleep` specifically is a plausible candidate for Observational. |
@@ -60,7 +60,7 @@ not ship-eligible this round.
 | Rule path | Prospero | open-telemetry | Corroborated? |
 |---|---|---|---|
 | `nonIdempotentInRetryContext` on `router.post` (bare-name verb) | 3 fires | 1 fire | ✅ same rule path, same shape |
-| `unannotatedInStrictReplayableContext` on `router.get` (unwhitelisted DSL) | 11 fires | 2 fires | ✅ same rule path, same shape |
+| `unannotatedInStrictReplayableContext` on `router.get` (unwhitelisted DSL) | 6 fires | 2 fires | ✅ same rule path, same shape |
 
 **Both paths fire identically across both adopters.** Slot 16
 promotes from 1-adopter to **2-adopter ship-eligibility.** The
@@ -94,10 +94,14 @@ tracking, not for immediate linter work.**
 1. **Hummingbird Router registration primitives** (`addMiddleware`,
    possibly others like `group`, `add`) — 1-adopter evidence
    (open-telemetry). Single-adopter; defer.
-2. **`context.parameters.require` receiver-chain gap** — the slot-14-
-   era whitelist pairs `require` with bare `parameters` receiver;
-   the chained form `context.parameters.require` is not matched.
-   1-adopter evidence. Defer pending corroboration.
+2. **`queryParameters.require` sibling pair** — the existing
+   `(parameters, require) → Hummingbird` whitelist matches the
+   `context.parameters.require(...)` shape correctly (via the
+   chained-receiver `callParts` immediate-parent rule), but the
+   sibling `request.uri.queryParameters.require(...)` shape used
+   for query-string access has `queryParameters` as its immediate
+   receiver and isn't whitelisted. 1-adopter evidence. Defer
+   pending corroboration.
 3. **Swift Distributed Tracing `withSpan`** — Observational
    primitive candidate. 1-adopter evidence. Strong a-priori case
    (distributed tracing is universally observational by design)

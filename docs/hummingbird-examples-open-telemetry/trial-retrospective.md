@@ -15,13 +15,24 @@ in Run A.
 it. Both `router.get` calls surface in Run B as
 `unannotatedInStrictReplayableContext` (strict mode forces all
 unannotated callees to raise). This matches prospero's behaviour
-exactly: prospero's 3× `router.post` Run A fires + 11× `router.get`
+exactly: prospero's 3× `router.post` Run A fires + 6× `router.get`
 Run B fires are the same two-path pattern, in the same ratio
 (all `post`s caught in Run A, all `get`s caught only in Run B).
 
 **Total slot 16 fires across both runs: 3** (1 in Run A + 2 in
-Run B). Prospero totalled 14 (3 + 11). Same paths, same rule
+Run B). Prospero totalled 9 (3 + 6). Same paths, same rule
 shapes, smaller sample. Clean 2-adopter corroboration.
+
+> **Correction (2026-04-22):** The initial writeup of this
+> retrospective quoted prospero's Run B `router.get` fires as 11
+> and the total cluster as 14. That was carried over from the
+> prospero trial-findings' original over-count, which conflated
+> 5 `parameters.get` / `queryParameters.get` fires into the
+> router-DSL cluster. The corrected prospero numbers are 6 and 9,
+> and are what the slot-16 PR evidence table on
+> `SwiftProjectLint` cites. See the prospero round's
+> [trial-findings correction](../prospero/trial-findings.md) for
+> the post-mortem.
 
 ### Q2 — Handler-body catches in Run A
 
