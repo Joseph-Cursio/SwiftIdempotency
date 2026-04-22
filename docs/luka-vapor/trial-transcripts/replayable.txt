@@ -1,0 +1,10 @@
+Sources/LukaVapor/routes.swift:10: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'routes' is declared `@lint.context replayable` but calls 'post', whose effect is inferred `non_idempotent` from the callee name `post`. If the inference is wrong, annotate 'post' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'post' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/LukaVapor/routes.swift:25: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'routes' is declared `@lint.context replayable` but calls 'sendEndEvent', whose effect is inferred `non_idempotent` from its body. If the inference is wrong, annotate 'sendEndEvent' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
+  suggestion: Replace 'sendEndEvent' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/LukaVapor/routes.swift:54: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'routes' is declared `@lint.context replayable` but calls 'post', whose effect is inferred `non_idempotent` from the callee name `post`. If the inference is wrong, annotate 'post' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'post' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/LukaVapor/routes.swift:75: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'routes' is declared `@lint.context replayable` but calls 'append', whose effect is inferred `non_idempotent` from the callee name `append`. If the inference is wrong, annotate 'append' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'append' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+
+Found 4 issues (4 errors)
