@@ -687,14 +687,45 @@ value-per-effort order:
       Observational shape (metadata attachment). Needs a second
       adopter.
 
-- **Cross-adopter triage filing** — ten real-bug shapes have
-  been documented across six adopters. Penny's four shapes are
-  parked in [`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md);
-  isowords' two, prospero's one, myfavquotes-api's one, **luka-vapor's
-  one (`sendEndEvent` APNS duplicate push)**, and **hellovapor's
-  one (Acronym create without unique constraint)** could be similarly
-  parked. Filing publicly is user-gated; surfacing them as a
-  batch is one option for adopter engagement.
+- **Slot 18 (parameters.get / queryParameters.get whitelist) —
+  shipped (SwiftProjectLint `db4d576`, PR #25 merged 2026-04-22).**
+  Two sibling whitelist entries for URL-parameter retrieval by name:
+  - **`(parameters, get) → {Hummingbird, Vapor}`** — cross-framework
+    entry in a new second table `idempotentReceiverMethodsMultiFramework`
+    (`[String: [String: Set<String>]]`) consulted after the existing
+    single-framework table. Qualifies when ANY candidate framework
+    is active. Receiver identifier is common convention across both
+    frameworks; import gate remains the precision mechanism.
+  - **`(queryParameters, get) → Hummingbird`** — additive entry on
+    the existing single-framework table, Hummingbird-scoped
+    (`queryParameters` isn't a Vapor idiom — Vapor uses `req.query`).
+  - Re-scans at slot-18 tip vs. slot-17 tip (strict_replayable):
+    - **prospero Run B** 53 → **48** (−5: 4× `context.parameters.get`
+      + 1× `request.uri.queryParameters.get`).
+    - **hellovapor Run B** 19 → **18** (−1: 1× `req.parameters.get("name")`).
+    - Combined: **6 fires silenced across 2 adopters, cross-
+      framework coverage.**
+  +11 tests; suite 2317 → **2328 green**. Trial tips unchanged from
+  slot 17 (prospero `56d676f`, hellovapor `4b2bea2`).
+  **Design note:** the new multi-framework table is the first
+  cross-framework data-structure in the inferrer; leaves the existing
+  `[String: [String: String]]` untouched. Open for future entries if
+  other receivers turn out to be shared-convention (e.g. `request.body`,
+  `content.decode`) across multiple web frameworks.
+
+- **Cross-adopter triage filing** — ten real-bug shapes documented
+  across six adopters. **Two filed this session:**
+  - **HelloVapor PR #1** (2026-04-22) — Acronym missing unique constraint.
+    [`sinduke/HelloVapor#1`](https://github.com/sinduke/HelloVapor/pull/1).
+  - **prospero PR #8** (2026-04-22) — ActivityPattern missing composite
+    `(user_id, name)` unique constraint.
+    [`samalone/prospero#8`](https://github.com/samalone/prospero/pull/8).
+  Both await maintainer response. The remaining 8 shapes (Penny × 4,
+  isowords × 2, myfavquotes-api × 1, luka-vapor × 1) stay parked —
+  Penny's four in [`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md),
+  others not yet scoped. Filing policy: keep it narrow, one finding
+  per PR, use the draft pattern established in
+  [`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md).
 
 - **`AppMetrics.push` / Prometheus Pushgateway shape — closed
   (SPI-Server-specific).** Penny re-scan at slot 14 tip
@@ -711,14 +742,6 @@ value-per-effort order:
   Same verdict as Prometheus Pushgateway — each observability
   library is its own receiver; defer until 2-adopter evidence.
 
-- **Next slice targets**: `(parameters.get, queryParameters.get)`
-  now has cross-framework 2-adopter evidence (prospero Hummingbird
-  + hellovapor Vapor). Gated on different imports, so not a single
-  whitelist entry, but structurally identical shape — worth
-  considering as a cross-framework bare-method whitelist or
-  per-framework entry. 8 total fires (5 prospero + 1 hellovapor
-  + luka-vapor 0 + various others). Deferred.
-
 Deferred — no urgent triggering evidence:
 
 - Slot 5 (perf fix) — no corpus has stressed the wall-clock
@@ -732,6 +755,6 @@ myfavquotes-api + luka-vapor + hellovapor** all map to
 `IdempotencyKey` / `@ExternallyIdempotent(by:)`. **10-for-10
 macro-surface coverage across six production adopters.**
 
-Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, **17** are
+Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, **18** are
 closed out. Slot 7's publicly-visible follow-on is parked in
 [`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md).
