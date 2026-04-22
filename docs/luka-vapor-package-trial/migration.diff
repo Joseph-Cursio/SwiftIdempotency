@@ -1,0 +1,208 @@
+diff --git a/Package.swift b/Package.swift
+index 541575b..6d2abcc 100644
+--- a/Package.swift
++++ b/Package.swift
+@@ -16,6 +16,7 @@ let package = Package(
+         .package(url: "https://github.com/vapor/apns", from: "5.0.0"),
+         .package(url: "https://github.com/vapor/redis.git", from: "4.14.0"),
+         .package(url: "https://github.com/vapor/queues-redis-driver.git", from: "1.1.2"),
++        .package(url: "https://github.com/Joseph-Cursio/SwiftIdempotency.git", revision: "813b72b"),
+     ],
+     targets: [
+         .executableTarget(
+@@ -29,6 +30,7 @@ let package = Package(
+                 .product(name: "VaporAPNS", package: "apns"),
+                 .product(name: "Redis", package: "redis"),
+                 .product(name: "QueuesRedisDriver", package: "queues-redis-driver"),
++                .product(name: "SwiftIdempotency", package: "SwiftIdempotency"),
+             ],
+             swiftSettings: swiftSettings
+         ),
+@@ -37,6 +39,8 @@ let package = Package(
+             dependencies: [
+                 .target(name: "LukaVapor"),
+                 .product(name: "VaporTesting", package: "vapor"),
++                .product(name: "SwiftIdempotency", package: "SwiftIdempotency"),
++                .product(name: "SwiftIdempotencyTestSupport", package: "SwiftIdempotency"),
+             ],
+             swiftSettings: swiftSettings
+         )
+diff --git a/Sources/LukaVapor/Handlers/StartLiveActivity.swift b/Sources/LukaVapor/Handlers/StartLiveActivity.swift
+new file mode 100644
+index 0000000..70562f2
+--- /dev/null
++++ b/Sources/LukaVapor/Handlers/StartLiveActivity.swift
+@@ -0,0 +1,75 @@
++import Foundation
++import Vapor
++import Redis
++import SwiftIdempotency
++
++@ExternallyIdempotent(by: "idempotencyKey")
++func startLiveActivity(
++    req: Request,
++    body: StartLiveActivityRequest,
++    idempotencyKey: IdempotencyKey
++) async throws -> HTTPStatus {
++    let dataKey = LiveActivityPollKeys.dataKey(for: body.username)
++
++    let tokenEntry = LiveActivityTokenEntry(
++        pushToken: body.pushToken,
++        environment: body.environment,
++        preferences: body.preferences,
++        startDate: Date.now,
++        duration: body.duration
++    )
++
++    // Try to load an existing session for this username
++    if let jsonString = try await req.redis.hget("data", from: dataKey, as: String.self).get(),
++       var session = try? JSONDecoder().decode(LiveActivityPollSession.self, from: Data(jsonString.utf8)) {
++
++        // Replace existing token entry or append new one
++        if let index = session.tokens.firstIndex(where: { $0.pushToken == body.pushToken }) {
++            session.tokens[index] = tokenEntry
++        } else {
++            session.tokens.append(tokenEntry)
++        }
++
++        // Update credentials to latest
++        session.password = body.password
++        session.accountID = body.accountID ?? session.accountID
++        session.sessionID = body.sessionID ?? session.sessionID
++
++        let jsonData = try JSONEncoder().encode(session)
++        guard let jsonStr = String(data: jsonData, encoding: .utf8) else {
++            throw Abort(.internalServerError, reason: "Failed to encode session data")
++        }
++        _ = try await req.redis.hset("data", to: jsonStr, in: dataKey).get()
++
++        req.logger.info("🆕 \(body.logID) Added token to existing session (\(session.tokens.count) tokens)")
++    } else {
++        // Create new session
++        let session = LiveActivityPollSession(
++            username: body.username,
++            password: body.password,
++            accountID: body.accountID,
++            sessionID: body.sessionID,
++            accountLocation: body.accountLocation,
++            tokens: [tokenEntry],
++            pollInterval: LiveActivityScheduler.minInterval,
++            retryCount: 0
++        )
++
++        let jsonData = try JSONEncoder().encode(session)
++        guard let jsonStr = String(data: jsonData, encoding: .utf8) else {
++            throw Abort(.internalServerError, reason: "Failed to encode session data")
++        }
++        _ = try await req.redis.hset("data", to: jsonStr, in: dataKey).get()
++
++        // Add to schedule sorted set (immediate execution)
++        let nowTimestamp = Date.now.timeIntervalSince1970
++        _ = try await req.redis.zadd(
++            (element: body.username, score: nowTimestamp),
++            to: LiveActivityPollKeys.scheduleKey
++        ).get()
++
++        req.logger.info("🆕 \(body.logID) Started new Live Activity session")
++    }
++
++    return .ok
++}
+diff --git a/Sources/LukaVapor/Models/StartLiveActivityRequest.swift b/Sources/LukaVapor/Models/StartLiveActivityRequest.swift
+index b16d1e3..a9a210d 100644
+--- a/Sources/LukaVapor/Models/StartLiveActivityRequest.swift
++++ b/Sources/LukaVapor/Models/StartLiveActivityRequest.swift
+@@ -7,6 +7,7 @@
+ 
+ import Foundation
+ import Dexcom
++import SwiftIdempotency
+ 
+ enum PushEnvironment: String, Codable, Sendable {
+     case development
+@@ -28,6 +29,7 @@ struct StartLiveActivityRequest: Codable, Sendable {
+     var accountLocation: AccountLocation
+     var duration: TimeInterval
+     var preferences: LiveActivityPreferences?
++    var idempotencyKey: IdempotencyKey
+ }
+ 
+ extension StartLiveActivityRequest {
+diff --git a/Sources/LukaVapor/routes.swift b/Sources/LukaVapor/routes.swift
+index 05981b4..59ea119 100644
+--- a/Sources/LukaVapor/routes.swift
++++ b/Sources/LukaVapor/routes.swift
+@@ -52,69 +52,10 @@ func routes(_ app: Application) throws {
+ 
+     app.post("start-live-activity") { req async throws -> HTTPStatus in
+         let body = try req.content.decode(StartLiveActivityRequest.self)
+-
+-        let dataKey = LiveActivityPollKeys.dataKey(for: body.username)
+-
+-        let tokenEntry = LiveActivityTokenEntry(
+-            pushToken: body.pushToken,
+-            environment: body.environment,
+-            preferences: body.preferences,
+-            startDate: Date.now,
+-            duration: body.duration
++        return try await startLiveActivity(
++            req: req,
++            body: body,
++            idempotencyKey: body.idempotencyKey
+         )
+-
+-        // Try to load an existing session for this username
+-        if let jsonString = try await req.redis.hget("data", from: dataKey, as: String.self).get(),
+-           var session = try? JSONDecoder().decode(LiveActivityPollSession.self, from: Data(jsonString.utf8)) {
+-
+-            // Replace existing token entry or append new one
+-            if let index = session.tokens.firstIndex(where: { $0.pushToken == body.pushToken }) {
+-                session.tokens[index] = tokenEntry
+-            } else {
+-                session.tokens.append(tokenEntry)
+-            }
+-
+-            // Update credentials to latest
+-            session.password = body.password
+-            session.accountID = body.accountID ?? session.accountID
+-            session.sessionID = body.sessionID ?? session.sessionID
+-
+-            let jsonData = try JSONEncoder().encode(session)
+-            guard let jsonStr = String(data: jsonData, encoding: .utf8) else {
+-                throw Abort(.internalServerError, reason: "Failed to encode session data")
+-            }
+-            _ = try await req.redis.hset("data", to: jsonStr, in: dataKey).get()
+-
+-            req.logger.info("🆕 \(body.logID) Added token to existing session (\(session.tokens.count) tokens)")
+-        } else {
+-            // Create new session
+-            let session = LiveActivityPollSession(
+-                username: body.username,
+-                password: body.password,
+-                accountID: body.accountID,
+-                sessionID: body.sessionID,
+-                accountLocation: body.accountLocation,
+-                tokens: [tokenEntry],
+-                pollInterval: LiveActivityScheduler.minInterval,
+-                retryCount: 0
+-            )
+-
+-            let jsonData = try JSONEncoder().encode(session)
+-            guard let jsonStr = String(data: jsonData, encoding: .utf8) else {
+-                throw Abort(.internalServerError, reason: "Failed to encode session data")
+-            }
+-            _ = try await req.redis.hset("data", to: jsonStr, in: dataKey).get()
+-
+-            // Add to schedule sorted set (immediate execution)
+-            let nowTimestamp = Date.now.timeIntervalSince1970
+-            _ = try await req.redis.zadd(
+-                (element: body.username, score: nowTimestamp),
+-                to: LiveActivityPollKeys.scheduleKey
+-            ).get()
+-
+-            req.logger.info("🆕 \(body.logID) Started new Live Activity session")
+-        }
+-
+-        return .ok
+     }
+ }
