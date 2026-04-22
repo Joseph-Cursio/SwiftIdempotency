@@ -120,6 +120,30 @@ value-per-effort, top to bottom.
   [`prospero/trial-findings.md`](prospero/trial-findings.md) and
   the updated
   [`ideas/inline-trailing-closure-annotation-gap.md`](ideas/inline-trailing-closure-annotation-gap.md).
+  **The myfavquotes-api round (fifth production-app target —
+  `kicsipixel/myfavquotes-api`, second Hummingbird adopter,
+  second phase-2 / single-contributor target, full
+  Postgres+Fluent+Bearer auth) was the third consecutive
+  plateau — Completion Criterion #2 closes at 3/3 → SHIP.**
+  Run A 5 / Run B 13; **1 real-bug catch**
+  (`UsersController.login` token persistence — `Token.generate`
+  uses `Int.random` × 8 per call, so retries persist N stale
+  tokens with 1h TTL; maps to `IdempotencyKey` /
+  `@ExternallyIdempotent(by:)`, **8-for-8 cross-adopter shape
+  coverage**). Two policy notes folded into `road_test_plan.md`:
+  (a) handler-binding-shape determines annotation target —
+  method-reference (`use: self.show`) annotate the func decl,
+  inline-trailing-closure annotate the registration helper;
+  (b) Fluent `.unique(on:)` migrations are the SQL-ground-truth
+  shortcut for create-handler defensibility. Slot 16 stayed at
+  1-adopter — myfavquotes-api uses method-reference handler
+  binding, not inline closures, so the registration helpers
+  weren't on the annotation surface. New 1-adopter candidate
+  (Bcrypt-crypto-gap, 1 fire) logged for evidence accumulation
+  but not slice-promoted. **All three road-test completion
+  criteria are now met (framework coverage ✅, adoption-gap
+  stability ✅, macro-form evidence ✅).** See
+  [`myfavquotes-api/trial-findings.md`](myfavquotes-api/trial-findings.md).
 - **Road-test workflow**: reworked to be fork-authoritative (commit
   `bb69729`), first dogfooded end-to-end on the Lambda round
   this session. Trial branches live on `<upstream>-idempotency-trial`
@@ -146,6 +170,10 @@ value-per-effort, top to bottom.
   - **`prospero-idempotency-trial` — active**; carries
     `trial-prospero` with `353753f` (Run A state, replayable) and
     `56d676f` (Run B tip, strict_replayable). Default-branch
+    switched. Fork hardened per recipe.
+  - **`myfavquotes-api-idempotency-trial` — active**; carries
+    `trial-myfavquotes` with `8ae0c78` (Run A state, replayable)
+    and `579c1a4` (Run B tip, strict_replayable). Default-branch
     switched. Fork hardened per recipe.
   - `hummingbird-examples-idempotency-trial`
   - `pointfreeco-idempotency-trial`
@@ -540,59 +568,79 @@ has three entries:
 
 ## Recommended next-session opener
 
-Four production-app rounds complete (Penny, isowords, SPI-Server,
-prospero). **Completion Criterion #2 now at 2/3 consecutive
-plateaus** — one more zero-named-slice round ships the adoption-
-gap-stability ship criterion. Next-session options, in
+Five production-app rounds complete (Penny, isowords, SPI-Server,
+prospero, **myfavquotes-api**). **All three road-test completion
+criteria are now met:**
+
+1. ✅ **Framework coverage** — Vapor (todos-fluent + SPI-Server +
+   pointfreeco), Hummingbird (prospero + myfavquotes-api),
+   SwiftNIO (swift-nio), Point-Free (pointfreeco + TCA).
+2. ✅ **Adoption-gap stability — 3/3 consecutive plateaus**
+   (spi-server + prospero + myfavquotes-api closed at this round).
+3. ✅ **Macro-form evidence** — three consumer samples in
+   `examples/` exercise `IdempotencyKey` / `@IdempotencyTests` /
+   `#assertIdempotent` end-to-end; root tests cover the four
+   attribute macros.
+
+Per `road_test_plan.md` §"Completion criteria": *"Continue the
+template even after completion criteria are met — future linter
+slices still get validated the same way. The plan stays alive;
+it just stops blocking on new targets."* So future rounds become
+**slice-driven** (validate a specific linter change) rather than
+**criterion-driven** (close a ship gate). Options, in
 value-per-effort order:
 
-- **Fifth production-app round — close Completion Criterion #2 at
-  3/3.** The round needs to produce zero new named slices to
-  advance. Good shapes:
-  - *Another Hummingbird adopter* to push slot 16 (Router DSL
-    whitelist) from 1-adopter to 2-adopter evidence and promote
-    to ship-ready. Would also re-test the enclosing-function
-    annotation workaround.
-  - *A Vapor routing-DSL-heavy adopter* — prospero's `router.get/post`
-    noise cluster is plausibly cross-framework; Vapor's
-    `app.get/post` / `routes.post(...)` shape is structurally
-    similar. If it recurs there, slot 16 generalises beyond
-    Hummingbird (receiver name becomes `RouteBuilder` etc.).
-  - *Another phase-2 single-contributor app* (any framework) —
-    continues the obscure-project validation thread from the
-    memory.
 - **Slot 14 promotion (HttpPipeline whitelist) — still eligible
   standalone.** Two-adopter evidence (isowords + pointfreeco
   www). Would close the `writeStatus` / `writeHeader` / etc.
-  residual. Can ship without a third adopter if desired.
-- **Slot 16 promotion (Hummingbird Router DSL whitelist) —
-  eligible after one more Hummingbird adopter confirms.**
-  Would silence `router.get/post/put/patch/delete` on
-  Router/RouterGroup receivers. Likely also generalises to
-  Vapor's `app.get/post` via parameterised framework gating.
+  residual. Ship without a third adopter — the slice is
+  well-scoped and the evidence is clean. ~1 session.
+- **Slot 16 promotion (Hummingbird Router DSL whitelist) — still
+  1-adopter (prospero only).** myfavquotes-api did NOT push it to
+  2-adopter because it uses method-reference handler binding
+  (`use: self.show`), not inline trailing closures. Three paths to
+  promote: (a) find another inline-closure Hummingbird adopter
+  (e.g. hummingbird-examples auth/CRUD examples often use
+  closures), (b) retro-pass on myfavquotes-api fork annotating
+  `addRoutes(to:)` registration helpers, (c) ship 1-adopter on
+  prospero alone if the linter team is comfortable with that
+  evidence threshold.
+- **Cross-adopter triage filing** — eight real-bug shapes have
+  been documented across five adopters. Penny's four shapes are
+  parked in [`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md);
+  isowords' two, prospero's one, and **myfavquotes-api's one
+  (`UsersController.login` token-persistence)** could be similarly
+  parked. Filing publicly is user-gated (not auto-promoted);
+  surfacing them as a batch is one option for adopter engagement.
 - **`AppMetrics.push` / Prometheus Pushgateway shape**
-  (1-adopter from SPI-Server). Re-scanning Penny at merge tip
-  `2fbb171` would clarify if Penny's Prometheus-style metrics
-  calls also fire. ~30 min lightweight.
+  (1-adopter from SPI-Server). Re-scan Penny at merge tip
+  `2fbb171` to see if Penny's metrics calls fire same shape.
+  ~30 min lightweight.
+- **Bcrypt-crypto-gap** (1-adopter, 1 fire from myfavquotes-api).
+  Single-fire shape — only matters if a future Hummingbird/Vapor
+  adopter with auth flows fires the same shape and pushes to
+  2-adopter slice volume. No action until then.
+- **Sixth production-app round — slice-driven.** No criterion
+  pressure, but a sixth round on a *Vapor routing-DSL-heavy
+  adopter* (e.g. Feather CMS if it builds, or another community
+  Vapor app) would test slot 16's cross-framework generalisation
+  hypothesis (`app.get/post` shape vs Hummingbird `router.get/post`).
+  If both fire the same way, slot 16 becomes parameterised across
+  frameworks — bigger payoff than promoting Hummingbird-specific.
 
 Deferred — no urgent triggering evidence:
 
 - Slot 5 (perf fix) — no corpus has stressed the wall-clock
-  budget. Prospero scanned instantly (29 files).
-- Slot 3 (property-wrapper receiver resolution) — prospero's
-  9 handler closures had no `(name, labels)` tier-conflict
-  collisions.
+  budget. myfavquotes-api scanned instantly (17 files).
+- Slot 3 (property-wrapper receiver resolution) —
+  myfavquotes-api's 6 handler annotations had no `(name, labels)`
+  tier-conflict collisions.
 
-**Seven real-bug shapes across Penny + isowords + prospero** all
-map to `IdempotencyKey` / `@ExternallyIdempotent(by:)`
-(prospero added one: `ActivityPattern.save` on create, no unique
-constraint). 7-for-7 macro-surface coverage across four
-production adopters. Filing upstream triage issues is a separate,
-user-gated decision — Penny's four shapes parked in
-[`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md);
-isowords' two shapes and prospero's one shape can be similarly
-parked if user wants upstream engagement (not auto-promoted).
-SPI-Server has no triage issues to file.
+**Eight real-bug shapes across Penny + isowords + prospero +
+myfavquotes-api** all map to `IdempotencyKey` /
+`@ExternallyIdempotent(by:)` (myfavquotes-api added one:
+`UsersController.login`, random-token-keyed persist on retry).
+**8-for-8 macro-surface coverage across five production adopters.**
 
 Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 15 are closed out. Slot 7's
 publicly-visible follow-on is parked in

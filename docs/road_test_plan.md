@@ -91,6 +91,28 @@ blend packages in one directory.
   `@ExternallyIdempotent`), document it explicitly in the scope
   doc's "source modifications" section.
 
+#### Handler-binding shape determines annotation target
+
+Adopters bind handlers to routes in two structurally distinct
+shapes; the annotation target differs:
+
+- **Method-reference (`use:`)** — Hummingbird `RouterGroup.get(":id",
+  use: self.show)`, Vapor `routes.get(":id", use: show)`. Annotate
+  the *handler method* with `/// @lint.context …` on its `func`
+  decl. The doc-comment attaches directly; the inferrer walks the
+  method body. Confirmed shape on `myfavquotes-api`.
+- **Inline trailing closure** — `router.get("/path") { req, ctx in … }`,
+  common in tutorial code and prospero's prod app. The closure
+  body has no named decl to attach to. Annotate the *enclosing
+  registration function* (`func addXRoutes(to:)`); the inferrer
+  walks the closures within. Confirmed shape on `prospero`.
+
+Both produce useful diagnostics. Pick the matching shape for the
+adopter — don't try to annotate registration helpers when handlers
+are method references (it inflates noise without surfacing real-bug
+evidence) and don't try to annotate inline closures directly (you
+can't — there's no named decl).
+
 ### Scan twice
 
 - **Replayable scan.** `swift run CLI <target-path> --categories
@@ -173,6 +195,16 @@ shows any of:
 - `INSERT ... RETURNING *` against a table with a unique index on
   the natural key being inserted — DB rejects duplicates before
   the row lands.
+
+For **Fluent adopters specifically**, check the migration
+`.unique(on:)` calls before reading SQL — Fluent compiles
+`.unique(on:)` to a Postgres `UNIQUE` constraint. If a `create`
+handler's model migration declares `.unique(on: <natural-key>)`,
+the create-on-retry hits a DB-level dedup just like a raw
+`ON CONFLICT (...) DO NOTHING`. This shortcut covers most Fluent
+CRUD audits. Confirmed on `myfavquotes-api` (both `Quote` and
+`User` migrations declare `.unique(on:)` → both `create` handler
+diagnostics flip to defensible-by-design without reading raw SQL).
 
 Evidence from this round's experience: isowords Run A would have
 been mis-scored as 3 real-bug catches without this pass (actual:
