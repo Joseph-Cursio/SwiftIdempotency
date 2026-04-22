@@ -47,9 +47,12 @@ value-per-effort, top to bottom.
   `@ExternallyIdempotent(by:)` are exercised by the root test target
   and by every adopter road-test. **Slot 6 — consumer-context
   validation — is fully closed.**
-- **Adopter road-tests**: **nine rounds completed** — `todos-fluent/`,
-  `pointfreeco/`, `swift-nio/`, `swift-composable-architecture/`,
-  `swift-aws-lambda-runtime/`, `penny-bot/`, `isowords/`, `spi-server/`, **`prospero/`**. The TCA
+- **Adopter road-tests**: **thirteen rounds completed** —
+  `todos-fluent/`, `pointfreeco/`, `swift-nio/`,
+  `swift-composable-architecture/`, `swift-aws-lambda-runtime/`,
+  `penny-bot/`, `isowords/`, `spi-server/`, `prospero/`,
+  `myfavquotes-api/`, `hummingbird-examples-open-telemetry/`,
+  **`luka-vapor/`**, **`hellovapor/`**. The TCA
   round closed **all three** cluster-level gaps it surfaced (return-
   trailing annotation, send-on-closure-parameter, dependency-client
   declarations) across PRs #17 / #18 / #19; current TCA residual on
@@ -600,9 +603,10 @@ has three entries:
 
 ## Recommended next-session opener
 
-Five production-app rounds complete (Penny, isowords, SPI-Server,
-prospero, **myfavquotes-api**). **All three road-test completion
-criteria are now met:**
+Seven production-app rounds complete (Penny, isowords, SPI-Server,
+prospero, myfavquotes-api, **luka-vapor**, **hellovapor**). **All
+three road-test completion criteria are met since myfavquotes-api;
+rounds since are slice-driven.**
 
 1. ✅ **Framework coverage** — Vapor (todos-fluent + SPI-Server +
    pointfreeco), Hummingbird (prospero + myfavquotes-api),
@@ -653,47 +657,82 @@ value-per-effort order:
   Single-fire shape — only matters if a future Hummingbird/Vapor
   adopter with auth flows fires the same shape and pushes to
   2-adopter slice volume. No action until then.
-- **Sixth production-app round — slice-driven, target-blocked.**
-  Would open a **slot 17** parallel to slot 16 on Vapor's
-  routing DSL: five `(app, get|post|put|patch|delete) → Vapor`
-  pairs with the same receiver-gated precedence shape. Note:
-  this is NOT a generalisation of slot 16 at the data-table
-  level — Vapor's inline-closure shape uses a different receiver
-  identifier (`app`) and a different framework gate, so it's a
-  parallel slice, not a merged one. The structural analogy is
-  strong; 2-adopter evidence is still required on the `app.`
-  receiver shape before shipping.
-  **Scout (2026-04-22) — no clean target yet:**
-  - `FeatherCMS/feather`: split across 7 sibling repos with
-    `.branch("dev")` dependencies; Swift 5.5 tools version; last
-    push 2023-05. Reproducibility-hostile for a 2-adopter evidence
-    trial.
-  - `madsodgaard/vapor-auth-template` (241★): uses method-reference
-    binding (`auth.post("register", use: register)`) — structurally
-    analogous to myfavquotes-api's Hummingbird pattern, wrong shape
-    for DSL-noise validation.
-  - `vapor/penny-bot` (already trialed on Lambda side): the source
-    under `Sources/` contains no Vapor routing DSL — Penny is
-    Lambda-based, not a Vapor-web-server adopter.
-  - **Next move when slot 17 comes onto the table:** either commit
-    to Feather scoped to a single-module subpackage (accepting
-    branch-dep fragility) or wait for a fresh target to surface
-    via `vapor-community/awesome-vapor` noise.
+- **Slot 17 (Vapor routing DSL whitelist) — PR #24 open
+  (SwiftProjectLint `afbc67c`, pending merge).** Five receiver-
+  method pairs `(app, get|post|put|patch|delete) → Vapor` added
+  to `idempotentReceiverMethodsByFramework` with `FrameworkWhitelist.vapor`
+  constant. Re-scans at slot-17 tip:
+  - **luka-vapor Run A** 4 → **2** (−2 `app.post`), **Run B**
+    52 → **49** (−3: 2 `app.post` carried + 1 `app.get` strict).
+  - **hellovapor Run A** 5 → **4** (−1 `app.post`), **Run B**
+    25 → **19** (−6: 1 `app.post` carried + 5 `app.get` strict).
+  - Combined: 9 fires silenced across 2 adopters, matching the
+    predicted 2-adopter delta exactly.
+  +11 tests; suite 2306 → **2317 green**. Trial tips pinned:
+  luka-vapor `f2e5d09`, hellovapor `4b2bea2`. Scope corrected
+  mid-round from 4 verbs to 5 after hellovapor's strict-mode
+  evidence (5× `app.get` Run B fires) confirmed the `app.get`
+  strict-only asymmetry — see
+  [`docs/luka-vapor/trial-findings.md`](luka-vapor/trial-findings.md)
+  §"Run B correction" and
+  [`docs/hellovapor/trial-findings.md`](hellovapor/trial-findings.md)
+  §"Slot-17 2-adopter evidence summary".
+  - **Two new 1-adopter candidates surfaced in the slot-17 round:**
+    - **`(app, register) → Vapor`** — hellovapor's 4 `register(collection:)`
+      fires in Run A. Structural sibling to slot 17. Needs a
+      second Vapor adopter using `register(collection:)` before
+      promoting; luka-vapor has zero.
+    - **`(Route, description) → Vapor`** — hellovapor's 5 Vapor
+      `.description("...")` OpenAPI-metadata chain calls in Run B.
+      Observational shape (metadata attachment). Needs a second
+      adopter.
+
+- **Cross-adopter triage filing** — ten real-bug shapes have
+  been documented across six adopters. Penny's four shapes are
+  parked in [`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md);
+  isowords' two, prospero's one, myfavquotes-api's one, **luka-vapor's
+  one (`sendEndEvent` APNS duplicate push)**, and **hellovapor's
+  one (Acronym create without unique constraint)** could be similarly
+  parked. Filing publicly is user-gated; surfacing them as a
+  batch is one option for adopter engagement.
+
+- **`AppMetrics.push` / Prometheus Pushgateway shape — closed
+  (SPI-Server-specific).** Penny re-scan at slot 14 tip
+  (`698081e`) returned 0 `push` fires. Shape stays at 1-adopter;
+  won't promote without a third Vapor+Prometheus adopter.
+
+- **Bcrypt-crypto-gap** (1-adopter, 1 fire from myfavquotes-api).
+  Single-fire shape — only matters if a future Hummingbird/Vapor
+  adopter with auth flows fires the same shape. No action until
+  then.
+
+- **Axiom `emit` observability pattern** (1-adopter from
+  luka-vapor, mirrors SPI-Server's `AppMetrics.push` shape).
+  Same verdict as Prometheus Pushgateway — each observability
+  library is its own receiver; defer until 2-adopter evidence.
+
+- **Next slice targets**: `(parameters.get, queryParameters.get)`
+  now has cross-framework 2-adopter evidence (prospero Hummingbird
+  + hellovapor Vapor). Gated on different imports, so not a single
+  whitelist entry, but structurally identical shape — worth
+  considering as a cross-framework bare-method whitelist or
+  per-framework entry. 8 total fires (5 prospero + 1 hellovapor
+  + luka-vapor 0 + various others). Deferred.
 
 Deferred — no urgent triggering evidence:
 
 - Slot 5 (perf fix) — no corpus has stressed the wall-clock
-  budget. myfavquotes-api scanned instantly (17 files).
-- Slot 3 (property-wrapper receiver resolution) —
-  myfavquotes-api's 6 handler annotations had no `(name, labels)`
-  tier-conflict collisions.
+  budget. luka-vapor + hellovapor both scanned instantly.
+- Slot 3 (property-wrapper receiver resolution) — no adopter
+  round has surfaced a same-name method collision with
+  differing tiers.
 
-**Eight real-bug shapes across Penny + isowords + prospero +
-myfavquotes-api** all map to `IdempotencyKey` /
-`@ExternallyIdempotent(by:)` (myfavquotes-api added one:
-`UsersController.login`, random-token-keyed persist on retry).
-**8-for-8 macro-surface coverage across five production adopters.**
+**Ten real-bug shapes across Penny + isowords + prospero +
+myfavquotes-api + luka-vapor + hellovapor** all map to
+`IdempotencyKey` / `@ExternallyIdempotent(by:)`. **10-for-10
+macro-surface coverage across six production adopters.**
 
-Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 are closed out.
-Slot 7's publicly-visible follow-on is parked in
+Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 are closed
+out. Slot 17 is in-flight (PR #24 pending merge). Slot 7's
+publicly-visible follow-on is parked in
 [`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md).
