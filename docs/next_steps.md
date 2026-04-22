@@ -154,8 +154,8 @@ value-per-effort, top to bottom.
   this OTel demo). 1× `router.post` Run A fire + 2× `router.get`
   Run B fire match prospero's two-path cluster shape exactly;
   slot 16 advances from 1-adopter (prospero-only) to 2-adopter
-  → linter team may now draft the Hummingbird Router DSL
-  whitelist PR. Four new 1-adopter below-threshold candidates
+  → **shipped as SwiftProjectLint PR #23 (`29e9069`)** in the
+  same session. Four new 1-adopter below-threshold candidates
   surfaced incidentally (`addMiddleware`, `queryParameters.require`
   sibling-pair gap, Swift Distributed Tracing `withSpan`,
   Swift Concurrency `Task.sleep`/`Duration.seconds`); none
@@ -622,19 +622,19 @@ it just stops blocking on new targets."* So future rounds become
 **criterion-driven** (close a ship gate). Options, in
 value-per-effort order:
 
-- **Slot 16 (Hummingbird Router DSL whitelist) — closed at
-  2-adopter ship-eligibility.** The hummingbird-examples/open-telemetry
-  round (path (a) from the three-path framing) produced exact-shape
-  corroboration: 1× `router.post` Run A fire + 2× `router.get`
-  Run B fire, matching prospero's 3+6 cluster ratio. Linter
-  team's next move: draft the `SwiftProjectLint` PR adding
-  `router.{get,post,put,patch,delete}` to `FrameworkWhitelist`
-  under the `Hummingbird` gate, analogous to the slot-14
-  HttpPipeline whitelist (merged in PR #22). Two corroborating
-  trial tips to cite: `Joseph-Cursio/prospero-idempotency-trial`
-  `56d676f` (prospero Run B) and
-  `Joseph-Cursio/hummingbird-examples-idempotency-trial`
-  `674935a` (open-telemetry Run B).
+- **Slot 16 (Hummingbird Router DSL whitelist) — shipped
+  (SwiftProjectLint `29e9069`, PR #23).** Five receiver-method
+  pairs `(router, get|post|put|patch|delete) → Hummingbird`
+  added to `idempotentReceiverMethodsByFramework`. Re-scans at
+  slot-16 tip vs. slot-14 tip: prospero Run B **−9**, open-telemetry
+  Run B **−3**, open-telemetry Run A **−1** — deltas match DSL
+  call counts exactly. +11 tests; suite 2295 → 2306 green.
+  Trial tips pinned: prospero `56d676f`, open-telemetry `674935a`.
+  Prospero's 5-fire `(parameters|queryParameters, get)` cluster
+  (surfaced during the slot-16 re-attribution; see the prospero
+  trial-findings correction post-mortem) is logged as a new
+  1-adopter candidate for a sibling-pair extension but does not
+  ship with slot 16.
 - **Cross-adopter triage filing** — eight real-bug shapes have
   been documented across five adopters. Penny's four shapes are
   parked in [`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md);
@@ -675,6 +675,6 @@ myfavquotes-api** all map to `IdempotencyKey` /
 `UsersController.login`, random-token-keyed persist on retry).
 **8-for-8 macro-surface coverage across five production adopters.**
 
-Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 are closed out.
+Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 are closed out.
 Slot 7's publicly-visible follow-on is parked in
 [`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md).
