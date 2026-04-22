@@ -166,6 +166,58 @@ of the encoder's key ordering. The same caveat and fix apply to the
 `@IdempotencyTests` auto-generated tests — prefer a typed return over
 raw bytes in the target function.
 
+#### What `#assertIdempotent` cannot detect
+
+`#assertIdempotent` compares return values. It does **not** observe
+side effects that don't appear in the return type. A handler that
+mutates a database, emits a notification, or publishes to a queue —
+and returns `HTTPStatus.ok` (or `Void`, or `Bool`, or `.created`)
+regardless — will silently pass `#assertIdempotent` even when it's
+demonstrably non-idempotent at the observable-state level.
+
+```swift
+// Non-idempotent: double-writes to Redis, returns .ok either way.
+func startLiveActivity(req: Request, /* ... */) async throws -> HTTPStatus {
+    _ = try await req.redis.hset("data", to: json, in: key).get()
+    _ = try await req.redis.zadd(element, to: scheduleKey).get()
+    return .ok
+}
+
+// #assertIdempotent "passes" — both calls returned .ok.
+// Redis state now has duplicate entries. Assertion is silent.
+try await #assertIdempotent { try await startLiveActivity(...) }
+```
+
+The macro is sharpest on handlers whose return value reflects the
+side effect — a `create → Entity` handler, an `increment → Int`, a
+`fetch → [Row]`. On handlers with trivial returns, pair the macro
+with explicit state inspection:
+
+```swift
+@Test func startActivityIsIdempotent() async throws {
+    let redis = try await makeEphemeralRedis()
+    let key = IdempotencyKey(fromAuditedString: "test-key-001")
+    let body = StartLiveActivityRequest(/* ... */, idempotencyKey: key)
+
+    _ = try await #assertIdempotent {
+        try await startLiveActivity(req: req, body: body, idempotencyKey: key)
+    }
+    let sessionCount = try await redis.hlen("data").get()
+    #expect(sessionCount == 1)  // catches what Option C cannot
+}
+```
+
+Treat return-equality as a **necessary but not sufficient** check
+on any handler whose return type doesn't reflect the side effect.
+A future release may add a dependency-injected-effect variant that
+observes state mutations directly; until then, handler-return shape
+determines how sharp `#assertIdempotent` can be. SwiftProjectLint's
+`nonIdempotentInRetryContext` rule fills part of the gap statically
+— it flags handlers that call known-non-idempotent operations
+inside a `@lint.context replayable` or `@ExternallyIdempotent(by:)`
+body — but static analysis has its own shape of limitation. Neither
+layer is complete on its own.
+
 ## Installation
 
 ```swift
@@ -184,13 +236,20 @@ targets: [
         name: "YourAppTests",
         dependencies: [
             .product(name: "SwiftIdempotency", package: "SwiftIdempotency"),
-            .product(name: "SwiftIdempotencyTestSupport", package: "SwiftIdempotency"),
         ]
     ),
 ]
 ```
 
 Swift 5.10+; requires Swift Testing for `@Test`-based peer expansion.
+
+The package also exposes a `SwiftIdempotencyTestSupport` library. It's
+currently a placeholder — `#assertIdempotent`'s runtime helpers live
+in the main `SwiftIdempotency` library, so test targets only need the
+one product shown above. The placeholder target exists so future
+test-only helpers can ship without breaking adopter Package.swift
+files that already declare the dependency; adopters adopting today
+can omit it.
 
 **Vapor adopters using Swift Testing**: import `VaporTesting` rather
 than `XCTVapor`. XCTVapor's `app.test(...)` silently drops failures
@@ -208,6 +267,60 @@ and unwrap the event envelope at the framework boundary. That shape
 also lets `@ExternallyIdempotent(by: "messageId")` point at a real
 parameter label — the dotted-path form `by: "message.messageId"` is
 rejected at macro-expansion time.
+
+## Migrating inline-closure handlers
+
+The attribute macros (`@Idempotent`, `@NonIdempotent`, `@Observational`,
+`@ExternallyIdempotent`) attach to **declarations** — `func`, `var`,
+`struct`, etc. They do not attach to expressions like inline trailing
+closures, which is the idiomatic route-registration shape in both
+Vapor and Hummingbird:
+
+```swift
+// ❌ Attribute macros can't attach to an inline closure.
+app.post("charge") { req async throws -> Response in
+    let body = try req.content.decode(ChargeRequest.self)
+    // handler body
+}
+```
+
+To add `@ExternallyIdempotent(by:)` et al. to a handler in this shape,
+extract the body into a named function and call it from the closure:
+
+```swift
+// ✅ Named decl — attribute macros attach cleanly.
+@ExternallyIdempotent(by: "idempotencyKey")
+func charge(
+    req: Request,
+    body: ChargeRequest,
+    idempotencyKey: IdempotencyKey
+) async throws -> Response {
+    // handler body
+}
+
+// Registration becomes a thin decode-and-delegate.
+app.post("charge") { req async throws -> Response in
+    let body = try req.content.decode(ChargeRequest.self)
+    return try await charge(req: req, body: body, idempotencyKey: body.idempotencyKey)
+}
+```
+
+The refactor is mechanical but invasive on codebases that use inline
+closures heavily — expect one new file per handler and a two-to-three-
+line registration delegate replacing each body. Worked example with
+full diff: [luka-vapor package-integration trial](https://github.com/Joseph-Cursio/swiftIdempotency/tree/main/docs/luka-vapor-package-trial).
+
+The same-named doc-comment form (`/// @lint.effect externally_idempotent(by: "idempotencyKey")`)
+has the identical constraint: doc comments attach to declarations,
+not to closure expressions. This is a Swift-attribute-and-doc-comment
+constraint, not a macro-specific one.
+
+> **Context annotations are different.** `/// @lint.context replayable`
+> on an **enclosing** function (e.g., `func routes(_ app:)`) walks into
+> inline trailing closures registered inside it — so the retry-context
+> linter rule reaches closure bodies without this refactor. Only the
+> per-handler effect declarations (`@ExternallyIdempotent(by:)` etc.)
+> require the extraction.
 
 ## Design boundaries
 
