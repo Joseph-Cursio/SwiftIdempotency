@@ -194,3 +194,36 @@ pointfreeco's own.
   carrier (pointfreeco's `paymentIntent.id` IS an idempotency
   key in the Stripe sense) but adding the strong type to a real
   codebase is a refactor, not a measurement.
+
+## Comparison to slot 14 tip (`698081e`) — HttpPipeline whitelist
+
+Re-scanned at SwiftProjectLint slot 14 merge commit `698081e`
+(adds `writeStatus` and `respond` to `idempotentMethodsByFramework`
+gated on `import HttpPipeline`).
+
+| Metric | At `2fbb171` (slot 13 tip) | At `698081e` (slot 14 tip) | Delta |
+|---|---|---|---|
+| Run B total | 38 | **23** | **−15** |
+| `writeStatus` diagnostics | 5 | 0 | −5 |
+| `respond` diagnostics | 4 | 0 | −4 |
+| `stripeHookFailure` diagnostics | 3 | 0 | **−3 (transitive)** |
+| `validateStripeSignature` diagnostics | 2 | 0 | **−2 (transitive)** |
+| `fetchGift` diagnostics | 1 | 0 | **−1 (transitive)** |
+
+**The pointfreeco corpus surfaced a transitive multiplier effect.**
+9 direct silences (5 `writeStatus` + 4 `respond`) plus 6
+indirect — three helper functions (`stripeHookFailure`,
+`validateStripeSignature`, `fetchGift`) had `writeStatus` /
+`respond` calls in their bodies. Once those callees classified
+cleanly under slot 14, the helpers' body inference resolved to
+idempotent, which silenced their own strict-mode diagnostics in
+the annotated handlers' call graphs.
+
+This is the **first slice across all rounds to demonstrate a
+measurable transitive-multiplier from a framework whitelist.**
+The same pattern likely applies to slot 10 (Lambda response-writer)
+on a richer Lambda corpus where helper functions wrap response
+calls — the awslabs demo corpus was too thin to surface it.
+
+Run A unchanged at 6 diagnostics — `writeStatus` / `respond`
+fire only in strict mode.

@@ -425,32 +425,43 @@ cross-adopter tally is now **6/6 real-bug shapes** across Penny
 (4) + isowords (2), with isowords' Run A handler coverage
 matching Penny's at 5/5.
 
-### 14. `HttpPipeline` framework whitelist — **deferred (evidence accumulating)**
+### 14. `HttpPipeline` framework whitelist — **done (SwiftProjectLint `698081e`)**
 
-**Shape:** `writeStatus(.ok)` / `writeStatus(.badRequest)` fires
-10 times in isowords Run B, identical shape to the pointfreeco
-www round's `writeStatus` residual. The primitive is part of
-`pointfreeco/swift-web`'s `HttpPipeline` module (public API:
-`writeStatus`, `writeHeader`, `writeBody`, `send`). Writing
-response headers is observationally replay-safe — same status /
-headers / body on retry produces the same response.
+Shipped as branch `slot14-httppipeline-whitelist` → **PR #22** →
+merge commit **`698081e`**. `writeStatus` and `respond` added to
+`idempotentMethodsByFramework` gated on `import HttpPipeline`.
+Different table than originally predicted — these are
+**freestanding curried functions** in `pointfreeco/swift-web`
+called via `|>` / `>=>` pipe-forward composition, not receiver-
+method calls — so the bare-name `idempotentMethodsByFramework`
+table was the right home, not `idempotentReceiverMethodsByFramework`.
 
-**Evidence:** 2 adopters (isowords + pointfreeco www), ~20
-combined fires. Same infrastructure shape as the closed slot 10
-Lambda response-writer slice and the `040f186` Hummingbird slice.
+Also introduced a per-framework reason-phrasing hook
+(`idempotentMethodPhrasingByFramework`) with `"framework primitive"`
+default. FluentKit phrasing (`"query-builder read"`) preserved
+exactly so the existing reason-string assertion at
+`FrameworkWhitelistGatingTests.swift:366` stays green.
 
-**Fix direction** (same pattern as slot 10): add entries to
-`idempotentReceiverMethodsByFramework` gated on
-`import HttpPipeline`. Probable entries: `(nil, "writeStatus")`,
-`(nil, "writeHeader")`, `(nil, "writeBody")`, `(nil, "send")`.
-Receiver may be `Conn<...>` or free-function via `|>`; verify
-shape before picking the gate.
+**Measured deltas at slice tip `698081e`:**
 
-**Status: deferred.** Two-adopter evidence is enough to slice,
-but validation direction is production-app rounds; a third
-Point-Free-stack adopter is unlikely to surface soon. If a
-user-owned Point-Free-stack app lands, this slice pays off
-immediately.
+- **Isowords Run B**: 162 → **152 (−10)**. Exactly matches the
+  10 `writeStatus` diagnostics that were firing.
+- **pointfreeco www Run B**: 38 → **23 (−15)**. 9 direct (5
+  `writeStatus` + 4 `respond`) plus a **6-diagnostic multiplier**
+  from transitive inference — `stripeHookFailure` ×3,
+  `validateStripeSignature` ×2, `fetchGift` ×1 resolve to
+  idempotent once their bodies' `writeStatus`/`respond` calls
+  classify cleanly. Slot 14 is the first slice to surface a
+  measurable transitive-multiplier effect from a framework
+  whitelist; the same pattern likely applies to slot 10
+  (Lambda response-writer) on a richer Lambda corpus.
+
+Linter test suite: 2286 → **2295 (+9 new)**. Same shape as slot 10
+(Lambda response-writer) and `040f186` (Hummingbird primitives) —
+no inferrer-core changes needed. See per-adopter pre/post
+comparison sections in
+[`isowords/trial-findings.md`](isowords/trial-findings.md) and
+[`pointfreeco/trial-findings.md`](pointfreeco/trial-findings.md).
 
 ### 11. Housekeeping (small docs/config items) — **done**
 
@@ -590,11 +601,6 @@ it just stops blocking on new targets."* So future rounds become
 **criterion-driven** (close a ship gate). Options, in
 value-per-effort order:
 
-- **Slot 14 promotion (HttpPipeline whitelist) — still eligible
-  standalone.** Two-adopter evidence (isowords + pointfreeco
-  www). Would close the `writeStatus` / `writeHeader` / etc.
-  residual. Ship without a third adopter — the slice is
-  well-scoped and the evidence is clean. ~1 session.
 - **Slot 16 promotion (Hummingbird Router DSL whitelist) — still
   1-adopter (prospero only).** myfavquotes-api did NOT push it to
   2-adopter because it uses method-reference handler binding
@@ -642,6 +648,6 @@ myfavquotes-api** all map to `IdempotencyKey` /
 `UsersController.login`, random-token-keyed persist on retry).
 **8-for-8 macro-surface coverage across five production adopters.**
 
-Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 15 are closed out. Slot 7's
-publicly-visible follow-on is parked in
+Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 are closed out.
+Slot 7's publicly-visible follow-on is parked in
 [`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md).

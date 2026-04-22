@@ -327,6 +327,33 @@ already surfaced.
 onto the `IdempotencyKey` + `@ExternallyIdempotent(by:)` surface.
 Six for six.**
 
+## Comparison to slot 14 tip (`698081e`) — HttpPipeline whitelist
+
+Re-scanned at SwiftProjectLint slot 14 merge commit `698081e`
+(adds `writeStatus` and `respond` to `idempotentMethodsByFramework`
+gated on `import HttpPipeline`).
+
+| Metric | At `2fbb171` (slot 13 tip) | At `698081e` (slot 14 tip) | Delta |
+|---|---|---|---|
+| Run B total | 162 | **152** | **−10** |
+| `writeStatus` diagnostics | 10 | 0 | −10 |
+| `respond` diagnostics | 0 | 0 | 0 |
+| Other clusters | 152 | 152 | unchanged |
+
+The −10 delta exactly matches the prior `writeStatus`-cluster
+count. No transitive multiplier on the isowords corpus — the
+isowords middlewares fire `writeStatus` directly in the annotated
+strict_replayable handler bodies, without intervening helpers
+whose inference would benefit from the silence. Contrast:
+pointfreeco's `stripeHookFailure` / `validateStripeSignature` /
+`fetchGift` helpers each had `writeStatus`/`respond` in their
+bodies, so slot 14 unblocked an extra 6 transitive silences
+there (see `pointfreeco/trial-findings.md`).
+
+Run A unchanged at 8 diagnostics — `writeStatus` and `respond`
+fire only in strict mode (replayable mode doesn't require every
+callee to be classified).
+
 ## Links
 
 - **Scope:** [`trial-scope.md`](trial-scope.md)
