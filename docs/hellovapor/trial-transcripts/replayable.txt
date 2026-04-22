@@ -1,0 +1,12 @@
+Sources/HelloVapor/routes.swift:32: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'routes' is declared `@lint.context replayable` but calls 'post', whose effect is inferred `non_idempotent` from the callee name `post`. If the inference is wrong, annotate 'post' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'post' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/HelloVapor/routes.swift:38: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'routes' is declared `@lint.context replayable` but calls 'register', whose effect is inferred `non_idempotent` from the callee name `register`. If the inference is wrong, annotate 'register' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'register' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/HelloVapor/routes.swift:39: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'routes' is declared `@lint.context replayable` but calls 'register', whose effect is inferred `non_idempotent` from the callee name `register`. If the inference is wrong, annotate 'register' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'register' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/HelloVapor/routes.swift:40: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'routes' is declared `@lint.context replayable` but calls 'register', whose effect is inferred `non_idempotent` from the callee name `register`. If the inference is wrong, annotate 'register' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'register' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/HelloVapor/routes.swift:41: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'routes' is declared `@lint.context replayable` but calls 'register', whose effect is inferred `non_idempotent` from the callee name `register`. If the inference is wrong, annotate 'register' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'register' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+
+Found 5 issues (5 errors)

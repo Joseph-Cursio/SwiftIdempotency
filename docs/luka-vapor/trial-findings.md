@@ -32,9 +32,21 @@ is a scope asymmetry versus slot 16 (Hummingbird), where
 receiver-recognized and the prefix-match path was bypassed for
 `router.`-prefixed calls.
 
-**Conclusion for pre-committed Q2:** slot 17 needs **4 entries**
-(`(app, post|put|patch|delete) → Vapor`), not 5 like slot 16.
-Adding `(app, get)` would be a no-op on this adopter.
+**Conclusion for pre-committed Q2 — replayable-tier view:** `app.get`
+is silent under replayable. But see [Run B correction](#run-b-correction-5-verb-scope)
+below — the HelloVapor round showed strict-mode fires on `app.get`,
+so slot 17 should ship at **5 entries** (matching slot 16), not 4.
+
+### Run B correction (5-verb scope)
+
+Initial Run B analysis below identified 9 `get` callees; 8 are
+`EventLoopFuture.get()` and **1 is `app.get` at line 6** (attributed
+to body-first-line of the closure opening at line 5). Under
+strict_replayable, `app.get` registration sites fire exactly like
+`app.post`. The HelloVapor corroboration round (5× `app.get` strict
+fires on a richer corpus) confirms this. **Slot 17 ships as 5
+entries, not 4.** See [`../hellovapor/trial-findings.md`](../hellovapor/trial-findings.md)
+§"Slot-17 2-adopter evidence summary" for combined data.
 
 ## Run B — strict_replayable context
 
@@ -125,14 +137,14 @@ macro surface.
    "from the callee name `post`"). Receiver `app` is unresolved,
    so the path is name-heuristic, not receiver-qualified. Slot-17
    whitelist entry should follow slot-16's `idempotentReceiverMethodsByFramework`
-   pattern: `(app, post|put|patch|delete) → Vapor`. The
-   receiver-literal `app` matches usage convention in the Vapor
-   community.
+   pattern. The receiver-literal `app` matches usage convention in
+   the Vapor community.
 2. **`app.get` symmetry.** `app.get` is silent under replayable
-   context. Prefix-lexicon (non_idempotent-names) does not contain
-   `get`, and the receiver-qualified path isn't needed to classify
-   this route registration as idempotent. Slot-17 scope is
-   **4 verbs**, not 5.
+   (prefix-lexicon classifies `get` as idempotent) but fires under
+   strict_replayable (1 fire on this corpus at line 6; 5 fires on
+   the HelloVapor corpus). Slot-17 scope is **5 verbs**
+   (`get|post|put|patch|delete`), matching slot 16. Whitelist
+   entry silences under both tiers.
 3. **Handler-body real-bug catches.** Yes — `sendEndEvent` maps
    cleanly to `@ExternallyIdempotent(by:)`. 9-for-9
    cross-adopter shape coverage.
@@ -144,16 +156,9 @@ macro surface.
 ## Next-step read
 
 Slot 17 has clean first-adopter evidence on **2 `app.post` fires**
-with predictable shape. The `app.get` asymmetry narrows scope but
-doesn't block the slice. Second adopter for 2-adopter
-ship-eligibility: **`sinduke/HelloVapor`** (scout-identified; 6
-`app.get` inline closures + 1 `app.post` inline closure in
-`Sources/HelloVapor/routes.swift`). Predicted HelloVapor Run A
-fires: **1 slot-17 fire** (the single `app.post("api", "acronym")`
-site). That would push slot 17 to 2-adopter evidence at
-3 total fires — thinner than slot 16's 12 but still replayable-
-context-verified on two independent adopters.
-
-If HelloVapor confirms, ship slot 17 as a 4-entry whitelist; if
-not, record the Vapor ecosystem's DSL-shape as slot-16-divergent
-and close slot 17 as non-applicable.
+(replayable) + **1 `app.get` fire** (strict). 2-adopter corroboration
+landed in the same session on
+[`sinduke/HelloVapor`](../hellovapor/trial-findings.md): 1× `app.post`
+replayable + 5× `app.get` strict. **Slot 17 ships as 5-entry
+whitelist** `(app, get|post|put|patch|delete) → Vapor` — same shape
+as slot 16, gated on `import Vapor`.
