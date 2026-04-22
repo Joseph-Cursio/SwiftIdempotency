@@ -238,6 +238,27 @@ rejected at macro-expansion time.
   non-idempotent functions whose side effects are invisible to the
   return value will not be caught by the auto-generated test alone.
 
+## Using without SwiftProjectLint
+
+The package has standalone value — two of the three tiers work independently, no linter required.
+
+**Standalone — full value:**
+
+- **`IdempotencyKey`** — compile-time type enforcement. `UUID()` / `Date()` at call sites become type errors, rejected by the compiler before any external tool runs.
+- **`#assertIdempotent` and `@IdempotencyTests`** — compile-time macro expansion into ordinary Swift Testing calls. Tests run at `swift test` time, no external tooling in the loop.
+
+**Needs the linter to pay off:**
+
+- **`@Idempotent` / `@NonIdempotent` / `@Observational` / `@ExternallyIdempotent(by:)`** — marker attributes that carry no runtime semantics on their own. Without a linter reading them, they're documentation; a `/// @lint.effect idempotent` doc comment is informationally equivalent. Still safe to add (unread markers are silent), just not load-bearing without the tool.
+
+**Recommended standalone adoption shape:**
+
+1. Migrate one or two high-value call sites to take `IdempotencyKey` instead of `String` or `UUID`. Payment charges, email delivery, webhook processing, and message-queue producers are the common targets.
+2. Sprinkle `#assertIdempotent { ... }` inside existing `@Test` methods where handlers should be retry-safe. The macro is effect-polymorphic — sync, async, throwing, non-throwing — and picks the right overload based on the closure's effects.
+3. Skip the attribute macros until you either add SwiftProjectLint or want self-documenting contracts for future tooling.
+
+What you give up without the linter: no verification that a function claiming `@Idempotent` is actually idempotent in its body; no retry-context reasoning; no framework-primitive recognition (Fluent ORM verbs, routing DSL, HTTP primitives). Those are linter-side guarantees. The package and the linter compose additively — same annotations, both read them — but the standalone proposition stands on its own two tiers.
+
 ## Coordination with SwiftProjectLint
 
 If your project already uses SwiftProjectLint, adding this package is
