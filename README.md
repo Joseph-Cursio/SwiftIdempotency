@@ -287,4 +287,4 @@ for this package's specific scope.
 
 ## License
 
-TBD — will match `SwiftProjectLint`'s license.
+Apache License 2.0. See [LICENSE](LICENSE).
