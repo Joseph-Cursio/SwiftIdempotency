@@ -653,13 +653,32 @@ value-per-effort order:
   Single-fire shape — only matters if a future Hummingbird/Vapor
   adopter with auth flows fires the same shape and pushes to
   2-adopter slice volume. No action until then.
-- **Sixth production-app round — slice-driven.** No criterion
-  pressure, but a sixth round on a *Vapor routing-DSL-heavy
-  adopter* (e.g. Feather CMS if it builds, or another community
-  Vapor app) would test slot 16's cross-framework generalisation
-  hypothesis (`app.get/post` shape vs Hummingbird `router.get/post`).
-  If both fire the same way, slot 16 becomes parameterised across
-  frameworks — bigger payoff than promoting Hummingbird-specific.
+- **Sixth production-app round — slice-driven, target-blocked.**
+  Would open a **slot 17** parallel to slot 16 on Vapor's
+  routing DSL: five `(app, get|post|put|patch|delete) → Vapor`
+  pairs with the same receiver-gated precedence shape. Note:
+  this is NOT a generalisation of slot 16 at the data-table
+  level — Vapor's inline-closure shape uses a different receiver
+  identifier (`app`) and a different framework gate, so it's a
+  parallel slice, not a merged one. The structural analogy is
+  strong; 2-adopter evidence is still required on the `app.`
+  receiver shape before shipping.
+  **Scout (2026-04-22) — no clean target yet:**
+  - `FeatherCMS/feather`: split across 7 sibling repos with
+    `.branch("dev")` dependencies; Swift 5.5 tools version; last
+    push 2023-05. Reproducibility-hostile for a 2-adopter evidence
+    trial.
+  - `madsodgaard/vapor-auth-template` (241★): uses method-reference
+    binding (`auth.post("register", use: register)`) — structurally
+    analogous to myfavquotes-api's Hummingbird pattern, wrong shape
+    for DSL-noise validation.
+  - `vapor/penny-bot` (already trialed on Lambda side): the source
+    under `Sources/` contains no Vapor routing DSL — Penny is
+    Lambda-based, not a Vapor-web-server adopter.
+  - **Next move when slot 17 comes onto the table:** either commit
+    to Feather scoped to a single-module subpackage (accepting
+    branch-dep fragility) or wait for a fresh target to surface
+    via `vapor-community/awesome-vapor` noise.
 
 Deferred — no urgent triggering evidence:
 
