@@ -365,13 +365,54 @@ Create handlers have a bootstrap problem that rules out
 pre-save dedup key. `init(fromEntity:)` is a post-save-read-or-lookup
 tool, not a create-handler tool.
 
-### `init(fromEntity:)` needs an adapter for Fluent Models
+### Post-save keys: `init(fromFluentModel:)` (v0.2.0+)
 
-Post-save handlers that want to key from the saved entity hit two
-compile errors. Fluent's `Model` does not inherit `Identifiable`
-(despite exposing `@ID var id: UUID?`), and the constructor's
-`E.ID: CustomStringConvertible` constraint rejects Optional types.
-An adopter-side adapter bridges both:
+For post-save handlers that want to key from the saved entity,
+add the `SwiftIdempotencyFluent` product to your adopter
+Package.swift alongside `SwiftIdempotency`:
+
+```swift
+// Package.swift
+.package(url: "https://github.com/Joseph-Cursio/SwiftIdempotency.git",
+         from: "0.2.0"),
+// ...
+.product(name: "SwiftIdempotency", package: "SwiftIdempotency"),
+.product(name: "SwiftIdempotencyFluent", package: "SwiftIdempotency"),
+```
+
+Then construct the key directly from the Fluent Model:
+
+```swift
+import SwiftIdempotency
+import SwiftIdempotencyFluent
+
+// Post-save handler:
+let key = try IdempotencyKey(fromFluentModel: savedAcronym)
+// → key.rawValue == savedAcronym.requireID().uuidString
+```
+
+The initializer throws `FluentError.idRequired` if the Model's
+`id` is nil (pre-save) — the same error `model.requireID()`
+throws. For pre-save create handlers, route through the header-
+sourced path above instead.
+
+Zero adopter-side boilerplate: no `Identifiable` adapter struct,
+no force-unwrap. The bare Fluent `Model` works directly, and the
+throwing init surfaces the pre-save state as a clean Swift error
+rather than a runtime crash.
+
+**Supported `IDValue` types:** any that conform to
+`CustomStringConvertible` — `UUID`, `Int`, `String`, and typed
+wrappers around those satisfy this. Models using `@CompositeID`
+have a custom struct `IDValue` and are rejected at compile time;
+route those through `init(fromAuditedString:)` on a manually-
+composed string.
+
+### Pre-v0.2.0 fallback: `init(fromEntity:)` via an adapter struct
+
+If you're pinned to SwiftIdempotency `< 0.2.0` and can't add the
+`SwiftIdempotencyFluent` product, the original adapter-struct
+pattern still works:
 
 ```swift
 struct IdentifiableAcronym: Identifiable {
@@ -380,16 +421,15 @@ struct IdentifiableAcronym: Identifiable {
     init(_ acronym: Acronym) { self.acronym = acronym }
 }
 
-// Post-save usage:
 let key = IdempotencyKey(fromEntity: IdentifiableAcronym(savedAcronym))
 ```
 
-One adapter per Model type the adopter keys on. Force-unwrapping
-`id` is safe inside this adapter because construction is post-save —
-the invariant the handler controls. Third-party Model types defined
-outside the adopter's module can't always be retroactively
-conformed this way; for those, fall back to
-`init(fromAuditedString:)` on a stable business key.
+One adapter per Model type the adopter keys on, force-unwrap on
+the Optional id. Third-party Model types defined outside the
+adopter's module may not be retroactively conformable this way;
+fall back to `init(fromAuditedString:)` on a stable business key
+for those. Upgrading to v0.2.0+ and switching to
+`init(fromFluentModel:)` is recommended.
 
 ### `#assertIdempotent` on Model returns needs an Equatable projection
 
@@ -546,14 +586,19 @@ value independent of static analysis.
 Early release. Annotation attributes (`@Idempotent`, `@NonIdempotent`,
 `@Observational`, `@ExternallyIdempotent`), `IdempotencyKey`, zero-arg
 `@IdempotencyTests` extension expansion, and `#assertIdempotent` (sync +
-async) are implemented and tested. Deferred for future work:
+async) are implemented and tested. v0.2.0 adds a dedicated
+`SwiftIdempotencyFluent` product with
+`IdempotencyKey.init(fromFluentModel:)` for Fluent `Model` adopters —
+see §"Using with Fluent ORM" above. Deferred for future work:
 
 - Parameterised `@IdempotencyTests` expansion — today only zero-arg
   `@Idempotent`-marked members get auto-generated tests; extending to
   parameterised members needs an `IdempotencyTestArgs` protocol design
   so the macro has a stable way to synthesise arguments
 - Option A / B observable-equivalence (dependency-injected mocks)
-- Framework-specific integrations (Vapor, Hummingbird, SwiftNIO)
+- Additional framework-specific integrations beyond Fluent (Hummingbird,
+  SwiftNIO, and others would follow the `SwiftIdempotencyFluent` opt-in
+  product pattern)
 
 See the design document in
 [swiftIdempotency/docs](https://github.com/Joseph-Cursio/swiftIdempotency/tree/main/docs)

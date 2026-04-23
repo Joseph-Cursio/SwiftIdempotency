@@ -275,3 +275,84 @@ For post-v0.1.0:
   - Trivial returns (`HTTPStatus.ok`, `Void`, `Bool`): ❌ pathology (luka-vapor).
   - Reference-type returns (Fluent `final class` Model): ❌ without adopter workaround (hellovapor).
   The README update drafted for the luka-vapor trial covers pathology case 2 but not case 3. Worth extending.
+
+## Re-run (2026-04-23, v0.2.0 pre-tag validation)
+
+Third-adopter synthetic-swiftdata trial confirmed the Optional-ID
+pattern is **Fluent-specific**, motivating the dedicated
+`SwiftIdempotencyFluent` product with
+`IdempotencyKey.init(fromFluentModel:)`. The hellovapor package-
+integration-trial branch was re-migrated to use the new constructor
+as the v0.2.0 pre-tag validation gate per
+[`../fluent-constructor-design.md`](../fluent-constructor-design.md)
+§"Testing strategy".
+
+**Trial-fork commit:** [`3c8a0f7`](https://github.com/Joseph-Cursio/HelloVapor-idempotency-trial/commit/3c8a0f7)
+on `package-integration-trial`, bumping SwiftIdempotency dep to
+`fb00d74` (pre-v0.2.0 tip) and adding the `SwiftIdempotencyFluent`
+product to both executable and test target dep lists.
+
+**Outcome: 5/5 tests passing, adapter struct removed entirely.**
+
+### Adopter-side diff summary
+
+| Artifact | Before | After | Delta |
+|---|---|---|---|
+| `IdentifiableAcronym` adapter struct | Present (~9 lines incl. docstring) | Removed | −9 LOC |
+| Key construction site | `let adapter = IdentifiableAcronym(acronym); let key = IdempotencyKey(fromEntity: adapter)` (2 lines) | `let key = try IdempotencyKey(fromFluentModel: acronym)` (1 line) | −1 LOC |
+| Pre-save failure mode | Force-unwrap crash via adapter's `var id: UUID { acronym.id! }` | Throw `FluentError.idRequired` via `requireID()` | Clean |
+| Package.swift deps | 1 product (`SwiftIdempotency`) | 2 products (adds `SwiftIdempotencyFluent`) | +1 line |
+
+Gross adopter-code LOC delta per keyed Model: **~10 LOC removed,
+one-line call site added**. Scales linearly with the number of
+Fluent Models the adopter keys idempotency on.
+
+### Test-level changes
+
+- `identifiableConformanceEnablesFromEntity` → renamed
+  `fluentModelReachesKeyDirectly`. Exercises the post-save
+  constructor directly, asserts `key.rawValue ==
+  acronym.requireID().uuidString`.
+- New test `preSaveThrowsFluentError` captures the clean failure
+  mode — `#expect(throws: FluentError.self)` on a pre-save Model.
+  Replaces the "pre-save bootstrap problem documented" comment-only
+  test from the original trial.
+- `tupleWorkaroundExposesIDChanges` → renamed
+  `freshSavesProduceDifferingUUIDs`. Exercises UUID divergence via
+  an `AcronymProjection` Equatable struct (the corrected pattern
+  from the synthetic-swiftdata Finding 4), matching the v0.1.0
+  README's updated "Using with Fluent ORM" guidance.
+- Inline commentary throughout updated to reference the
+  synthetic-swiftdata trial's corrections (tuple non-conformance,
+  Fluent-specific Optional-ID pattern).
+
+### Carry-forward findings confirmed
+
+The original trial's P0 / P1 / P3 findings all stand:
+
+- **P0 — Fluent Model not Identifiable.** Still true. The
+  constructor's approach is to take the Fluent `Model` directly
+  and skip `Identifiable` synthesis entirely — the gap is
+  sidestepped, not fixed at the `fromEntity:` level.
+- **P0 — Optional `UUID?` rejects CustomStringConvertible.**
+  Still true. The constructor's generic constraint is on
+  `M.IDValue: CustomStringConvertible` where `IDValue` is the
+  unwrapped inner type (UUID), and the Optional-unwrap happens
+  inside via `requireID()`.
+- **P1 — `import Fluent` meta-package linter gate mismatch.**
+  Shipped as SwiftProjectLint PR #26 / slot 19. No action needed.
+- **P3 — File basename collision.** Documentation-only. No
+  action needed.
+
+### Build-time / compile-cost delta
+
+Adding the `SwiftIdempotencyFluent` product adds FluentKit as a
+transitive dep — but hellovapor already imports FluentKit via
+its own `vapor/fluent` dependency, so the package graph gains
+zero additional build units. Other Fluent adopters with the same
+setup will see identical zero-cost integration. Non-Fluent
+adopters don't add the `SwiftIdempotencyFluent` product and pay
+zero.
+
+**Cold build** (`swift build`): ~127s on the re-run pin. Same
+ballpark as the pre-re-run build; no regression.
