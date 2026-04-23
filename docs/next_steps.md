@@ -766,12 +766,16 @@ value-per-effort order:
     blind on trivial returns (`HTTPStatus.ok`, `Void`) and on non-
     Equatable class returns without adopter workarounds. See
     [`hellovapor-package-trial/`](hellovapor-package-trial/).
-  - **Pending v0.1.0 blocker:** README "Using with Fluent ORM"
-    section. Documents the `Identifiable` adapter workaround, the
-    Optional-ID force-unwrap pattern, tuple workarounds for non-
-    Equatable Model returns, and the header-sourced key flow as the
-    idiomatic path. ~40 lines. Most urgent documentation gap — Fluent
-    is the biggest Vapor-ecosystem persistence library.
+  - **README "Using with Fluent ORM" section** (`0477b2f`) —
+    v0.1.0 documentation blocker cleared. Three-pattern section:
+    header-sourced `init(fromAuditedString:)` as the idiomatic
+    path (with the create-handler bootstrap-problem rationale),
+    `IdentifiableAcronym`-style adapter struct for post-save
+    handlers (bridges the `Identifiable` + Optional-`UUID?` gaps
+    in one), and tuple-return workaround for `#assertIdempotent`
+    on non-Equatable Model references. Patterns drawn from the
+    hellovapor trial (5/5 tests passing); links to both trial
+    artifacts at the section foot.
   - **Pending post-v0.1.0:** `IdempotencyKey(fromEntity:)` API
     relaxation. Drop the `CustomStringConvertible` constraint on
     `E.ID` (or add a Fluent-shaped constructor) so the path reaches
