@@ -742,7 +742,15 @@ value-per-effort order:
   Same verdict as Prometheus Pushgateway — each observability
   library is its own receiver; defer until 2-adopter evidence.
 
-- **Package release prep (v0.1.0 → SPI submission) — in flight.**
+- **Package release prep (v0.1.0 → SPI submission) — shipped
+  2026-04-23.** Tag `0.1.0` pushed (`f005d28`), GitHub Release
+  live at
+  [`Joseph-Cursio/SwiftIdempotency/releases/tag/0.1.0`](https://github.com/Joseph-Cursio/SwiftIdempotency/releases/tag/0.1.0),
+  SPI "Add Package" submission filed as
+  [`SwiftPackageIndex/PackageList#13283`](https://github.com/SwiftPackageIndex/PackageList/issues/13283).
+  Pre-release checklist (Apache-2.0 license, package-adoption
+  test plan 3/3 trials, README + `.spi.yml` + release-notes
+  docs, 80/80 tests across root + 4 examples) all met.
   Apache-2.0 license landed (SwiftIdempotency `13b1a24`); README
   pre-release review prompted a new
   [`package_adoption_test_plan.md`](package_adoption_test_plan.md)
