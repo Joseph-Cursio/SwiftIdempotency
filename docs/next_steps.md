@@ -783,20 +783,33 @@ value-per-effort order:
     Option C is blind to — the characterisation above gives concrete
     design constraints for what Option B would need to verify.
 
-- **Slot 19 candidate (SwiftProjectLint) — FluentKit gate
-  `import Fluent` alias.** Surfaced by the hellovapor package
-  trial's linter parity check. Idiomatic Vapor code uses the
-  `Fluent` meta-package, not `FluentKit`. The linter's FluentKit
-  gate matches the literal import name only; `import Fluent` silences
-  the Fluent-ORM-verb classification. Evidence: hellovapor scan went
-  silent on `save(on:)` inside an `@ExternallyIdempotent`-marked
-  body under `import Fluent`, fired correctly (1
-  `idempotencyViolation`) after swapping to `import FluentKit`.
-  Cross-adopter check recommended before shipping: re-run prospero /
-  myfavquotes-api / SPI-Server / hummingbird-examples linter trials
-  at a slot-19 tip and measure catch-count deltas — probably
-  meaningfully higher given how widely adopters use `import Fluent`.
-  Shape: same as slots 13-18, data-table addition. Low cost.
+- **Slot 19 (FluentKit `import Fluent` alias) — shipped
+  (SwiftProjectLint `70f2d61`, PR #26 merged 2026-04-22).**
+  Single alias entry (`fluent: ["Fluent"]`) in a new
+  `frameworkImportAliases` table, consulted from the single-site
+  `FrameworkContext.isFrameworkActive` gate. Canonical framework
+  name remains the single identity — reason strings still say
+  `FluentKit`, `enabledFrameworks` config still gates by canonical
+  name, all nested whitelist tables still key on canonical; the
+  alias is purely an import-gate convenience. Surfaced by the
+  hellovapor package trial — `save(on:)` under `import Fluent` was
+  going silent until the gate was aliased.
+  - **hellovapor Run A** 4 → **5** (+1 correct-catch: `save(on:
+    req.db)` at `routes.swift:34` — the Acronym-uniqueness bug
+    already filed as `sinduke/HelloVapor#1`; previously silent
+    under `import Fluent` because the FluentKit gate didn't match
+    the import spelling).
+  - **hellovapor Run B** 18 → **18** (same line reclassifies from
+    `[Unannotated In Strict Replayable Context]` fallback to the
+    typed `[Non-Idempotent In Retry Context]` via FluentKit ORM
+    verb — precision uplift, count unchanged).
+  - **Non-regression verified** on luka-vapor / myfavquotes-api /
+    prospero trial clones via `import Fluent` grep: zero files
+    (all three use `import FluentKit` directly, which the existing
+    gate already handled).
+  +10 tests; suite 2328 → **2338 green**. Trial tip unchanged
+  (hellovapor `4b2bea2`). Shape: same data-table addition as slots
+  13–18; lowest-cost slice shipped so far.
 
 Deferred — no urgent triggering evidence:
 
@@ -811,10 +824,15 @@ myfavquotes-api + luka-vapor + hellovapor** all map to
 `IdempotencyKey` / `@ExternallyIdempotent(by:)`. **10-for-10
 macro-surface coverage across six production adopters.**
 
-Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 are
-closed out. **Slot 19 (FluentKit `import Fluent` alias) is the
-next queued linter candidate.** Package-side v0.1.0 release prep
-is the next queued SwiftIdempotency workstream — see the
-"Package release prep" bullet above for the full slice list.
-Slot 7's publicly-visible follow-on is parked in
+Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 are
+closed out. **No named linter slice is queued** — next candidates
+are all still 1-adopter and awaiting second-adopter evidence
+(Vapor `register(collection:)`, Vapor `Route.description`,
+Hummingbird `addMiddleware`, Hummingbird `queryParameters.require`
+sibling-pair, Swift Distributed Tracing `withSpan`, Swift
+Concurrency `Task.sleep` / `Duration.seconds`, Bcrypt-crypto-gap,
+`AppMetrics.push` Prometheus-Pushgateway, Axiom `emit`). Package-
+side v0.1.0 release prep is the next queued SwiftIdempotency
+workstream — see the "Package release prep" bullet above for the
+full slice list. Slot 7's publicly-visible follow-on is parked in
 [`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md).
