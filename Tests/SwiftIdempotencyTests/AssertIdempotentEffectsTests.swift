@@ -24,10 +24,10 @@ struct AssertIdempotentEffectsTests {
     }
 
     @Test("Idempotent body (no effects inside) passes with zero-effect recorders")
-    func idempotentNoOpBody() async throws {
+    func idempotentNoOpBody() async {
         let recorder = CountingRecorder()
 
-        try await assertIdempotentEffects(recorders: [recorder]) {
+        await assertIdempotentEffects(recorders: [recorder]) {
             // body doesn't touch the recorder → always idempotent
         }
 
@@ -35,7 +35,7 @@ struct AssertIdempotentEffectsTests {
     }
 
     @Test("Dedup-guarded body: records once on first call, zero on retry")
-    func dedupGuardedBody() async throws {
+    func dedupGuardedBody() async {
         let recorder = CountingRecorder()
 
         // Mimics an adopter's dedup-gate shape: "if already done, skip."
@@ -44,7 +44,7 @@ struct AssertIdempotentEffectsTests {
         // cache lookup, whatever).
         let gate = Gate()
 
-        try await assertIdempotentEffects(recorders: [recorder]) {
+        await assertIdempotentEffects(recorders: [recorder]) {
             guard gate.tryTake() else { return }
             recorder.record()
         }
@@ -55,32 +55,32 @@ struct AssertIdempotentEffectsTests {
     }
 
     @Test("Multiple recorders: all must show zero delta on retry")
-    func multipleRecorders() async throws {
-        let db = CountingRecorder()
+    func multipleRecorders() async {
+        let databaseWrites = CountingRecorder()
         let email = CountingRecorder()
 
         // Both recorders increment on first call, neither on retry.
-        let dbGate = Gate()
+        let databaseGate = Gate()
         let emailGate = Gate()
 
-        try await assertIdempotentEffects(recorders: [db, email]) {
-            if dbGate.tryTake() {
-                db.record()
+        await assertIdempotentEffects(recorders: [databaseWrites, email]) {
+            if databaseGate.tryTake() {
+                databaseWrites.record()
             }
             if emailGate.tryTake() {
                 email.record()
             }
         }
 
-        #expect(db.effectCount == 1)
+        #expect(databaseWrites.effectCount == 1)
         #expect(email.effectCount == 1)
     }
 
     @Test("Empty recorders array: runs body twice, no assertion")
-    func emptyRecorders() async throws {
+    func emptyRecorders() async {
         var invocations = 0
 
-        try await assertIdempotentEffects(recorders: []) {
+        await assertIdempotentEffects(recorders: []) {
             invocations += 1
         }
 

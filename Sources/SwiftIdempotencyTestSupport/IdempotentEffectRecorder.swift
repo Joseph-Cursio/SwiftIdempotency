@@ -141,15 +141,15 @@ public func assertIdempotentEffects(
     try await body()
     let afterSecond = recorders.map(\.effectCount)
 
-    for i in recorders.indices {
-        let firstDelta = afterFirst[i] - baseline[i]
-        let secondDelta = afterSecond[i] - afterFirst[i]
+    for index in recorders.indices {
+        let firstDelta = afterFirst[index] - baseline[index]
+        let secondDelta = afterSecond[index] - afterFirst[index]
         if secondDelta != 0 {
             preconditionFailure(
                 """
                 assertIdempotentEffects: handler is not idempotent.
 
-                Recorder \(type(of: recorders[i])) \
+                Recorder \(type(of: recorders[index])) \
                 recorded \(secondDelta) new call\(secondDelta == 1 ? "" : "s") \
                 on the second invocation \
                 (first invocation recorded \(firstDelta); \
