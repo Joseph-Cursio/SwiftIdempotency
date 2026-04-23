@@ -833,15 +833,33 @@ value-per-effort order:
     the new product. README §"Using with Fluent ORM" updated
     with the v0.2.0 direct-constructor path + pre-v0.2.0
     adapter fallback preserved.
-  - **Pending post-v0.1.0:** current-toolchain SwiftData
-    real-adopter trial. TeymiaHabit (pushed 2026-04-19),
-    vreader (2026-04-04), or similar fresh-toolchain SwiftData
-    adopter. Requires xcodebuild+simulator methodology (no
-    candidate has a top-level `Package.swift`). Not release-
-    blocking — the synthetic closed the API question; this
-    trial fills the external-adoption-signal gap. Fold a
-    `pushedAt > 2026-02-01` candidate-freshness filter into the
-    test plan first.
+  - **vreader SwiftData real-adopter trial — shipped 2026-04-23**
+    (fork `Joseph-Cursio/vreader-idempotency-trial@8c010ea` on
+    `package-integration-trial`). First iOS-app / xcodebuild
+    trial, closes the external-adoption-signal gap the
+    synthetic-swiftdata trial left open. 3/3 tests green on
+    iPhone 17 simulator (Xcode 26.4.1, iOS 26, Swift 6.3.1).
+    TeymiaHabit was first-pick (17⭐) but blocked by a
+    pre-existing baseline syntax error; vreader (6⭐) picked
+    up. Two substantive findings:
+    - **P1** — `IdempotencyKey(fromEntity:)` fails compile on
+      real-adopter `@Model` types with business-named UUIDs
+      (not named `id`). Exact error captured: `initializer
+      'init(fromEntity:)' requires that 'PersistentIdentifier'
+      conform to 'CustomStringConvertible'`. Workaround:
+      `IdempotencyKey(fromAuditedString: model.annotationId.uuidString)`.
+      Recommendation: README "Using with SwiftData" section
+      mirroring the "Using with Fluent ORM" pattern.
+    - **P2** — XcodeGen regen doesn't round-trip vreader's
+      hybrid project.yml+pbxproj cleanly. Hand-edit pbxproj is
+      the reliable path. Six-step sequence documented for
+      future iOS-app trials.
+    See
+    [`vreader-package-trial/`](vreader-package-trial/) for full
+    artifacts.
+    - **Pending v0.2.1 / v0.3.0:** README "Using with SwiftData"
+      section — the P1 doc fix. Parallels the v0.2.0 "Using
+      with Fluent ORM" section. Direct-to-main when drafted.
   - **Pending post-v0.1.0:** Option B (dep-injected mock effects)
     promotion from deferred. Would catch the non-idempotency shapes
     Option C is blind to — the characterisation above gives concrete
