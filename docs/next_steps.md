@@ -881,8 +881,19 @@ value-per-effort order:
     See [`penny-package-trial/`](penny-package-trial/). Adopter
     refactor cost measured: ~35-50 LOC (protocol extractions +
     reusable mocks) — tractable mid-weight refactor.
-  - **v0.3.0 workstream: ship Option B — queued, highest priority.**
-    Three pre-ship refinements from the Penny trial's findings:
+  - **v0.3.0 Option B ship proposal — pending user decision
+    (paused 2026-04-23).** The Penny trial produced a positive
+    ship recommendation but the go-ahead is not committed; a
+    future session should check in before starting this work.
+    Alternative paths the user may prefer instead: another
+    adopter trial first (Penny bug-sweep covering OAuth +
+    sponsor DM + GHHooks shapes; VernissageServer as a fresh-
+    external-signal Option B probe); or pause the package-
+    side work entirely and return to a different workstream
+    (triage filings, linter slice, IdempotencyKey.init(fromUUID:)
+    convenience).
+    Proposal details if/when the ship decision is confirmed —
+    three pre-ship refinements from the Penny trial's findings:
     - **R1:** add `Issue.record` failure mode alongside
       `preconditionFailure` (unlocks failure-path tests).
     - **R2:** `Snapshot` associatedtype overload (default `Int`
@@ -892,7 +903,11 @@ value-per-effort order:
       conform without pulling in TestSupport).
     Estimated ~4-5 hours total: 2-3h code, 1-2h docs + example
     sample, 30min release prep. Single-session or two-session
-    slice. Deferred: macro-wrapping variant, Option-B/C hybrid.
+    slice. Explicitly deferred even if the ship decision is
+    positive: macro-wrapping variant, Option-B/C hybrid.
+    See [`penny-package-trial/trial-retrospective.md`](penny-package-trial/trial-retrospective.md)
+    §"v0.3.0 workstream" for the full implementation-order
+    checklist when the decision lands.
 
 - **Slot 19 (FluentKit `import Fluent` alias) — shipped
   (SwiftProjectLint `70f2d61`, PR #26 merged 2026-04-22).**
