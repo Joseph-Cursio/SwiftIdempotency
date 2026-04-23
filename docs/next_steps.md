@@ -857,9 +857,18 @@ value-per-effort order:
     See
     [`vreader-package-trial/`](vreader-package-trial/) for full
     artifacts.
-    - **Pending v0.2.1 / v0.3.0:** README "Using with SwiftData"
-      section — the P1 doc fix. Parallels the v0.2.0 "Using
-      with Fluent ORM" section. Direct-to-main when drafted.
+    - **README "Using with SwiftData" section — shipped
+      2026-04-23** (direct-to-main). Parallels the v0.2.0
+      "Using with Fluent ORM" section. Three subsections:
+      clean path (`@Model` with `id: UUID`/`id: String` →
+      `fromEntity:` works out of the box, AmpFin-shape
+      reference); business-named-UUID path (Options A and B
+      — `fromAuditedString:` canonical + typealias opt-in
+      for `fromEntity:` ergonomics); `#assertIdempotent` on
+      Model returns (same Equatable-projection pattern as
+      Fluent). Links the synthetic + vreader trials at the
+      section foot. **Third v0.2.x docs-only polish;
+      addresses P1 from the vreader trial.**
   - **Pending post-v0.1.0:** Option B (dep-injected mock effects)
     promotion from deferred. Would catch the non-idempotency shapes
     Option C is blind to — the characterisation above gives concrete

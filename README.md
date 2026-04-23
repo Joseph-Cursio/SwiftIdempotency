@@ -504,6 +504,160 @@ pattern. The earlier
 covers the first adopter-integration round (non-Fluent Vapor, same
 inline-closure refactor shape).
 
+## Using with SwiftData
+
+SwiftData is Apple's first-party persistence layer on iOS 17+ /
+macOS 14+. Unlike Fluent, SwiftData's `@Model` macro emits
+`PersistentModel` conformance with an inherited `Identifiable`
+conformance — so the `SwiftIdempotencyFluent` product isn't
+needed here. The integration turns on a single question: does
+the adopter's `@Model` type expose a stable identifier named
+`id`, or something else?
+
+### Clean path: `@Model` with `id: UUID` or `id: String`
+
+When the adopter names their identifier `id`, `fromEntity:`
+works out of the box. The user's declared `id` satisfies
+`Identifiable.id`; SwiftData's synthesized
+`persistentModelID: PersistentIdentifier` sits alongside as a
+separate property.
+
+```swift
+import SwiftData
+import SwiftIdempotency
+
+@Model
+final class OfflineAlbum {
+    @Attribute(.unique) var id: String
+    var name: String
+    var favorite: Bool
+
+    init(id: String, name: String, favorite: Bool) {
+        self.id = id
+        self.name = name
+        self.favorite = favorite
+    }
+}
+
+let album = OfflineAlbum(id: "album-42", name: "Kind of Blue", favorite: true)
+let key = IdempotencyKey(fromEntity: album)
+// key.rawValue == "album-42"
+```
+
+`@Attribute(.unique)` on `id` is recommended — it makes the
+persistence layer the final dedup gate, which pairs naturally
+with the idempotency-key flow at the handler layer.
+`String`, `UUID`, `Int`, and typed wrappers over those all
+satisfy `CustomStringConvertible` and work with `fromEntity:`.
+
+### Business-named-UUID path: `annotationId` / `uuid` / `pk` / etc.
+
+Real iOS codebases often name their stable identifier
+something other than `id` — `annotationId`, `uuid`, `pk`,
+domain-specific names. `fromEntity:` does **not** reach these
+types: Swift's `Identifiable` synthesis requires a member named
+`id` (or an explicit `typealias ID = …`), and absent both,
+SwiftData falls through to `id: PersistentIdentifier`, which
+isn't `CustomStringConvertible`:
+
+```
+error: initializer 'init(fromEntity:)' requires that
+'PersistentIdentifier' conform to 'CustomStringConvertible'
+```
+
+Two workarounds — pick based on how much adopter-side
+boilerplate is acceptable.
+
+**Option A — `fromAuditedString:` over the stringified UUID
+(canonical, zero boilerplate):**
+
+```swift
+@Model
+final class AnnotationNote {
+    @Attribute(.unique) var annotationId: UUID
+    var content: String
+    // ... no id property
+}
+
+let annotation = AnnotationNote(annotationId: UUID(), content: "...")
+let key = IdempotencyKey(fromAuditedString: annotation.annotationId.uuidString)
+```
+
+This is the path the `lllyys/vreader` package-adoption trial
+uses. Zero per-Model boilerplate; the `fromAuditedString:`
+label flags the construction as a deliberate audit moment
+in code review.
+
+**Option B — opt in to `fromEntity:` via typealias + computed
+`id` (three lines per Model):**
+
+```swift
+@Model
+final class AnnotationNote: Identifiable {
+    @Attribute(.unique) var annotationId: UUID
+    var content: String
+
+    // Opt in to IdempotencyKey(fromEntity:):
+    typealias ID = UUID
+    var id: UUID { annotationId }
+}
+
+let key = IdempotencyKey(fromEntity: annotation)
+```
+
+The typealias pins `Identifiable.ID` to the unwrapped `UUID`
+(not the synthesized `PersistentIdentifier`), and the computed
+`id` satisfies the protocol requirement. Cost: three lines per
+`@Model` type the adopter keys on. Use when the team prefers
+the `fromEntity:` ergonomics over per-call-site
+`fromAuditedString: .uuidString` ceremony.
+
+### `#assertIdempotent` on SwiftData Model returns
+
+Same guidance as Fluent: `@Model` classes are non-Equatable
+reference types, so you cannot return one directly from a
+`#assertIdempotent` closure. Use a dedicated Equatable `struct`
+projection:
+
+```swift
+struct AnnotationProjection: Equatable {
+    let annotationId: UUID
+    let content: String
+}
+
+let projection = try #assertIdempotent {
+    let note = AnnotationNote(annotationId: fixedID, content: "...")
+    return AnnotationProjection(
+        annotationId: note.annotationId,
+        content: note.content
+    )
+}
+```
+
+Tuples do not work here for the same reason they don't work on
+Fluent Models — synthesized `==` is not `Equatable` protocol
+conformance, and `#assertIdempotent`'s `<Result: Equatable>`
+constraint rejects tuples at compile time. See the
+[`#assertIdempotent on Model returns needs an Equatable
+projection`](#assertidempotent-on-model-returns-needs-an-equatable-projection)
+subsection above for the full rationale.
+
+### SwiftData trials reference
+
+These patterns are drawn from two fully-compiling trials with
+passing tests:
+
+- [`docs/synthetic-swiftdata-package-trial/`](docs/synthetic-swiftdata-package-trial/)
+  — the Clean-path pattern against a synthetic `@Model` with
+  `id: String`. See `examples/swiftdata-sample/` for a
+  consumer sample exercising the same code.
+- [`docs/vreader-package-trial/`](docs/vreader-package-trial/)
+  — the Business-named-UUID pattern against real adopter-
+  authored code (`lllyys/vreader`'s `AnnotationNote`).
+  Test-target-only integration via xcodebuild + iOS
+  simulator. Documents the `typealias ID`-opt-in and the
+  `fromAuditedString:` canonical-path trade-off above.
+
 ## Design boundaries
 
 **What this package does:**
