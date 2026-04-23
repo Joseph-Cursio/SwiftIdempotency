@@ -776,12 +776,56 @@ value-per-effort order:
     on non-Equatable Model references. Patterns drawn from the
     hellovapor trial (5/5 tests passing); links to both trial
     artifacts at the section foot.
-  - **Pending post-v0.1.0:** `IdempotencyKey(fromEntity:)` API
-    relaxation. Drop the `CustomStringConvertible` constraint on
-    `E.ID` (or add a Fluent-shaped constructor) so the path reaches
-    Fluent Models without adapter code. Needs a third adopter trial
-    (non-Fluent Identifiable type — Core Data, SwiftData) to confirm
-    the Optional-ID pattern recurs outside Fluent before committing.
+  - **Third trial — synthetic SwiftData** (2026-04-23). AmpFin
+    real-adopter attempt pivoted mid-baseline after ~30 min of
+    Swift-6.3 `@Model`-toolchain-drift friction unrelated to the
+    API question; pivoted to a fresh synthetic at
+    [`examples/swiftdata-sample/`](../examples/swiftdata-sample/)
+    per the test plan's option #3. Trial artifacts:
+    [`docs/synthetic-swiftdata-package-trial/`](synthetic-swiftdata-package-trial/)
+    and the AmpFin attempt at
+    [`docs/ampfin-package-trial/`](ampfin-package-trial/). 8/8
+    tests green. Deciding question answered: `IdempotencyKey(fromEntity:)`
+    **reaches SwiftData `@Model` with user-declared `var id:
+    String` cleanly** and reaches plain reference-type
+    `Identifiable` with `let id: String` trivially. The Optional-ID
+    pattern from Fluent is **Fluent-specific**, not recurring.
+    API decision: **add a Fluent-shaped constructor post-v0.1.0,
+    do NOT relax the global `CustomStringConvertible` constraint**.
+    One P0 doc finding: the hellovapor-trial-documented tuple-
+    wrapping workaround for `#assertIdempotent` on non-Equatable
+    `@Model` returns doesn't compile (tuples don't conform to the
+    `Equatable` *protocol*, only have synthesised `==`). **README
+    §"Using with Fluent ORM" fixed in the same session** — the
+    §"`#assertIdempotent` on Model returns" subsection now
+    recommends a dedicated Equatable `struct` projection with
+    the exact compile-error excerpt adopters would see if they
+    try the old tuple pattern. Hellovapor trial-findings.md
+    annotated in-place with a post-publication correction note.
+    Completion criteria per the test plan: **three adopter
+    integrations complete (luka-vapor + hellovapor + synthetic)**,
+    **no new P0 API-change requirements** (only a doc fix, not
+    an API shape change), **linter parity confirmed** on
+    luka-vapor/hellovapor — package-adoption-test-plan bar **met
+    for v0.1.0**.
+  - **Pending post-v0.1.0:** dedicated Fluent-shaped constructor
+    on `IdempotencyKey` (e.g. `init(fromFluentModel:)` or
+    `init(fromFluentID:)` — design TBD). Must route through
+    `FluentKit` as a conditional dep and not break existing
+    `fromEntity:` callers. Requires a FluentKit real-adopter
+    validation (hellovapor re-run) before merging. See
+    [`synthetic-swiftdata-package-trial/trial-retrospective.md`](synthetic-swiftdata-package-trial/trial-retrospective.md)
+    §"P2 — design `init(fromFluentID:)`" for design
+    considerations.
+  - **Pending post-v0.1.0:** current-toolchain SwiftData
+    real-adopter trial. TeymiaHabit (pushed 2026-04-19),
+    vreader (2026-04-04), or similar fresh-toolchain SwiftData
+    adopter. Requires xcodebuild+simulator methodology (no
+    candidate has a top-level `Package.swift`). Not release-
+    blocking — the synthetic closed the API question; this
+    trial fills the external-adoption-signal gap. Fold a
+    `pushedAt > 2026-02-01` candidate-freshness filter into the
+    test plan first.
   - **Pending post-v0.1.0:** Option B (dep-injected mock effects)
     promotion from deferred. Would catch the non-idempotency shapes
     Option C is blind to — the characterisation above gives concrete
