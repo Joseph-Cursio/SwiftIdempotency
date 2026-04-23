@@ -937,6 +937,51 @@ value-per-effort order:
   (hellovapor `4b2bea2`). Shape: same data-table addition as slots
   13–18; lowest-cost slice shipped so far.
 
+- **Slot 20 (`tuple-equality-with-unstable-components` rule) —
+  shipped (SwiftProjectLint `69979a4`, direct-to-main 2026-04-23).**
+  New file-local structural rule under the Idempotency category.
+  Flags `(a, b) == (c, d)` / `!=` tuple-literal equality where any
+  element on either side is produced by a time, randomness, or
+  per-call identity source — `Date()`, `UUID()`, `Date.now`,
+  `Int.random(in:)`, `CFAbsoluteTimeGetCurrent()`, or the
+  identifiers `now` / `timestamp` / `nonce`. Deliberately narrow:
+  variable-ref tuples skipped (no type resolution), ambiguous
+  identifiers (`date`, `time`, `id`) stay silent,
+  `Date(timeIntervalSince1970:)` passes as value-driven, ordering
+  operators (`<`, `<=`) out of scope. First slice that adds a
+  *finder* (generates new diagnostics) rather than a *silencer*
+  (framework whitelist) or *inference tweak*. Ships structurally
+  — no `@lint.context` required, fires anywhere the shape occurs.
+  +23 tests; suite 2338 → **2361 green**. See
+  [`Docs/rules/tuple-equality-with-unstable-components.md`](../../SwiftProjectLint/Docs/rules/tuple-equality-with-unstable-components.md)
+  for rule semantics.
+
+  **Corpus baseline set (2026-04-23, slot-20 tip `69979a4`).**
+  13-adopter sweep, `swift run CLI <target> --categories
+  idempotency --threshold info`: **0 tuple-equality-with-unstable-
+  components fires corpus-wide** — matches the rule doc's "zero
+  findings on a corpus is the expected outcome" prediction.
+  Adopters scanned: todos-fluent (via vapor scan), pointfreeco,
+  swift-nio, TCA, lambda-runtime, penny-bot, isowords, SPI-Server,
+  prospero, myfavquotes-api, hummingbird-examples-open-telemetry,
+  luka-vapor, hellovapor. Pre-filter pass on the 13 clones
+  surfaced 5 shape-candidate lines total (TCA 2, SPI-Server 3),
+  all silently filtered by the rule gates:
+  - TCA `Deprecations.swift:1042,2488` — `($0 != nil) == ($1 != nil)`,
+    arity-1 parenthesised-bool pairs, rule skips per "arity ≥ 2."
+  - SPI-Server `Tests/AppTests/Helpers/Extensions.swift:73,75,77`
+    — `(id1, v1) == (id2, v2)`, arity-2 literal tuples but no
+    element matches an unstable marker (`id` is on the
+    deliberately-not-flagged list).
+
+  Baseline registers the rule as operating silently across the
+  current adopter corpus. Any future fire is a high-confidence
+  catch per the rule's own "when it fires, it's a real bug"
+  framing. Structural-fire counts to be tracked separately from
+  handler yield in future rounds per
+  [`road_test_plan.md`](road_test_plan.md) §"Structural (non-
+  annotation-gated) rules."
+
 Deferred — no urgent triggering evidence:
 
 - Slot 5 (perf fix) — no corpus has stressed the wall-clock
@@ -950,8 +995,8 @@ myfavquotes-api + luka-vapor + hellovapor** all map to
 `IdempotencyKey` / `@ExternallyIdempotent(by:)`. **10-for-10
 macro-surface coverage across six production adopters.**
 
-Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 are
-closed out. **No named linter slice is queued** — next candidates
+Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+are closed out. **No named linter slice is queued** — next candidates
 are all still 1-adopter and awaiting second-adopter evidence
 (Vapor `register(collection:)`, Vapor `Route.description`,
 Hummingbird `addMiddleware`, Hummingbird `queryParameters.require`

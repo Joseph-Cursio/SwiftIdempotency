@@ -175,6 +175,22 @@ Cap the per-round audit at 30 diagnostics. If strict mode exceeds
 30, decompose the excess by class in the findings doc without
 per-diagnostic verdicts.
 
+#### Structural (non-annotation-gated) rules
+
+Some idempotency rules fire on structural pattern alone, independent
+of any `/// @lint.context` annotation — e.g.
+`tuple-equality-with-unstable-components`, which flags
+`(…, Date()) == (…)` shapes wherever they occur. These surface on
+Run A even on unannotated files, and surface on any file during
+Run B regardless of handler scope. Audit them with the same four
+verdicts (correct catch / defensible / adoption gap / noise); when
+they fire, the finding is typically high-confidence by construction
+(the rule is narrow on purpose). They don't count toward the
+catches/handlers yield metric — there is no handler to attribute a
+structural fire to. Record them separately in the findings doc and
+note whether they appear in handler code or elsewhere (util, test,
+fixture).
+
 #### SQL ground-truth pass (DB-heavy adopters)
 
 For adopters with a DB layer, a Swift-surface audit ("this looks
@@ -257,7 +273,10 @@ progress noise. Keep the "Found N issues" footer.
 ## Yield metric
 
 `catches / annotated handlers` across a single mode. Report per-handler
-(showing silent handlers explicitly) and aggregate.
+(showing silent handlers explicitly) and aggregate. Structural-rule
+fires (see "Structural (non-annotation-gated) rules" in Audit) sit
+outside this metric — they have no handler to attribute to. Count
+them separately in the findings doc.
 
 Silent handlers are not failures — they're the correctness signal.
 Report yield with + without silent handlers for comparison:
