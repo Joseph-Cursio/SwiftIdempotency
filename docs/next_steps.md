@@ -869,10 +869,30 @@ value-per-effort order:
       Fluent). Links the synthetic + vreader trials at the
       section foot. **Third v0.2.x docs-only polish;
       addresses P1 from the vreader trial.**
-  - **Pending post-v0.1.0:** Option B (dep-injected mock effects)
-    promotion from deferred. Would catch the non-idempotency shapes
-    Option C is blind to — the characterisation above gives concrete
-    design constraints for what Option B would need to verify.
+  - **Penny package-integration trial (Option B probe) — completed
+    2026-04-23** (fork `Joseph-Cursio/penny-bot-idempotency-trial@c121ced`
+    on `package-integration-trial`). **Dual-purpose trial:**
+    validates v0.2.0 on Penny's heavy dep graph AND designs the
+    Option B API surface simultaneously. 2/2 tests green. Prototype
+    lives in `SwiftIdempotencyTestSupport` at SwiftIdempotency
+    `bfcad8c` — `IdempotentEffectRecorder` protocol + `assertIdempotentEffects`
+    async helper. Verified on Penny's coin-double-grant bug shape
+    (CoinEntry.id defaults to UUID() — retries create distinct rows).
+    See [`penny-package-trial/`](penny-package-trial/). Adopter
+    refactor cost measured: ~35-50 LOC (protocol extractions +
+    reusable mocks) — tractable mid-weight refactor.
+  - **v0.3.0 workstream: ship Option B — queued, highest priority.**
+    Three pre-ship refinements from the Penny trial's findings:
+    - **R1:** add `Issue.record` failure mode alongside
+      `preconditionFailure` (unlocks failure-path tests).
+    - **R2:** `Snapshot` associatedtype overload (default `Int`
+      from `effectCount`; richer snapshots opt-in).
+    - **R3:** move `IdempotentEffectRecorder` protocol to the
+      main `SwiftIdempotency` target (production mocks can
+      conform without pulling in TestSupport).
+    Estimated ~4-5 hours total: 2-3h code, 1-2h docs + example
+    sample, 30min release prep. Single-session or two-session
+    slice. Deferred: macro-wrapping variant, Option-B/C hybrid.
 
 - **Slot 19 (FluentKit `import Fluent` alias) — shipped
   (SwiftProjectLint `70f2d61`, PR #26 merged 2026-04-22).**
