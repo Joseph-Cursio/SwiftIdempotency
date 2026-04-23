@@ -322,6 +322,112 @@ constraint, not a macro-specific one.
 > per-handler effect declarations (`@ExternallyIdempotent(by:)` etc.)
 > require the extraction.
 
+## Using with Fluent ORM
+
+Vapor's Fluent ORM is the biggest persistence library in the Vapor
+ecosystem. Integrating SwiftIdempotency with Fluent adopters hits
+three rough edges worth calling out up front — all have known
+workarounds, and the idiomatic integration path sidesteps the first
+two entirely.
+
+### Header-sourced keys are the idiomatic path
+
+Route through `init(fromAuditedString:)` with an HTTP header, falling
+back to a natural business-key field when the header is absent:
+
+```swift
+app.post("api", "acronym") { req async throws -> Acronym in
+    let acronym = try req.content.decode(Acronym.self)
+    let keyString = req.headers.first(name: "Idempotency-Key") ?? acronym.short
+    let key = IdempotencyKey(fromAuditedString: keyString)
+    return try await createAcronym(req: req, acronym: acronym, idempotencyKey: key)
+}
+
+@ExternallyIdempotent(by: "idempotencyKey")
+func createAcronym(
+    req: Request,
+    acronym: Acronym,
+    idempotencyKey: IdempotencyKey
+) async throws -> Acronym {
+    try await acronym.save(on: req.db)
+    return acronym
+}
+```
+
+Stripe-convention-aligned, integrates with `Request.headers` without
+adapter code, and the fallback to the business key gives clients that
+don't supply the header deterministic dedup via the adopter's own
+data.
+
+Create handlers have a bootstrap problem that rules out
+`init(fromEntity:)` anyway — a Fluent Model being created has no
+`id` until after save, so the entity can't be the source of its own
+pre-save dedup key. `init(fromEntity:)` is a post-save-read-or-lookup
+tool, not a create-handler tool.
+
+### `init(fromEntity:)` needs an adapter for Fluent Models
+
+Post-save handlers that want to key from the saved entity hit two
+compile errors. Fluent's `Model` does not inherit `Identifiable`
+(despite exposing `@ID var id: UUID?`), and the constructor's
+`E.ID: CustomStringConvertible` constraint rejects Optional types.
+An adopter-side adapter bridges both:
+
+```swift
+struct IdentifiableAcronym: Identifiable {
+    let acronym: Acronym
+    var id: UUID { acronym.id! } // safe only post-save
+    init(_ acronym: Acronym) { self.acronym = acronym }
+}
+
+// Post-save usage:
+let key = IdempotencyKey(fromEntity: IdentifiableAcronym(savedAcronym))
+```
+
+One adapter per Model type the adopter keys on. Force-unwrapping
+`id` is safe inside this adapter because construction is post-save —
+the invariant the handler controls. Third-party Model types defined
+outside the adopter's module can't always be retroactively
+conformed this way; for those, fall back to
+`init(fromAuditedString:)` on a stable business key.
+
+### `#assertIdempotent` on Model returns needs a tuple
+
+Fluent `Model` is `final class` without explicit `Equatable`
+conformance. `#assertIdempotent` requires an `Equatable` return —
+handing a Model-returning closure directly produces a compile
+error. Return a value-tuple of the Model's fields instead (tuples
+of Equatables are synthesized-Equatable):
+
+```swift
+// ❌ Acronym is a final class; Equatable not synthesized.
+_ = try #assertIdempotent {
+    try await Acronym.find(id, on: db)
+}
+
+// ✅ Tuple of Equatable value fields.
+_ = try #assertIdempotent {
+    let a = try await Acronym.find(id, on: db)!
+    return (a.id, a.short, a.long)
+}
+```
+
+Size the tuple to whichever fields matter for the operation being
+asserted. For create handlers, include the mutable `id: UUID?`:
+a non-idempotent create produces distinct UUIDs across the two
+invocations, the tuples compare unequal, and the precondition fires.
+
+### Full worked migration
+
+These patterns are drawn from a fully-compiling adopter trial with
+passing tests — see
+[`docs/hellovapor-package-trial/`](docs/hellovapor-package-trial/)
+for the complete migration diff and the findings that motivated each
+pattern. The earlier
+[`docs/luka-vapor-package-trial/`](docs/luka-vapor-package-trial/)
+covers the first adopter-integration round (non-Fluent Vapor, same
+inline-closure refactor shape).
+
 ## Design boundaries
 
 **What this package does:**
