@@ -141,6 +141,26 @@ the same name hit this immediately. Rename convention suggestion:
 
 ### 1. Option C sharpness on Fluent Model returns
 
+> **Post-publication correction (2026-04-23):** the claim in the
+> paragraphs below that "tuples of Equatable types are
+> synthesized-Equatable, so the macro accepts them" is **wrong**.
+> This trial never actually executed `#assertIdempotent { ...
+> return tuple }` — only `#expect(tupleA != tupleB)` on tuples
+> directly (which works because Swift synthesises `==` for tuples
+> of Equatable elements). The
+> [synthetic-swiftdata trial's Finding 4](../synthetic-swiftdata-package-trial/trial-findings.md#finding-4-p0-doc-error-assertidempotent-tuple-wrapping-workaround-does-not-compile)
+> caught the error when it became the first trial to actually
+> execute the pattern. Tuples do not conform to the `Equatable`
+> *protocol* (only named types can satisfy protocol
+> constraints), so `#assertIdempotent`'s `<Result: Equatable>`
+> generic constraint rejects tuples at type-check time. The
+> **correct** workaround is a dedicated Equatable `struct` (see
+> the synthetic trial's `AlbumProjection` for a working example,
+> and the updated README's "Using with Fluent ORM" §
+> "`#assertIdempotent` on Model returns needs an Equatable
+> projection"). The original claim is preserved below as
+> archaeological record; do not apply it as guidance.
+
 `Acronym` (a `final class` without explicit `Equatable` conformance)
 does not compile as an `#assertIdempotent` return type — the
 compiler requires `Equatable` for return comparison. The adopter

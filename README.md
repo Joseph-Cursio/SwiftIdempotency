@@ -391,31 +391,67 @@ outside the adopter's module can't always be retroactively
 conformed this way; for those, fall back to
 `init(fromAuditedString:)` on a stable business key.
 
-### `#assertIdempotent` on Model returns needs a tuple
+### `#assertIdempotent` on Model returns needs an Equatable projection
 
 Fluent `Model` is `final class` without explicit `Equatable`
 conformance. `#assertIdempotent` requires an `Equatable` return —
 handing a Model-returning closure directly produces a compile
-error. Return a value-tuple of the Model's fields instead (tuples
-of Equatables are synthesized-Equatable):
+error. **Use a dedicated Equatable `struct`** to project the
+fields the assertion cares about.
+
+Tuples do NOT work here, despite Swift synthesising `==` for
+tuples whose elements are `Equatable`. The synthesised `==` is
+not the same as `Equatable` *protocol* conformance, and
+`#assertIdempotent`'s generic `<Result: Equatable>` constraint
+rejects tuples at type-check time with
+
+```
+error: type '(UUID?, String, String)' cannot conform to 'Equatable'
+note: only concrete types such as structs, enums and classes can
+      conform to protocols
+note: required by macro 'assertIdempotent' where
+      'Result' = '(UUID?, String, String)'
+```
+
+Only named types can satisfy protocol constraints. The correct
+pattern:
 
 ```swift
+struct AcronymProjection: Equatable {
+    let id: UUID?
+    let short: String
+    let long: String
+}
+
 // ❌ Acronym is a final class; Equatable not synthesized.
 _ = try #assertIdempotent {
     try await Acronym.find(id, on: db)
 }
 
-// ✅ Tuple of Equatable value fields.
+// ❌ Tuple return — does not satisfy the macro's Equatable constraint.
 _ = try #assertIdempotent {
     let a = try await Acronym.find(id, on: db)!
     return (a.id, a.short, a.long)
 }
+
+// ✅ Dedicated Equatable struct.
+_ = try #assertIdempotent {
+    let a = try await Acronym.find(id, on: db)!
+    return AcronymProjection(id: a.id, short: a.short, long: a.long)
+}
 ```
 
-Size the tuple to whichever fields matter for the operation being
-asserted. For create handlers, include the mutable `id: UUID?`:
-a non-idempotent create produces distinct UUIDs across the two
-invocations, the tuples compare unequal, and the precondition fires.
+Size the projection struct to whichever fields matter for the
+operation being asserted. For create handlers, include the
+mutable `id: UUID?`: a non-idempotent create produces distinct
+UUIDs across the two invocations, the projections compare
+unequal, and the precondition fires.
+
+See
+[`examples/swiftdata-sample/`](examples/swiftdata-sample/) for a
+fully-compiling example of this pattern against a SwiftData
+`@Model` type; the shape is identical across Fluent `Model`,
+SwiftData `@Model`, and any other non-Equatable reference return.
 
 ### Full worked migration
 
