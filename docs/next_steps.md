@@ -816,15 +816,23 @@ value-per-effort order:
     an API shape change), **linter parity confirmed** on
     luka-vapor/hellovapor — package-adoption-test-plan bar **met
     for v0.1.0**.
-  - **Pending post-v0.1.0:** dedicated Fluent-shaped constructor
-    on `IdempotencyKey` (e.g. `init(fromFluentModel:)` or
-    `init(fromFluentID:)` — design TBD). Must route through
-    `FluentKit` as a conditional dep and not break existing
-    `fromEntity:` callers. Requires a FluentKit real-adopter
-    validation (hellovapor re-run) before merging. See
-    [`synthetic-swiftdata-package-trial/trial-retrospective.md`](synthetic-swiftdata-package-trial/trial-retrospective.md)
-    §"P2 — design `init(fromFluentID:)`" for design
-    considerations.
+  - **v0.2.0 — SwiftIdempotencyFluent shipped 2026-04-23.**
+    New opt-in library product with
+    `IdempotencyKey.init<M: Model>(fromFluentModel:) throws
+    where M.IDValue: CustomStringConvertible`. Routes through
+    FluentKit's own `requireID()` for a clean
+    `FluentError.idRequired` throw on pre-save nil ids. Design
+    captured in
+    [`fluent-constructor-design.md`](fluent-constructor-design.md);
+    validation via `Joseph-Cursio/HelloVapor-idempotency-trial@3c8a0f7`
+    (5/5 tests green, `IdentifiableAcronym` adapter struct
+    removed, ~10 LOC saved per Model keyed on). Root test
+    suite 58 → 64 (+6 new in `SwiftIdempotencyFluentTests`);
+    adds `examples/fluent-sample/` (4 tests). Non-Fluent
+    adopters pay zero — FluentKit dep is gated on opt-in to
+    the new product. README §"Using with Fluent ORM" updated
+    with the v0.2.0 direct-constructor path + pre-v0.2.0
+    adapter fallback preserved.
   - **Pending post-v0.1.0:** current-toolchain SwiftData
     real-adopter trial. TeymiaHabit (pushed 2026-04-19),
     vreader (2026-04-04), or similar fresh-toolchain SwiftData
