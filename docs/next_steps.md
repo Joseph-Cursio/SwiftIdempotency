@@ -909,6 +909,24 @@ value-per-effort order:
     macro-wrapping `#assertIdempotentEffects` variant, hybrid
     Option-B/C helper. See
     [`docs/release-notes/v0.3.0.md`](release-notes/v0.3.0.md).
+  - **v0.3.1 — swift-syntax pin relax shipped 2026-04-23.** Same-day
+    patch: `exact: "602.0.0"` → `"602.0.0"..<"604.0.0"`. Surfaced by
+    the Penny bug-sweep trial (below): pin conflict with DiscordBM's
+    `@UnstableEnum` which only expands on swift-syntax 603+. Both 602
+    and 603 verified 74/74 green before release. No API changes. See
+    [`docs/release-notes/v0.3.1.md`](release-notes/v0.3.1.md).
+  - **Penny bug-sweep trial — shipped 2026-04-23.** First external
+    adopter to pin the shipped v0.3.1. Exercised Option B on the three
+    remaining Penny bug shapes (OAuth error-path, sponsor welcome DM,
+    GHHooks error-path) beyond the original coin-double-grant. 8/8
+    tests green across 4 suites. All three v0.3.1 refinements
+    (failureMode / Snapshot associatedtype / main-target protocol)
+    exercised on adopter-realistic code; no API friction surfaced.
+    **10-for-10 real-bug shapes across six production adopters** now
+    map to `IdempotencyKey` or `IdempotentEffectRecorder`. Trial
+    branch [`Joseph-Cursio/penny-bot-idempotency-trial@aa24cf9`](https://github.com/Joseph-Cursio/penny-bot-idempotency-trial/tree/bug-sweep);
+    full artifacts at
+    [`docs/penny-package-trial/bug-sweep-findings.md`](penny-package-trial/bug-sweep-findings.md).
 
 - **Slot 19 (FluentKit `import Fluent` alias) — shipped
   (SwiftProjectLint `70f2d61`, PR #26 merged 2026-04-22).**
