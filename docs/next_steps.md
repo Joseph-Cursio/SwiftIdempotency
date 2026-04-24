@@ -927,6 +927,24 @@ value-per-effort order:
     branch [`Joseph-Cursio/penny-bot-idempotency-trial@aa24cf9`](https://github.com/Joseph-Cursio/penny-bot-idempotency-trial/tree/bug-sweep);
     full artifacts at
     [`docs/penny-package-trial/bug-sweep-findings.md`](penny-package-trial/bug-sweep-findings.md).
+  - **VernissageServer fresh-external-signal trial — shipped
+    2026-04-23.** First clean-slate external adopter (neither linter
+    nor package trial previously). Target shape: ActivityPub inbox —
+    the canonical at-least-once-delivery domain in modern server
+    codebases. Single `@Suite` with three tests (ungated `.issueRecord`,
+    dedup-gated happy path, distinct-ids sanity) all green. Validates
+    v0.3.1 on a fresh Vapor+FluentKit+Postgres+Redis+JWT+S3+Queues
+    stack compiling under Swift tools 6.2. **Cross-adopter tally
+    bumps to 7 production adopters**; every Option B refinement (R1
+    failureMode / R2 Snapshot / R3 main-target protocol) continues to
+    hold up on adopter-realistic code with zero friction. Primary
+    finding was adopter-side (Vernissage needs Homebrew
+    `libexif`/`libgd`/`libiptcdata` + `CPATH=/opt/homebrew/include` —
+    not a SwiftIdempotency issue but documented for future Vernissage-
+    shape trials). Trial branch
+    [`Joseph-Cursio/VernissageServer-idempotency-trial@ed40976`](https://github.com/Joseph-Cursio/VernissageServer-idempotency-trial/tree/package-integration-trial);
+    full artifacts at
+    [`docs/vernissage-server-package-trial/`](vernissage-server-package-trial/trial-findings.md).
 
 - **Slot 19 (FluentKit `import Fluent` alias) — shipped
   (SwiftProjectLint `70f2d61`, PR #26 merged 2026-04-22).**
