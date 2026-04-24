@@ -945,6 +945,22 @@ value-per-effort order:
     [`Joseph-Cursio/VernissageServer-idempotency-trial@ed40976`](https://github.com/Joseph-Cursio/VernissageServer-idempotency-trial/tree/package-integration-trial);
     full artifacts at
     [`docs/vernissage-server-package-trial/`](vernissage-server-package-trial/trial-findings.md).
+  - **VernissageServer bug-sweep variant — shipped 2026-04-23.**
+    Depth-extension on the same Vernissage fork, layering three more
+    shapes over the inbox probe: account signup welcome email, follow-
+    request duplicate row, avatar upload S3 PUT. 6/6 new tests green
+    (9/9 total with inbox); 3 new known issues from the ungated
+    `.issueRecord` demonstrations (4 total). R2 custom `Snapshot =
+    [String]` overload exercised on the avatar-upload shape —
+    diagnostic surfaces actual S3 keys rather than just counts.
+    **Four distinct side-effect classes** (federated-ID dedup, email,
+    DB row, file storage) validated on a single adopter under a
+    single toolchain. No SwiftIdempotency API friction surfaced.
+    Total Option B test count across all package-integration trials:
+    **17 green** (Penny 8 + Vernissage 9). Trial branch
+    [`Joseph-Cursio/VernissageServer-idempotency-trial@3d97ef8`](https://github.com/Joseph-Cursio/VernissageServer-idempotency-trial/tree/bug-sweep);
+    findings at
+    [`docs/vernissage-server-package-trial/bug-sweep-findings.md`](vernissage-server-package-trial/bug-sweep-findings.md).
 
 - **Slot 19 (FluentKit `import Fluent` alias) — shipped
   (SwiftProjectLint `70f2d61`, PR #26 merged 2026-04-22).**
