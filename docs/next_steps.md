@@ -1174,23 +1174,31 @@ end-to-end (the above six + VernissageServer + plc-handle-tracker
 + HomeAutomation). Twenty-three green Option B tests across
 package-integration trials (Penny 8 + Vernissage 9 + plc 3 + HomeAutomation 3).
 
-Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
-are closed out.
+Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+**21**, **22** are closed out.
 
-**2026-04-24 trial-adopter lint sweep results** (see
-[`trial-adopter-lint-sweep-2026-04-24.md`](trial-adopter-lint-sweep-2026-04-24.md)):
-bare-scan + grep of the four untested trial adopters (Vernissage,
-plc-handle-tracker, HomeAutomation, Uitsmijter) against the nine
-parked 1-adopter candidates promoted **two to ship-eligibility**:
+**2026-04-24 trial-adopter lint sweep** (see
+[`trial-adopter-lint-sweep-2026-04-24.md`](trial-adopter-lint-sweep-2026-04-24.md))
+promoted two parked 1-adopter candidates to 3-4-adopter evidence
+and both shipped in the same session:
 
-- **Slot 21 candidate — Vapor `app.register(collection:)` whitelist.**
-  3-adopter evidence: hellovapor (prior) + Uitsmijter (10 sites) +
-  plc-handle-tracker (2 sites). PR-sized linter slice, same shape
-  as slots 16-18.
-- **Slot 22 candidate — Swift Concurrency `Task.sleep` whitelist.**
-  4-adopter evidence: hummingbird-examples (prior) + Uitsmijter (5) +
-  HomeAutomation (5) + Vernissage (5+). Stdlib shape — may need
-  framework-name invention since `Task` isn't from a module.
+- **Slot 21 — Vapor `app.register(collection:)` whitelist — shipped
+  (SwiftProjectLint `fa126ab`, PR #27 merged 2026-04-24).**
+  3-adopter evidence (hellovapor + Uitsmijter 10 sites + plc-handle-tracker
+  2 sites). Single entry `"register": ["app": vapor]` added to
+  `idempotentReceiverMethodsByFramework`; shape-identical to slot 17.
+  +6 tests; suite 2361 → 2367.
+- **Slot 22 — Swift Concurrency `Task.sleep` whitelist — shipped
+  (SwiftProjectLint `a1024ac`, PR #28 merged 2026-04-24).**
+  4-adopter evidence (hummingbird-examples + Uitsmijter 5 + HomeAutomation
+  5 + Vernissage 5+). New `SwiftConcurrency` pseudo-framework
+  constant + `alwaysActiveFrameworks: Set<String>` mechanism that
+  bypasses the import-presence gate for stdlib types (adopters
+  never write `import SwiftConcurrency`); preserves config opt-out.
+  Both `Task.sleep(nanoseconds:)` and modern `Task.sleep(for: .seconds(N))`
+  spellings resolve via the same name-based lookup. Future stdlib
+  additions (AsyncStream, Actor, TaskGroup) drop into the same
+  table + set. +8 tests; suite 2367 → **2375 green**.
 
 Remaining 1-adopter candidates still awaiting second-adopter
 evidence: Vapor `Route.description`, Hummingbird `addMiddleware`,
