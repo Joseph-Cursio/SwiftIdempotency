@@ -1175,13 +1175,33 @@ end-to-end (the above six + VernissageServer + plc-handle-tracker
 package-integration trials (Penny 8 + Vernissage 9 + plc 3 + HomeAutomation 3).
 
 Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
-are closed out. **No named linter slice is queued** — next
-candidates are all still 1-adopter and awaiting second-adopter
-evidence (Vapor `register(collection:)`, Vapor `Route.description`,
-Hummingbird `addMiddleware`, Hummingbird `queryParameters.require`
-sibling-pair, Swift Distributed Tracing `withSpan`, Swift
-Concurrency `Task.sleep` / `Duration.seconds`, Bcrypt-crypto-gap,
-`AppMetrics.push` Prometheus-Pushgateway, Axiom `emit`).
+are closed out.
+
+**2026-04-24 trial-adopter lint sweep results** (see
+[`trial-adopter-lint-sweep-2026-04-24.md`](trial-adopter-lint-sweep-2026-04-24.md)):
+bare-scan + grep of the four untested trial adopters (Vernissage,
+plc-handle-tracker, HomeAutomation, Uitsmijter) against the nine
+parked 1-adopter candidates promoted **two to ship-eligibility**:
+
+- **Slot 21 candidate — Vapor `app.register(collection:)` whitelist.**
+  3-adopter evidence: hellovapor (prior) + Uitsmijter (10 sites) +
+  plc-handle-tracker (2 sites). PR-sized linter slice, same shape
+  as slots 16-18.
+- **Slot 22 candidate — Swift Concurrency `Task.sleep` whitelist.**
+  4-adopter evidence: hummingbird-examples (prior) + Uitsmijter (5) +
+  HomeAutomation (5) + Vernissage (5+). Stdlib shape — may need
+  framework-name invention since `Task` isn't from a module.
+
+Remaining 1-adopter candidates still awaiting second-adopter
+evidence: Vapor `Route.description`, Hummingbird `addMiddleware`,
+Hummingbird `queryParameters.require` sibling-pair, Swift Distributed
+Tracing `withSpan`, Bcrypt-crypto-gap, `AppMetrics.push`
+Prometheus-Pushgateway, Axiom `emit`. One new 1-adopter candidate
+surfaced: Uitsmijter's `Prometheus.main.<metric>?.inc(...)` pattern
+(distinct from SPI-Server's `AppMetrics.push` shape; parked).
+
+Slot-20 `tuple-equality-with-unstable-components` corpus baseline
+extended from 13 to **17 adopters, all zero fires**.
 **SwiftIdempotency is at v0.3.1** (ship history: v0.1.0 →
 v0.2.0 SwiftIdempotencyFluent → v0.3.0 Option B → v0.3.1
 swift-syntax pin relax). Slot 7's publicly-visible follow-on
