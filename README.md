@@ -209,21 +209,132 @@ with explicit state inspection:
 
 Treat return-equality as a **necessary but not sufficient** check
 on any handler whose return type doesn't reflect the side effect.
-A future release may add a dependency-injected-effect variant that
-observes state mutations directly; until then, handler-return shape
-determines how sharp `#assertIdempotent` can be. SwiftProjectLint's
-`nonIdempotentInRetryContext` rule fills part of the gap statically
-— it flags handlers that call known-non-idempotent operations
-inside a `@lint.context replayable` or `@ExternallyIdempotent(by:)`
-body — but static analysis has its own shape of limitation. Neither
-layer is complete on its own.
+Pair `#assertIdempotent` with effect-observation testing (see the
+next section) for handlers where the return type is trivial.
+SwiftProjectLint's `nonIdempotentInRetryContext` rule fills part
+of the gap statically — it flags handlers that call known-non-
+idempotent operations inside a `@lint.context replayable` or
+`@ExternallyIdempotent(by:)` body — but static analysis has its
+own shape of limitation. Neither layer is complete on its own.
+
+### 4. Effect-observation testing via `IdempotentEffectRecorder`
+
+When the return value can't tell you whether a handler is idempotent,
+watch what the handler *does* instead. v0.3.0 ships
+`IdempotentEffectRecorder` — a protocol you conform test doubles to —
+and `assertIdempotentEffects(recorders:body:)` — a helper that runs a
+body twice and asserts no recorder observed new side effects on the
+second call.
+
+```swift
+import SwiftIdempotency
+import SwiftIdempotencyTestSupport
+import Testing
+
+// Test double — increments on every observable mutation/write/send.
+final class MockCoinRepo: IdempotentEffectRecorder {
+    private(set) var effectCount = 0
+    private(set) var puts: [CoinEntry] = []
+
+    func putItem(_ entry: CoinEntry) async throws {
+        puts.append(entry)
+        effectCount += 1
+    }
+}
+
+@Test("addUser is idempotent when keyed on the request id")
+func addUserIsIdempotent() async throws {
+    let coinRepo = MockCoinRepo()
+    let handler = UsersHandler(coinRepo: coinRepo)
+    let request = UserRequest(id: "req-42", amount: 10)
+
+    try await assertIdempotentEffects(recorders: [coinRepo]) {
+        _ = try await handler.handleAddUser(entry: request)
+    }
+    // Passes iff the second invocation's snapshot equals the first —
+    // i.e. coinRepo saw zero new puts on retry.
+}
+```
+
+Reads should NOT count. The point of Option B is to detect
+*observable-state-changing* retries; a handler that reads a row
+twice is idempotent, a handler that writes twice is not.
+
+#### When to reach for Option B vs `#assertIdempotent`
+
+| Your handler… | Use |
+|---|---|
+| Returns a typed model with meaningful `Equatable` | `#assertIdempotent` |
+| Returns `Void` / `HTTPStatus.ok` / `Bool` / other trivial type | `assertIdempotentEffects` |
+| Writes to a DB / sends a message / publishes to a queue and returns a status | `assertIdempotentEffects` (add both if the return type is also meaningful) |
+| Returns a non-`Equatable` reference type | `assertIdempotentEffects`, or project to a struct |
+
+The two layers compose — use both when the handler has both a
+meaningful return value *and* observable side effects.
+
+#### Failure mode: `preconditionFailure` (default) vs `issueRecord`
+
+```swift
+// Default: aborts the process via Swift.preconditionFailure on a
+// non-idempotent body. Matches #assertIdempotent's failure mode.
+try await assertIdempotentEffects(recorders: [mockDB]) {
+    try await handler.run()
+}
+
+// Swift Testing path: reports via Testing.Issue.record without
+// aborting. Useful for failure-path tests wrapped in withKnownIssue.
+await withKnownIssue {
+    await assertIdempotentEffects(
+        recorders: [mockDB],
+        failureMode: .issueRecord
+    ) {
+        await nonIdempotentHandler.run()
+    }
+}
+```
+
+#### Richer snapshots via the `Snapshot` associatedtype
+
+`IdempotentEffectRecorder` has an associated `Snapshot: Equatable`
+that defaults to `Int` (backed by `effectCount`). Conform and you
+get count-based comparison for free. Override with any `Equatable`
+type — an ordered call log, a dictionary of per-operation counters,
+whatever captures the state you care about — to detect non-
+idempotency invisible to counts alone (e.g. retries that undo-then-
+redo, leaving count unchanged but call order diverged).
+
+```swift
+final class DetailedMock: IdempotentEffectRecorder {
+    typealias Snapshot = [String]          // ordered call log
+
+    private(set) var callLog: [String] = []
+    var effectCount: Int { callLog.count }
+
+    func snapshot() -> [String] { callLog }
+
+    func putItem(_ id: String) { callLog.append("put(\(id))") }
+    func deleteItem(_ id: String) { callLog.append("del(\(id))") }
+}
+```
+
+The protocol lives in the main `SwiftIdempotency` target (not
+`SwiftIdempotencyTestSupport`) so production mocks — observability
+shims, retry instrumentation — can conform without pulling in the
+test-support dependency. The `assertIdempotentEffects` helper lives
+in `SwiftIdempotencyTestSupport` because it imports `Testing` for
+the `.issueRecord` failure mode.
+
+The shape was validated end-to-end in the Penny bot
+package-integration trial against an adopter-realistic coin-double-
+grant bug — see [`docs/penny-package-trial/`](docs/penny-package-trial/)
+for the full trial artifacts (scope, findings, retrospective).
 
 ## Installation
 
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/Joseph-Cursio/SwiftIdempotency.git", from: "0.1.0"),
+    .package(url: "https://github.com/Joseph-Cursio/SwiftIdempotency.git", from: "0.3.0"),
 ],
 targets: [
     .target(
@@ -236,20 +347,18 @@ targets: [
         name: "YourAppTests",
         dependencies: [
             .product(name: "SwiftIdempotency", package: "SwiftIdempotency"),
+            // Only add when using assertIdempotentEffects (Option B).
+            // #assertIdempotent's runtime helpers live in the main
+            // SwiftIdempotency library; test targets using only that
+            // macro don't need this product.
+            .product(name: "SwiftIdempotencyTestSupport", package: "SwiftIdempotency"),
         ]
     ),
 ]
 ```
 
-Swift 5.10+; requires Swift Testing for `@Test`-based peer expansion.
-
-The package also exposes a `SwiftIdempotencyTestSupport` library. It's
-currently a placeholder — `#assertIdempotent`'s runtime helpers live
-in the main `SwiftIdempotency` library, so test targets only need the
-one product shown above. The placeholder target exists so future
-test-only helpers can ship without breaking adopter Package.swift
-files that already declare the dependency; adopters adopting today
-can omit it.
+Swift 5.10+; requires Swift Testing for `@Test`-based peer expansion
+and for the `.issueRecord` failure mode of `assertIdempotentEffects`.
 
 **Vapor adopters using Swift Testing**: import `VaporTesting` rather
 than `XCTVapor`. XCTVapor's `app.test(...)` silently drops failures

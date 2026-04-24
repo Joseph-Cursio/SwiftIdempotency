@@ -1,5 +1,5 @@
 version: 1
 builder:
   configs:
-    - documentation_targets: [SwiftIdempotency, SwiftIdempotencyFluent]
+    - documentation_targets: [SwiftIdempotency, SwiftIdempotencyFluent, SwiftIdempotencyTestSupport]
       scheme: SwiftIdempotency
