@@ -1210,6 +1210,22 @@ surfaced: Uitsmijter's `Prometheus.main.<metric>?.inc(...)` pattern
 
 Slot-20 `tuple-equality-with-unstable-components` corpus baseline
 extended from 13 to **17 adopters, all zero fires**.
+
+**Slots 21 + 22 post-ship verified on real adopter code** (see
+[`uitsmijter-package-trial/slot-21-22-verification/verification-findings.md`](uitsmijter-package-trial/slot-21-22-verification/verification-findings.md)):
+annotated two Uitsmijter functions, ran scans at slot-20 tip and
+slot-22 tip. Pre-ship: 12 `register` fires on `routes.swift` under
+`@replayable`, 1 `sleep` fire at `KeyStorage+RedisImpl.swift:323`
+under `@strict_replayable`. Post-ship: 0 `register`, 0 `sleep`
+(only `UInt64(...)` stdlib initializer remained, out of slot-22
+scope as designed). **−13 diagnostics silenced, matching the
+predicted delta exactly.** Closes the unchecked "post-merge
+verification" checkbox in both PRs.
+
+A session-level retrospective synthesising the full arc (10
+adopters, 22 shipped slices, Option B R1/R2/R3 evolution, sweep
+methodology lessons) is at
+[`retrospective-2026-04-24.md`](retrospective-2026-04-24.md).
 **SwiftIdempotency is at v0.3.1** (ship history: v0.1.0 →
 v0.2.0 SwiftIdempotencyFluent → v0.3.0 Option B → v0.3.1
 swift-syntax pin relax). Slot 7's publicly-visible follow-on
