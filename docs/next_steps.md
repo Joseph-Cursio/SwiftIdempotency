@@ -881,33 +881,34 @@ value-per-effort order:
     See [`penny-package-trial/`](penny-package-trial/). Adopter
     refactor cost measured: ~35-50 LOC (protocol extractions +
     reusable mocks) — tractable mid-weight refactor.
-  - **v0.3.0 Option B ship proposal — pending user decision
-    (paused 2026-04-23).** The Penny trial produced a positive
-    ship recommendation but the go-ahead is not committed; a
-    future session should check in before starting this work.
-    Alternative paths the user may prefer instead: another
-    adopter trial first (Penny bug-sweep covering OAuth +
-    sponsor DM + GHHooks shapes; VernissageServer as a fresh-
-    external-signal Option B probe); or pause the package-
-    side work entirely and return to a different workstream
-    (triage filings, linter slice, IdempotencyKey.init(fromUUID:)
-    convenience).
-    Proposal details if/when the ship decision is confirmed —
-    three pre-ship refinements from the Penny trial's findings:
-    - **R1:** add `Issue.record` failure mode alongside
-      `preconditionFailure` (unlocks failure-path tests).
-    - **R2:** `Snapshot` associatedtype overload (default `Int`
-      from `effectCount`; richer snapshots opt-in).
-    - **R3:** move `IdempotentEffectRecorder` protocol to the
-      main `SwiftIdempotency` target (production mocks can
-      conform without pulling in TestSupport).
-    Estimated ~4-5 hours total: 2-3h code, 1-2h docs + example
-    sample, 30min release prep. Single-session or two-session
-    slice. Explicitly deferred even if the ship decision is
-    positive: macro-wrapping variant, Option-B/C hybrid.
-    See [`penny-package-trial/trial-retrospective.md`](penny-package-trial/trial-retrospective.md)
-    §"v0.3.0 workstream" for the full implementation-order
-    checklist when the decision lands.
+  - **v0.3.0 — Option B shipped 2026-04-23.** All three pre-ship
+    refinements from the Penny trial landed in a single session:
+    - **R1** — `failureMode: IdempotencyFailureMode = .preconditionFailure`
+      parameter on `assertIdempotentEffects`. `.issueRecord`
+      branch reports via `Testing.Issue.record(_:sourceLocation:)`
+      without process abort, unlocking failure-path tests via
+      `withKnownIssue { }`.
+    - **R2** — `associatedtype Snapshot: Equatable = Int` on
+      `IdempotentEffectRecorder`, with `where Snapshot == Int`
+      default impl returning `effectCount`. Adopters opt into
+      richer snapshot types (`[String]` call log, etc.) without
+      touching existing conformers.
+    - **R3** — `IdempotentEffectRecorder` moved from
+      `SwiftIdempotencyTestSupport` to `SwiftIdempotency` main
+      target. Type-erased comparison exposed to TestSupport via
+      `@_spi(Internals)` (keeps the public surface clean).
+    Root test suite 64 → **74 green** (+10 new: R1 × 3, R2 × 2,
+    default-Int × 1, existing prototype coverage × 4 retained).
+    New consumer sample `examples/option-b-sample/` (3/3 green)
+    joins the other five samples; README §4 "Effect-observation
+    testing via `IdempotentEffectRecorder`" added; `.spi.yml`
+    gains `SwiftIdempotencyTestSupport` as a docs target. The
+    v0.2.0 forward-looking sentence about "a future release may
+    add a dependency-injected-effect variant" is resolved and
+    now cross-links the new section. Explicitly deferred:
+    macro-wrapping `#assertIdempotentEffects` variant, hybrid
+    Option-B/C helper. See
+    [`docs/release-notes/v0.3.0.md`](release-notes/v0.3.0.md).
 
 - **Slot 19 (FluentKit `import Fluent` alias) — shipped
   (SwiftProjectLint `70f2d61`, PR #26 merged 2026-04-22).**
