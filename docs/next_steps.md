@@ -987,6 +987,37 @@ value-per-effort order:
     [`docs/plc-handle-tracker-package-trial/`](plc-handle-tracker-package-trial/trial-findings.md).
     Total Option B test count across all package-integration
     trials: **20 green** (Penny 8 + Vernissage 9 + plc-handle-tracker 3).
+  - **HomeAutomation fresh-external-signal trial — shipped
+    2026-04-24.** Third consecutive clean-slate fresh-signal round,
+    zero API friction. First APNs-delivery target, first HomeKit-
+    automation domain, first MySQL Fluent adopter, first
+    `swift-distributed-actors` adopter. Target:
+    `NotificationSender.sendNotification(title:message:id:)` —
+    where `id` is **pre-existing in the adopter's own public
+    protocol doc comments** ("a stable id used as
+    `apns-collapse-id` and `threadIdentifier`"). First trial where
+    protocol extraction was not required; the adopter's own
+    `HAModels.NotificationSender` is imported and conformed
+    directly. 3/3 tests green (1 known-issue from the ungated
+    `.issueRecord` demonstration, snapshot drift 0 → 3 → 6 for
+    3 devices × 2 replays). Also first multi-effect-per-invocation
+    body (APNs fan-out to N device tokens) — default `Snapshot = Int`
+    handled the shape cleanly. **Cross-adopter Option B tally
+    bumps 8 → 9 production adopters.** Adopter author had
+    independently reached Option B framing at the transport layer
+    (`collapseID`); the trial demonstrates how to test-assert the
+    same reasoning at the application layer. Refactor cost: **~5-8
+    LOC adopter-side** — lowest of any trial so far. **Three
+    consecutive zero-friction rounds is now a stable pattern**;
+    phase-2 "obscure single-contributor" selection heuristic
+    explicitly retired — future selection optimises for domain/shape
+    novelty. Trial branch
+    [`Joseph-Cursio/HomeAutomation-idempotency-trial@26cb15b`](https://github.com/Joseph-Cursio/HomeAutomation-idempotency-trial/tree/package-integration-trial);
+    full artifacts at
+    [`docs/homeautomation-package-trial/`](homeautomation-package-trial/trial-findings.md).
+    Total Option B test count across all package-integration
+    trials: **23 green** (Penny 8 + Vernissage 9 + plc-handle-tracker
+    3 + HomeAutomation 3).
 
 - **Slot 19 (FluentKit `import Fluent` alias) — shipped
   (SwiftProjectLint `70f2d61`, PR #26 merged 2026-04-22).**
