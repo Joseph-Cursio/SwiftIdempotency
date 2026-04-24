@@ -961,6 +961,32 @@ value-per-effort order:
     [`Joseph-Cursio/VernissageServer-idempotency-trial@3d97ef8`](https://github.com/Joseph-Cursio/VernissageServer-idempotency-trial/tree/bug-sweep);
     findings at
     [`docs/vernissage-server-package-trial/bug-sweep-findings.md`](vernissage-server-package-trial/bug-sweep-findings.md).
+  - **plc-handle-tracker fresh-external-signal trial — shipped
+    2026-04-24.** Second consecutive clean-slate external adopter
+    (post-Vernissage). First AT Protocol / Bluesky target and first
+    `vapor/queues` AsyncJob shape — all prior Option B trials were
+    HTTP handlers. Target: `ImportExportedLogJob.dequeue` with
+    `Payload.historyId: UUID` as the external idempotency key.
+    3/3 tests green (1 known-issue from the ungated `.issueRecord`
+    demonstration, snapshot drift 0 → 2 → 4 captured). v0.3.1
+    compiled cleanly against a Swift-tools-6.0-declared package on
+    the 6.3.1 toolchain; zero system-library pre-flight (unlike
+    Vernissage's SwiftExif/SwiftGD). **Cross-adopter Option B
+    tally bumps 7 → 8 production adopters** (Penny, isowords,
+    prospero, myfavquotes-api, luka-vapor, hellovapor,
+    VernissageServer, **plc-handle-tracker**). Notable: adopter's
+    own git history corroborates the probe shape — migration
+    `ChangePrimaryKeyToNaturalKeyOfDidAndCid.swift` retrofits the
+    `operations` PK to the natural composite `(did, cid)`, an
+    explicit at-DB-layer fix for the duplicate-insert bug Option B
+    models at the application layer. First adopter where the probe
+    is *retrospectively validated* by the adopter's own bug-fix
+    commit history rather than hypothetically. Trial branch
+    [`Joseph-Cursio/plc-handle-tracker-idempotency-trial@bfb059b`](https://github.com/Joseph-Cursio/plc-handle-tracker-idempotency-trial/tree/package-integration-trial);
+    full artifacts at
+    [`docs/plc-handle-tracker-package-trial/`](plc-handle-tracker-package-trial/trial-findings.md).
+    Total Option B test count across all package-integration
+    trials: **20 green** (Penny 8 + Vernissage 9 + plc-handle-tracker 3).
 
 - **Slot 19 (FluentKit `import Fluent` alias) — shipped
   (SwiftProjectLint `70f2d61`, PR #26 merged 2026-04-22).**
