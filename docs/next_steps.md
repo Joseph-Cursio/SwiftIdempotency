@@ -1045,6 +1045,45 @@ in this post-criteria mode. Options, in value-per-effort order:
     Total Option B test count across all package-integration
     trials: **23 green** (Penny 8 + Vernissage 9 + plc-handle-tracker
     3 + HomeAutomation 3).
+  - **Uitsmijter fresh-external-signal trial — shipped 2026-04-24.**
+    Fourth consecutive clean-slate fresh-signal round; zero API
+    friction. First OAuth 2.0 authorization server, first
+    **RFC-spec-mandated single-use shape** (RFC 6749 §4.1.2
+    mandates authorization codes MUST be single-use, or the server
+    ships a replay-attack vulnerability). First swiftkube/client
+    adopter (Kubernetes API client), first SwiftPrometheus adopter,
+    first Soto adopter, first JXKit (JavaScript scripting) adopter.
+    Target: `authorisationTokenGrantTypeRequestHandler` on the
+    OAuth 2.0 `/token` endpoint. **4/4 tests green** (one more than
+    the standard 3 — added an app-level-`IdempotencyKey`-gate variant
+    alongside the storage-atomic-gate to show both architectural
+    options). 1 known-issue from the ungated `.issueRecord`
+    demonstration (snapshot drift 0 → 4 → 8 across 4 distinct
+    side-effect classes: storage write, JWT signing, Kubernetes CRD
+    update, Prometheus metric). **Cross-adopter Option B tally bumps
+    9 → 10 production adopters.** First adopter where the code is
+    **already fully spec-compliant** — Uitsmijter's production
+    `authCodeStorage.get(..., remove: true)` pattern is the correct
+    atomic single-use enforcement; the trial validates rather than
+    introduces. Refactor cost: **~0 LOC** (lowest possible).
+    Surfaced a subtle Option B probe-design finding: the ungated
+    handler must NOT call `storage.delete` after side effects, else
+    the second invocation accidentally sees the delete's effect and
+    throws (masking the bug) — the realistic ungated shape is
+    "trust TTL expiry" with no explicit delete. Documented for
+    future OAuth2 / single-use-token adopter trials. Also first
+    trial surfacing **git-LFS clone friction** (Uitsmijter uses LFS
+    for Graphics / Fonts / Playwright snapshots, not Swift sources);
+    recipe documented. **Four consecutive zero-friction fresh-signal
+    rounds is a superset of the 3/3 plateau bar from the linter
+    road-tests** → Option B surface demonstrably stable. Trial
+    branch
+    [`Joseph-Cursio/Uitsmijter-idempotency-trial@17822b4`](https://github.com/Joseph-Cursio/Uitsmijter-idempotency-trial/tree/package-integration-trial);
+    full artifacts at
+    [`docs/uitsmijter-package-trial/`](uitsmijter-package-trial/trial-findings.md).
+    Total Option B test count across all package-integration
+    trials: **27 green** (Penny 8 + Vernissage 9 + plc 3 +
+    HomeAutomation 3 + Uitsmijter 4).
 
 - **Slot 19 (FluentKit `import Fluent` alias) — shipped
   (SwiftProjectLint `70f2d61`, PR #26 merged 2026-04-22).**
