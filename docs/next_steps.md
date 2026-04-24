@@ -592,39 +592,66 @@ has three entries:
   for `SwiftIdempotency` + `SwiftProjectLint`. Linter rule
   slices keep the PR convention; docs and simple tweaks go
   straight to main.
-- `project_validation_phase2.md` — after the false-positive
-  rate settles on battle-tested projects, shift validation
-  target to obscure single-contributor projects where latent
-  idempotency issues are more likely to survive collective
-  review.
+- `project_validation_phase2.md` — **updated 2026-04-24.**
+  Original single-contributor / low-star heuristic **retired
+  by user** after three consecutive zero-friction rounds
+  (Vernissage, plc-handle-tracker, HomeAutomation). Adopter
+  selection now optimises for *domain / shape novelty*, not
+  project obscurity. Larger / multi-contributor projects are
+  in-scope.
 - `project_trial_fork_naming.md` — adopter trial branches live
   on `<upstream>-idempotency-trial` forks (naming convention
   codified in `road_test_plan.md`).
 
 ## Recommended next-session opener
 
-Seven production-app rounds complete (Penny, isowords, SPI-Server,
-prospero, myfavquotes-api, **luka-vapor**, **hellovapor**). **All
-three road-test completion criteria are met since myfavquotes-api;
-rounds since are slice-driven.**
+**State snapshot (2026-04-24).** Two parallel workstreams are in
+stable state:
+
+1. **Linter road-tests** — seven production-app rounds + six
+   framework/demo rounds complete. All three completion criteria
+   met since myfavquotes-api; rounds since have been slice-driven.
+   Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+   20 all closed.
+2. **Package-integration (Option B) trials** — v0.3.1 shipped; nine
+   production adopters validated end-to-end (Penny, isowords,
+   prospero, myfavquotes-api, luka-vapor, hellovapor,
+   VernissageServer, plc-handle-tracker, HomeAutomation). **Three
+   consecutive zero-friction fresh-signal rounds** (Vernissage,
+   plc-handle-tracker, HomeAutomation) mirror the 3/3-plateau bar
+   from the linter road-tests → Option B surface is effectively
+   stable.
+
+Linter completion criteria (met):
 
 1. ✅ **Framework coverage** — Vapor (todos-fluent + SPI-Server +
-   pointfreeco), Hummingbird (prospero + myfavquotes-api),
-   SwiftNIO (swift-nio), Point-Free (pointfreeco + TCA).
+   pointfreeco + **HomeAutomation**), Hummingbird (prospero +
+   myfavquotes-api), SwiftNIO (swift-nio), Point-Free
+   (pointfreeco + TCA).
 2. ✅ **Adoption-gap stability — 3/3 consecutive plateaus**
-   (spi-server + prospero + myfavquotes-api closed at this round).
-3. ✅ **Macro-form evidence** — three consumer samples in
+   (spi-server + prospero + myfavquotes-api).
+3. ✅ **Macro-form evidence** — six consumer samples in
    `examples/` exercise `IdempotencyKey` / `@IdempotencyTests` /
-   `#assertIdempotent` end-to-end; root tests cover the four
-   attribute macros.
+   `#assertIdempotent` / `IdempotentEffectRecorder` / Option B /
+   Fluent constructor end-to-end.
+
+Package-integration (Option B) completion criteria (met):
+
+1. ✅ **Cross-adopter coverage** — nine production adopters across
+   AWS Lambda / PointFree HttpPipeline / Hummingbird / Vapor /
+   Vapor + vapor/queues / Vapor + APNSwift + MySQL Fluent.
+2. ✅ **Fresh-signal stability — 3/3 consecutive zero-friction
+   rounds** (Vernissage → plc-handle-tracker → HomeAutomation).
+3. ✅ **Pre-existing-protocol adoption evidence** —
+   HomeAutomation's `NotificationSender` was already an extracted
+   `Sendable` protocol with `id` documented as the stable
+   external key; no extraction refactor needed for the trial.
 
 Per `road_test_plan.md` §"Completion criteria": *"Continue the
 template even after completion criteria are met — future linter
 slices still get validated the same way. The plan stays alive;
-it just stops blocking on new targets."* So future rounds become
-**slice-driven** (validate a specific linter change) rather than
-**criterion-driven** (close a ship gate). Options, in
-value-per-effort order:
+it just stops blocking on new targets."* Both workstreams are
+in this post-criteria mode. Options, in value-per-effort order:
 
 - **Slot 16 (Hummingbird Router DSL whitelist) — shipped
   (SwiftProjectLint `29e9069`, PR #23).** Five receiver-method
@@ -1100,20 +1127,24 @@ Deferred — no urgent triggering evidence:
   round has surfaced a same-name method collision with
   differing tiers.
 
-**Ten real-bug shapes across Penny + isowords + prospero +
-myfavquotes-api + luka-vapor + hellovapor** all map to
-`IdempotencyKey` / `@ExternallyIdempotent(by:)`. **10-for-10
-macro-surface coverage across six production adopters.**
+**Ten real-bug shapes** caught by the linter across Penny +
+isowords + prospero + myfavquotes-api + luka-vapor + hellovapor
+all map to `IdempotencyKey` / `@ExternallyIdempotent(by:)`.
+**Nine production adopters** have the Option B surface validated
+end-to-end (the above six + VernissageServer + plc-handle-tracker
++ HomeAutomation). Twenty-three green Option B tests across
+package-integration trials (Penny 8 + Vernissage 9 + plc 3 + HomeAutomation 3).
 
 Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
-are closed out. **No named linter slice is queued** — next candidates
-are all still 1-adopter and awaiting second-adopter evidence
-(Vapor `register(collection:)`, Vapor `Route.description`,
+are closed out. **No named linter slice is queued** — next
+candidates are all still 1-adopter and awaiting second-adopter
+evidence (Vapor `register(collection:)`, Vapor `Route.description`,
 Hummingbird `addMiddleware`, Hummingbird `queryParameters.require`
 sibling-pair, Swift Distributed Tracing `withSpan`, Swift
 Concurrency `Task.sleep` / `Duration.seconds`, Bcrypt-crypto-gap,
-`AppMetrics.push` Prometheus-Pushgateway, Axiom `emit`). Package-
-side v0.1.0 release prep is the next queued SwiftIdempotency
-workstream — see the "Package release prep" bullet above for the
-full slice list. Slot 7's publicly-visible follow-on is parked in
+`AppMetrics.push` Prometheus-Pushgateway, Axiom `emit`).
+**SwiftIdempotency is at v0.3.1** (ship history: v0.1.0 →
+v0.2.0 SwiftIdempotencyFluent → v0.3.0 Option B → v0.3.1
+swift-syntax pin relax). Slot 7's publicly-visible follow-on
+is parked in
 [`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md).
