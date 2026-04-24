@@ -37,12 +37,14 @@ let package = Package(
         ),
     ],
     dependencies: [
-        // Pinned to match SwiftProjectLint's swift-syntax version so attribute-
-        // parsing work stays cross-package-compatible. 602.0.0 targets Swift
-        // 6.x; the macros plugin is loaded by the user's toolchain, so this
-        // pin is effectively a compile-time dependency rather than a runtime
-        // version gate.
-        .package(url: "https://github.com/apple/swift-syntax.git", exact: "602.0.0"),
+        // Allow 602.x or 603.x — the macro APIs SwiftIdempotency uses
+        // (SwiftSyntax node types, SwiftSyntaxMacros context, SwiftDiagnostics)
+        // are stable across these minors. A previous `exact: "602.0.0"` pin
+        // caused dep-graph friction on adopters who transitively required
+        // 603 (surfaced by Penny's DiscordBM via `@UnstableEnum`, which
+        // only expands correctly on swift-syntax 603+). Upper bound stays
+        // exclusive of 604 until verified on that version.
+        .package(url: "https://github.com/apple/swift-syntax.git", "602.0.0"..<"604.0.0"),
         // FluentKit is an optional dependency for the `SwiftIdempotencyFluent`
         // product. Only adopters that declare a dependency on
         // `SwiftIdempotencyFluent` pay the compile cost. `requireID()` and
