@@ -47,13 +47,13 @@ value-per-effort, top to bottom.
   `@ExternallyIdempotent(by:)` are exercised by the root test target
   and by every adopter road-test. **Slot 6 — consumer-context
   validation — is fully closed.**
-- **Adopter road-tests**: **fifteen rounds completed** —
+- **Adopter road-tests**: **sixteen rounds completed** —
   `todos-fluent/`, `pointfreeco/`, `swift-nio/`,
   `swift-composable-architecture/`, `swift-aws-lambda-runtime/`,
   `penny-bot/`, `isowords/`, `spi-server/`, `prospero/`,
   `myfavquotes-api/`, `hummingbird-examples-open-telemetry/`,
-  `luka-vapor/`, `hellovapor/`, `grpc-swift-2/`, **`graphiti/`**.
-  The TCA
+  `luka-vapor/`, `hellovapor/`, `grpc-swift-2/`, `graphiti/`,
+  **`matool/`**. The TCA
   round closed **all three** cluster-level gaps it surfaced (return-
   trailing annotation, send-on-closure-parameter, dependency-client
   declarations) across PRs #17 / #18 / #19; current TCA residual on
@@ -187,12 +187,16 @@ has four entries:
 **State snapshot (2026-04-25).** Two parallel workstreams are in
 stable state:
 
-1. **Linter road-tests** — seven production-app rounds + eight
+1. **Linter road-tests** — eight production-app rounds + eight
    framework/demo rounds complete (added grpc-swift-2 + graphiti
-   on 2026-04-25, first gRPC + first GraphQL targets — domain/
-   shape novelty rounds under the post-2026-04-24 selection rule).
-   All three completion criteria met since myfavquotes-api; rounds
-   since have been slice-driven.
+   + matool on 2026-04-25 — first gRPC, first GraphQL, and first
+   *production-app* AWS Lambda targets respectively under the
+   post-2026-04-24 domain/shape novelty selection rule). The
+   matool round closed the CLAUDE.md gap on Lambda FP-rate
+   evidence: 4/6 Run A catches (Swift surface) → 2 real-bug
+   catches (after data-layer audit), where awslabs/Examples
+   gave 0/6. All three completion criteria met since myfavquotes-
+   api; rounds since have been slice-driven.
    Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
    20, 21, 22 all closed.
 2. **Package-integration (Option B) trials** — v0.3.1 shipped; nine
@@ -279,6 +283,14 @@ in this post-criteria mode. Options, in value-per-effort order:
   strict but are the framework's correct mechanism, not the
   user's bug. gRPC-specific; no 2-adopter trigger.
 
+- **AWS Cognito `adminCreateUser` (2 fires from matool —
+  `DistrictController.post` + `.postReissue`)** — sends
+  invitation email by default (`messageAction: nil`).
+  Cross-adopter implication: every Swift-on-Lambda app
+  using Cognito for user invitation flow is exhibiting the
+  same shape. 1-adopter evidence so far; awaiting second
+  adopter that uses Cognito SDK for user creation.
+
 Deferred — no urgent triggering evidence:
 
 - Slot 5 (perf fix) — no corpus has stressed the wall-clock
@@ -292,9 +304,12 @@ Deferred — no urgent triggering evidence:
   the body inferrer and does not surface receiver-resolution
   collisions. Slot 3 trigger condition remains unchanged.
 
-**Ten real-bug shapes** caught by the linter across Penny +
+**Twelve real-bug shapes** caught by the linter across Penny +
 isowords + prospero + myfavquotes-api + luka-vapor + hellovapor
-all map to `IdempotencyKey` / `@ExternallyIdempotent(by:)`.
++ **matool** (added 2026-04-25 — `DistrictController.post` and
+`.postReissue` both fire Cognito `adminCreateUser` invitation
+emails on retry) all map to `IdempotencyKey` /
+`@ExternallyIdempotent(by:)`.
 **Nine production adopters** have the Option B surface validated
 end-to-end. Twenty-seven green Option B tests across
 package-integration trials (Penny 8 + Vernissage 9 + plc 3 +

@@ -1,0 +1,11 @@
+[0/1] Planning build
+Sources/Controller/LocationController.swift:51: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'put' is declared `@lint.context replayable` but calls 'put', whose effect is inferred `non_idempotent` from its body via 5-hop chain of un-annotated callees. If the inference is wrong, annotate 'put' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
+  suggestion: Replace 'put' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/Controller/DistrictController.swift:56: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'post' is declared `@lint.context replayable` but calls 'post', whose effect is inferred `non_idempotent` from its body via 5-hop chain of un-annotated callees. If the inference is wrong, annotate 'post' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
+  suggestion: Replace 'post' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/Controller/DistrictController.swift:65: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'postReissue' is declared `@lint.context replayable` but calls 'postReissue', whose effect is inferred `non_idempotent` from its body via 2-hop chain of un-annotated callees. If the inference is wrong, annotate 'postReissue' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
+  suggestion: Replace 'postReissue' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/Controller/FestivalController.swift:44: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'put' is declared `@lint.context replayable` but calls 'put', whose effect is inferred `non_idempotent` from its body via 5-hop chain of un-annotated callees. If the inference is wrong, annotate 'put' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
+  suggestion: Replace 'put' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+
+Found 4 issues (4 errors)
