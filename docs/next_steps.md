@@ -47,12 +47,13 @@ value-per-effort, top to bottom.
   `@ExternallyIdempotent(by:)` are exercised by the root test target
   and by every adopter road-test. **Slot 6 — consumer-context
   validation — is fully closed.**
-- **Adopter road-tests**: **fourteen rounds completed** —
+- **Adopter road-tests**: **fifteen rounds completed** —
   `todos-fluent/`, `pointfreeco/`, `swift-nio/`,
   `swift-composable-architecture/`, `swift-aws-lambda-runtime/`,
   `penny-bot/`, `isowords/`, `spi-server/`, `prospero/`,
   `myfavquotes-api/`, `hummingbird-examples-open-telemetry/`,
-  `luka-vapor/`, `hellovapor/`, **`grpc-swift-2/`**. The TCA
+  `luka-vapor/`, `hellovapor/`, `grpc-swift-2/`, **`graphiti/`**.
+  The TCA
   round closed **all three** cluster-level gaps it surfaced (return-
   trailing annotation, send-on-closure-parameter, dependency-client
   declarations) across PRs #17 / #18 / #19; current TCA residual on
@@ -186,11 +187,12 @@ has four entries:
 **State snapshot (2026-04-25).** Two parallel workstreams are in
 stable state:
 
-1. **Linter road-tests** — seven production-app rounds + seven
-   framework/demo rounds complete (added grpc-swift-2 2026-04-25,
-   first gRPC target — domain/shape novelty round under the
-   post-2026-04-24 selection rule). All three completion criteria
-   met since myfavquotes-api; rounds since have been slice-driven.
+1. **Linter road-tests** — seven production-app rounds + eight
+   framework/demo rounds complete (added grpc-swift-2 + graphiti
+   on 2026-04-25, first gRPC + first GraphQL targets — domain/
+   shape novelty rounds under the post-2026-04-24 selection rule).
+   All three completion criteria met since myfavquotes-api; rounds
+   since have been slice-driven.
    Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
    20, 21, 22 all closed.
 2. **Package-integration (Option B) trials** — v0.3.1 shipped; nine
@@ -283,7 +285,12 @@ Deferred — no urgent triggering evidence:
   budget. luka-vapor + hellovapor both scanned instantly.
 - Slot 3 (property-wrapper receiver resolution) — no adopter
   round has surfaced a same-name method collision with
-  differing tiers.
+  differing tiers. The graphiti round (2026-04-25) was
+  designed to test whether GraphQL DSL field-binding triggers
+  slot 3 — **negative evidence**: the DSL pattern
+  `Field("hero", at: StarWarsResolver.hero)` is invisible to
+  the body inferrer and does not surface receiver-resolution
+  collisions. Slot 3 trigger condition remains unchanged.
 
 **Ten real-bug shapes** caught by the linter across Penny +
 isowords + prospero + myfavquotes-api + luka-vapor + hellovapor
