@@ -52,6 +52,9 @@ let package = Package(
         // so the conservative `from: "1.48.0"` floor is well ahead of the
         // API surface this integration uses.
         .package(url: "https://github.com/vapor/fluent-kit", from: "1.48.0"),
+        // Test-only: property-based testing for `#assertIdempotent`. Scoped
+        // to the SwiftIdempotencyTests target; adopters do not pull this in.
+        .package(url: "https://github.com/x-sheep/swift-property-based.git", from: "1.0.0"),
     ],
     targets: [
         /// Public API declarations. Contains the `@macro` declarations that
@@ -102,6 +105,7 @@ let package = Package(
                 "SwiftIdempotencyMacros",
                 "SwiftIdempotencyTestSupport",
                 .product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
+                .product(name: "PropertyBased", package: "swift-property-based"),
             ]
         ),
         .testTarget(
