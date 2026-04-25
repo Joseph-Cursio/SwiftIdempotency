@@ -1,0 +1,15 @@
+=== /tmp/grpc-swift-2-trial-scan/Examples/route-guide ===
+[0/1] Planning build
+Sources/Subcommands/Serve.swift:184: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'routeChat' is declared `@lint.context replayable` but calls 'recordNote', whose effect is inferred `non_idempotent` from its body. If the inference is wrong, annotate 'recordNote' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
+  suggestion: Replace 'recordNote' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+
+Found 1 issue (1 error)
+
+=== /tmp/grpc-swift-2-trial-scan/Examples/hello-world ===
+
+No issues found.
+
+=== /tmp/grpc-swift-2-trial-scan/Examples/echo ===
+
+No issues found.
+

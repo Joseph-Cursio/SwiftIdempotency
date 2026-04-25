@@ -47,12 +47,12 @@ value-per-effort, top to bottom.
   `@ExternallyIdempotent(by:)` are exercised by the root test target
   and by every adopter road-test. **Slot 6 — consumer-context
   validation — is fully closed.**
-- **Adopter road-tests**: **thirteen rounds completed** —
+- **Adopter road-tests**: **fourteen rounds completed** —
   `todos-fluent/`, `pointfreeco/`, `swift-nio/`,
   `swift-composable-architecture/`, `swift-aws-lambda-runtime/`,
   `penny-bot/`, `isowords/`, `spi-server/`, `prospero/`,
   `myfavquotes-api/`, `hummingbird-examples-open-telemetry/`,
-  **`luka-vapor/`**, **`hellovapor/`**. The TCA
+  `luka-vapor/`, `hellovapor/`, **`grpc-swift-2/`**. The TCA
   round closed **all three** cluster-level gaps it surfaced (return-
   trailing annotation, send-on-closure-parameter, dependency-client
   declarations) across PRs #17 / #18 / #19; current TCA residual on
@@ -183,11 +183,13 @@ has four entries:
 
 ## Recommended next-session opener
 
-**State snapshot (2026-04-24).** Two parallel workstreams are in
+**State snapshot (2026-04-25).** Two parallel workstreams are in
 stable state:
 
-1. **Linter road-tests** — seven production-app rounds + six
-   framework/demo rounds complete. All three completion criteria
+1. **Linter road-tests** — seven production-app rounds + seven
+   framework/demo rounds complete (added grpc-swift-2 2026-04-25,
+   first gRPC target — domain/shape novelty round under the
+   post-2026-04-24 selection rule). All three completion criteria
    met since myfavquotes-api; rounds since have been slice-driven.
    Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
    20, 21, 22 all closed.
@@ -260,7 +262,20 @@ in this post-criteria mode. Options, in value-per-effort order:
   Hummingbird `queryParameters.require` sibling-pair, Swift Distributed
   Tracing `withSpan`, `AppMetrics.push` Prometheus-Pushgateway,
   Uitsmijter's `Prometheus.main.<metric>?.inc(...)` pattern
-  (distinct from SPI-Server's `AppMetrics.push` shape).
+  (distinct from SPI-Server's `AppMetrics.push` shape),
+  **SwiftProtobuf `<Type>.with(_:)` builder + bare-init
+  message constructors** (5 fires across 2 example packages
+  on grpc-swift-2 round, 2026-04-25 — first measurement of
+  protobuf-message construction surface; fix direction is a
+  `protobuf` namespace in the existing `idempotentReceiverMethodsByFramework`
+  infrastructure, commit `040f186`).
+
+- **gRPC `RPCWriter.write` (2 fires from grpc-swift-2)** —
+  framework-side stream-emit primitive. Same verdict pattern
+  as Hummingbird `addMiddleware` and SPI-Server `AppMetrics.push`:
+  observability/streaming framework primitives that fire under
+  strict but are the framework's correct mechanism, not the
+  user's bug. gRPC-specific; no 2-adopter trigger.
 
 Deferred — no urgent triggering evidence:
 
