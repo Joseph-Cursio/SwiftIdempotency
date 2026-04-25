@@ -108,6 +108,40 @@ different tiers. Watch for this on swift-nio-scale corpora or on
 large TCA apps with multiple dependency clients sharing method
 names (`fetch`, `search`, `save` are the likely collision points).
 
+### PropertyBased — non-fatal `#assertIdempotent` failure mode
+
+`swift-property-based` adopted 2026-04-24 into both repos as a
+test-target dependency; see
+[`property-based/trial-findings.md`](property-based/trial-findings.md)
+for the full writeup. Nine property tests live across the two repos
+(7 lattice-law tests on `SwiftProjectLint`'s
+`UpwardEffectInferrer.leastUpperBound`, 2 wrap-pattern demonstrations
+on `#assertIdempotent`).
+
+One backlog item surfaced: `#assertIdempotent` fails via
+`precondition`, which terminates the test process. On a failing
+`propertyCheck` iteration the process dies before PropertyBased's
+shrinker can minimise the counter-example. Property-based users get
+the raw random input rather than a shrunk one.
+
+Fix direction when triggered:
+- `Sources/SwiftIdempotency/AssertIdempotent.swift` — add a
+  `failureMode` parameter to `__idempotencyAssertRunTwice` + async
+  variant, routing to `Issue.record` on `.issueRecord`. Shape mirrors
+  the existing `assertIdempotentEffects` surface in
+  `SwiftIdempotencyTestSupport`.
+- `Sources/SwiftIdempotencyMacros/AssertIdempotentMacro.swift` —
+  forward the parameter through the macro expansion.
+- `Tests/SwiftIdempotencyTests/AssertIdempotentMacroTests.swift` —
+  cover the new surface.
+  `Tests/SwiftIdempotencyTests/PropertyBasedAssertIdempotentTests.swift`
+  — switch to `.issueRecord` and prove shrinking with a deliberately-
+  failing property.
+
+Trigger: first use of the PBT wrap pattern that surfaces a failing
+property where the raw random input isn't immediately diagnostic.
+Zero-priority until then — the green-path demo is stable as-is.
+
 ## Deeper work (bigger slices)
 
 ### 5. Real perf fix on the inference loop
@@ -125,7 +159,7 @@ Unlocks full correctness on swift-nio-scale codebases.
 
 The Claude-Code memory at
 `/Users/joecursio/.claude/projects/-Users-joecursio-xcode-projects-swiftIdempotency/memory/`
-has three entries:
+has four entries:
 
 - `workflow_direct_to_main.md` — direct-to-main on solo repos
   for `SwiftIdempotency` + `SwiftProjectLint`. Linter rule
@@ -141,6 +175,11 @@ has three entries:
 - `project_trial_fork_naming.md` — adopter trial branches live
   on `<upstream>-idempotency-trial` forks (naming convention
   codified in `road_test_plan.md`).
+- `project_phase3_non_fatal_assert_idempotent.md` — backlog
+  item from the 2026-04-24 PropertyBased adoption trial.
+  `#assertIdempotent`'s `precondition` failure mode blocks
+  PropertyBased's shrinker; fix is a `failureMode` enum
+  mirroring `assertIdempotentEffects`.
 
 ## Recommended next-session opener
 
