@@ -1,0 +1,25 @@
+warning: 'swiftprojectlint': dependency 'swiftprojectlintmodels' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintvisitors' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintregistry' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintrules' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintconfig' is not used by any target
+warning: 'swiftprojectlint': dependency 'yams' is not used by any target
+[0/1] Planning build
+Building for debugging...
+[0/3] Write swift-version--58304C5D6DBC2206.txt
+[1/4] Write sources
+[3/6] Emitting module SwiftProjectLintRules
+[4/6] Compiling SwiftProjectLintRules CouldBePrivateMemberVisitor.swift
+Build of product 'CLI' complete! (1.42s)
+Operations/Interactions/Unidoc.WebhookOperation.swift:81: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'load' is declared `@lint.context replayable` but calls 'create', whose effect is inferred `non_idempotent` from the callee name `create`. If the inference is wrong, annotate 'create' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'create' with an idempotent alternative, or route the call through a deduplication guard such as `IdempotencyKey` or `@ExternallyIdempotent(by:)` from the `SwiftIdempotency` package.
+Operations/Interactions/Unidoc.WebhookOperation.swift:107: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'handle' is declared `@lint.context replayable` but calls 'update', whose effect is inferred `non_idempotent` from the callee name `update`. If the inference is wrong, annotate 'update' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'update' with an idempotent alternative, or route the call through a deduplication guard such as `IdempotencyKey` or `@ExternallyIdempotent(by:)` from the `SwiftIdempotency` package.
+Operations/Interactions/Unidoc.WebhookOperation.swift:148: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'handle' is declared `@lint.context replayable` but calls 'updateWebhook', whose effect is inferred `non_idempotent` from the callee-name prefix `update` (in `updateWebhook`). If the inference is wrong, annotate 'updateWebhook' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'updateWebhook' with an idempotent alternative, or route the call through a deduplication guard such as `IdempotencyKey` or `@ExternallyIdempotent(by:)` from the `SwiftIdempotency` package.
+Operations/Interactions/Unidoc.WebhookOperation.swift:190: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'handle' is declared `@lint.context replayable` but calls 'insert', whose effect is inferred `non_idempotent` from the callee name `insert`. If the inference is wrong, annotate 'insert' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'insert' with an idempotent alternative, or route the call through a deduplication guard such as `IdempotencyKey` or `@ExternallyIdempotent(by:)` from the `SwiftIdempotency` package.
+Operations/Interactions/Unidoc.AuthOperation.swift:57: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'load' is declared `@lint.context replayable` but calls 'perform', whose effect is inferred `non_idempotent` from its body. If the inference is wrong, annotate 'perform' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
+  suggestion: Replace 'perform' with an idempotent alternative, or route the call through a deduplication guard such as `IdempotencyKey` or `@ExternallyIdempotent(by:)` from the `SwiftIdempotency` package.
+
+Found 5 issues (5 errors)
