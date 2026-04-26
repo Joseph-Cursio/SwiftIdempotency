@@ -47,13 +47,13 @@ value-per-effort, top to bottom.
   `@ExternallyIdempotent(by:)` are exercised by the root test target
   and by every adopter road-test. **Slot 6 — consumer-context
   validation — is fully closed.**
-- **Adopter road-tests**: **seventeen rounds completed** —
+- **Adopter road-tests**: **eighteen rounds completed** —
   `todos-fluent/`, `pointfreeco/`, `swift-nio/`,
   `swift-composable-architecture/`, `swift-aws-lambda-runtime/`,
   `penny-bot/`, `isowords/`, `spi-server/`, `prospero/`,
   `myfavquotes-api/`, `hummingbird-examples-open-telemetry/`,
   `luka-vapor/`, `hellovapor/`, `grpc-swift-2/`, `graphiti/`,
-  `matool/`, **`tinyfaces/`**. The TCA
+  `matool/`, `tinyfaces/`, **`unidoc/`**. The TCA
   round closed **all three** cluster-level gaps it surfaced (return-
   trailing annotation, send-on-closure-parameter, dependency-client
   declarations) across PRs #17 / #18 / #19; current TCA residual on
@@ -184,23 +184,27 @@ has four entries:
 
 ## Recommended next-session opener
 
-**State snapshot (2026-04-26).** Two parallel workstreams are in
-stable state:
+**State snapshot (2026-04-26, post-unidoc).** Two parallel
+workstreams are in stable state:
 
-1. **Linter road-tests** — nine production-app rounds + eight
+1. **Linter road-tests** — ten production-app rounds + eight
    framework/demo rounds complete (added grpc-swift-2 + graphiti
    + matool on 2026-04-25 — first gRPC, first GraphQL, and first
-   *production-app* AWS Lambda targets; added **tinyfaces** on
+   *production-app* AWS Lambda targets; added **tinyfaces**
    2026-04-26 — first **Stripe-using adopter**, direct exercise
-   of the `IdempotencyKey` named use case). The matool round
-   closed the CLAUDE.md gap on Lambda FP-rate evidence: 4/6
-   Run A catches (Swift surface) → 2 real-bug catches (after
-   data-layer audit), where awslabs/Examples gave 0/6. The
-   tinyfaces round produced 6/6 yield (1.00 incl. silent /
-   1.50 excl.) with 3 distinct real-bug shapes after data-
-   layer audit — best yield of any round to date. All three
-   completion criteria met since myfavquotes-api; rounds since
-   have been slice-driven.
+   of the `IdempotencyKey` named use case; added **unidoc**
+   2026-04-26 — first **MongoDB-backed adopter**, **2-adopter
+   slot 23 trigger** for switch-dispatch deep-chain inference).
+   The matool round closed the CLAUDE.md gap on Lambda FP-rate
+   evidence: 4/6 Run A catches (Swift surface) → 2 real-bug
+   catches (after data-layer audit), where awslabs/Examples
+   gave 0/6. The tinyfaces round produced 6/6 yield with 3
+   distinct real-bug shapes — best yield of any round to date.
+   The unidoc round confirmed slot 23 across 2 adopters
+   (switch-dispatch through-arm propagation is silent) and
+   surfaced a separate enum-case-pattern FP. All three completion
+   criteria met since myfavquotes-api; rounds since have been
+   slice-driven.
    Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
    20, 21, 22 all closed.
 2. **Package-integration (Option B) trials** — v0.3.1 shipped; nine
@@ -243,16 +247,16 @@ slices still get validated the same way. The plan stays alive;
 it just stops blocking on new targets."* Both workstreams are
 in this post-criteria mode. Options, in value-per-effort order:
 
-- **Cross-adopter triage filing** — **fifteen** real-bug shapes
-  documented across **eight** adopters. **Two filed:**
+- **Cross-adopter triage filing** — **seventeen** real-bug shapes
+  documented across **nine** adopters. **Two filed:**
   - **HelloVapor PR #1** (2026-04-22) — Acronym missing unique constraint.
     [`sinduke/HelloVapor#1`](https://github.com/sinduke/HelloVapor/pull/1).
   - **prospero PR #8** (2026-04-22) — ActivityPattern missing composite
     `(user_id, name)` unique constraint.
     [`samalone/prospero#8`](https://github.com/samalone/prospero/pull/8).
-  Both await maintainer response. The remaining 13 shapes stay parked
+  Both await maintainer response. The remaining 15 shapes stay parked
   (Penny × 4, isowords × 2, myfavquotes-api × 1, luka-vapor × 1,
-  matool × 2, **tinyfaces × 3**). Penny's four in
+  matool × 2, tinyfaces × 3, **unidoc × 2**). Penny's four in
   [`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md);
   others not yet scoped. **TinyFaces** has the highest-impact
   unfiled shape — Stripe customer orphan on retry without
@@ -317,17 +321,31 @@ in this post-criteria mode. Options, in value-per-effort order:
   a suggestion specifically pointing at `IdempotencyKey` /
   `@ExternallyIdempotent(by:)`.
 
-- **Switch-dispatch deep-chain inference** (1-adopter, tinyfaces).
-  `StripeWebhookController.index` dispatches via
-  `switch (event.type, event.data?.object)` to four sibling
-  handlers and is silent in Run A despite the sub-handlers being
-  non-idempotent. The inferrer doesn't walk `SwitchExprSyntax`
-  case bodies as direct callees of the enclosing function. Likely
-  recurs on any webhook adopter (Stripe, GitHub, Slack, Discord);
-  trigger condition for slice work is a 2nd-adopter round that
-  exhibits the same shape. Fix direction:
-  `EffectSymbolTable.runInferencePass` to walk switch case bodies
-  as direct callees, not nested expressions.
+- **Switch-dispatch deep-chain inference** — **2-adopter
+  slice-ready** (tinyfaces + unidoc, 2026-04-26). Both adopters'
+  webhook entries dispatch via `switch self.event` (or
+  `switch (event.type, event.data?.object)`) to private
+  `handle(...)` sub-handlers that contain non-idempotent calls.
+  Without the slot, the dispatcher's `@lint.context replayable`
+  annotation produces zero diagnostic from the deep-chain path.
+  tinyfaces was a clean silent miss; unidoc confirms — its `load`
+  fires only on a separate enum-case-pattern false positive (see
+  the new candidate below), and would be cleanly silent without
+  it. Fix direction: `EffectSymbolTable.runInferencePass` to walk
+  `SwitchCase` bodies as direct callees of the enclosing function,
+  not as nested expressions. Tests can use the tinyfaces + unidoc
+  transcripts as regression goldens. **Ready to ship.**
+
+- **Enum-case-pattern false positive** (1-adopter, unidoc).
+  `case .create(let event):` fires the linter's name-prefix
+  heuristic — the case label is treated as a `create()` function
+  call. Tinyfaces' switch case names (`.checkoutSessionCompleted`,
+  `.invoice`, `.subscription`) didn't match non-idempotent
+  prefixes, so the bug was masked there. Cross-cuts independently
+  of the switch-dispatch slot. Fix direction: distinguish
+  `EnumCasePatternSyntax` (`.identifier` in pattern position)
+  from `MemberAccessExprSyntax` (`.identifier` in call position).
+  Single-adopter; defer until 2nd exhibition.
 
 - **Stripe-kit framework whitelist** (1-adopter, tinyfaces). Add
   `request.stripe.*` namespace to
@@ -350,13 +368,14 @@ Deferred — no urgent triggering evidence:
   the body inferrer and does not surface receiver-resolution
   collisions. Slot 3 trigger condition remains unchanged.
 
-**Fifteen real-bug shapes** caught by the linter across Penny +
+**Seventeen real-bug shapes** caught by the linter across Penny +
 isowords + prospero + myfavquotes-api + luka-vapor + hellovapor
-+ matool + **tinyfaces** (added 2026-04-26 — Subscription
-find-or-create race without `.unique(on: "stripe_id")`, Stripe
-customer orphan on retry without `Idempotency-Key`, magic-link
-email double-send via Brevo on LB retry — all three map to
-`IdempotencyKey` / `@ExternallyIdempotent(by:)`).
++ matool + tinyfaces + **unidoc** (added 2026-04-26 — RepoFeed
+duplicate-on-retry on a capped Mongo collection [low-impact,
+bounded by the cap], OAuth code-exchange / user-create UI
+inconsistency where the second exchange returns 4xx but the user
+record from the first call exists). All map to `IdempotencyKey`
+/ `@ExternallyIdempotent(by:)`.
 **Nine production adopters** have the Option B surface validated
 end-to-end. Twenty-seven green Option B tests across
 package-integration trials (Penny 8 + Vernissage 9 + plc 3 +
