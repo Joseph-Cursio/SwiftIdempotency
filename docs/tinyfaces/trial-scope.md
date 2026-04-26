@@ -30,11 +30,12 @@ See [`../road_test_plan.md`](../road_test_plan.md) for the template.
 ## Pinned context
 
 - **Linter:** `Joseph-Cursio/SwiftProjectLint` @ `main` at `0ca8a12`
-  (same SHA as matool / graphiti / grpc-swift-2 rounds; 2 pre-
-  existing CLI input-validation test failures in
-  `exitWithErrorForInvalidCategory` are unrelated to rule behavior
-  — `--categories idempotency` is a valid category, so the
-  validation path is not on the scan path).
+  (same SHA as matool / graphiti / grpc-swift-2 rounds; 2397 tests
+  green on a clean `.build/`). Two `exitWithErrorForInvalidCategory`
+  failures observed mid-round were traced to a stale build cache
+  carried across the local fast-forward from `0015248 → 0ca8a12`
+  and resolved by `rm -rf .build && swift test` — the actual code
+  at `0ca8a12` is green.
 - **Upstream target:** `maximedegreve/TinyFaces` @ `db3f2b6` on
   `master` (last upstream push 2024-02-08). Vapor 4 + Fluent
   (PostgreSQL) + StripeKit web app. **Real production app** —

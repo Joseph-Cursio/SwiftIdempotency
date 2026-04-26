@@ -19,13 +19,17 @@ Yes, in full.
   helper body inspected; Stripe API semantics checked against
   Stripe-kit's documented behaviour.
 
-One scope-adjacent observation: **the linter's pre-existing test
-failures.** Two `exitWithErrorForInvalidCategory()` failures at
-the pinned linter SHA (`0ca8a12`) were noted in scope as
-unrelated to rule behaviour and confirmed unrelated to the scan
-path. The matool round (round 16) used the same SHA and called
-it "green" — that wording is loose. Worth re-verifying on future
-rounds rather than carrying forward as ambient.
+One scope-adjacent observation: **build-cache traps on linter
+fast-forwards.** Two `exitWithErrorForInvalidCategory()` failures
+appeared mid-round at the pinned linter SHA (`0ca8a12`), and
+were initially treated as pre-existing CLI input-validation
+regressions unrelated to the scan path. Investigation after the
+round closed traced them to a stale `.build/` carried across
+the local fast-forward from `0015248 → 0ca8a12`; once cleared
+with `rm -rf .build && swift test`, all 2397 tests passed. The
+matool round (round 16) called this SHA "green" and was correct;
+my mid-round caveat was wrong. Folded back into the policy-
+notes section below.
 
 ## Pre-committed questions
 
@@ -173,15 +177,19 @@ from 1-adopter speculative to 2-adopter slice candidate.
 
 ## Policy notes
 
-1. **"Linter on a known-green tip" wording is loose.** The matool
-   round called `0ca8a12` "green" while two CLI-input-validation
-   tests fail. For this round it was confirmed not on the scan
-   path (the failure is in unknown-category rejection;
-   `--categories idempotency` bypasses the bug). But future rounds
-   shouldn't carry this forward as ambient. Proposed
-   `road_test_plan.md` clarification: pre-flight should explicitly
-   confirm test failures are on a non-scan path, not just count
-   them.
+1. **`rm -rf .build` after a linter fast-forward.** Both this
+   round and the linter's local main jumped 38 commits during
+   pre-flight (`0015248 → 0ca8a12`). The `.build/` directory
+   carried compiled test binaries from the older SHA, and
+   `swift test` reused them: the resulting "2 failures" in
+   `exitWithErrorForInvalidCategory` were artefacts of running
+   stale binaries against the pinned-SHA test sources. The
+   fix is one line; the policy is to add it as a pre-flight
+   step whenever the linter is fast-forwarded more than a
+   handful of commits. Proposed `road_test_plan.md` addition:
+   step "verify linter is on a known-green tip" should
+   include `rm -rf .build && swift test` when the local
+   working tree was just fast-forwarded.
 
 2. **Local linter checkout drift.** Local main was 38 commits
    behind origin/main (PRs #11-#29 had merged on origin without
