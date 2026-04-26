@@ -321,20 +321,22 @@ in this post-criteria mode. Options, in value-per-effort order:
   a suggestion specifically pointing at `IdempotencyKey` /
   `@ExternallyIdempotent(by:)`.
 
-- **Switch-dispatch deep-chain inference** — **2-adopter
-  slice-ready** (tinyfaces + unidoc, 2026-04-26). Both adopters'
-  webhook entries dispatch via `switch self.event` (or
-  `switch (event.type, event.data?.object)`) to private
-  `handle(...)` sub-handlers that contain non-idempotent calls.
-  Without the slot, the dispatcher's `@lint.context replayable`
-  annotation produces zero diagnostic from the deep-chain path.
-  tinyfaces was a clean silent miss; unidoc confirms — its `load`
-  fires only on a separate enum-case-pattern false positive (see
-  the new candidate below), and would be cleanly silent without
-  it. Fix direction: `EffectSymbolTable.runInferencePass` to walk
-  `SwitchCase` bodies as direct callees of the enclosing function,
-  not as nested expressions. Tests can use the tinyfaces + unidoc
-  transcripts as regression goldens. **Ready to ship.**
+- **Switch-dispatch deep-chain inference** — **shipped 2026-04-26**
+  ([`Joseph-Cursio/SwiftProjectLint#35`](https://github.com/Joseph-Cursio/SwiftProjectLint/pull/35)).
+  Investigation showed the actual root cause was simpler than the
+  original framing: not a switch-traversal bug (the inference
+  walker already recursed through case bodies) but a storage-gate
+  bug. The pre-fix `entriesBySignature[sig] == nil` guard
+  suppressed upward inference for any signature already in the
+  table — including signatures with only a `@lint.context`
+  annotation and no `@lint.effect`. Sub-handlers annotated
+  `@lint.context replayable` had their body's non-idempotent
+  classification correctly computed but never stored, so callers
+  saw nothing. One-line fix: `entriesBySignature[sig]?.effect == nil`.
+  Field verification on the unidoc trial: dispatcher
+  `WebhookOperation.load(with:)` regained 2 fires (lines 75 + 82)
+  on the `handle(...)` calls via 2-hop upward inference through
+  the switch arms.
 
 - **Enum-case-pattern false positive** (1-adopter, unidoc).
   `case .create(let event):` fires the linter's name-prefix
