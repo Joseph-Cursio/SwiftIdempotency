@@ -100,18 +100,18 @@ struct IdempotencyKeyFluentTests {
     func crossInstanceConsistency() throws {
         let sharedID = UUID()
 
-        let a1 = Acronym()
-        a1.id = sharedID
-        a1.short = "TEST"
-        a1.long = "one"
+        let acronym1 = Acronym()
+        acronym1.id = sharedID
+        acronym1.short = "TEST"
+        acronym1.long = "one"
 
-        let a2 = Acronym()
-        a2.id = sharedID
-        a2.short = "TEST-DIFFERENT-FIELD"  // intentional field drift
-        a2.long = "two"
+        let acronym2 = Acronym()
+        acronym2.id = sharedID
+        acronym2.short = "TEST-DIFFERENT-FIELD"  // intentional field drift
+        acronym2.long = "two"
 
-        let key1 = try IdempotencyKey(fromFluentModel: a1)
-        let key2 = try IdempotencyKey(fromFluentModel: a2)
+        let key1 = try IdempotencyKey(fromFluentModel: acronym1)
+        let key2 = try IdempotencyKey(fromFluentModel: acronym2)
 
         // The init only hashes the id — the other fields don't
         // contribute. Two post-save Models with the same id produce

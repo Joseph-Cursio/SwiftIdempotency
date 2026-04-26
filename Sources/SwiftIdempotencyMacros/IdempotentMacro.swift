@@ -123,11 +123,11 @@ public struct ExternallyIdempotentMacro: PeerMacro {
         // Parameter-label check only applies when the macro is attached
         // to a function. If it's attached to something else, skip —
         // peer-macro placement on non-functions is a separate concern.
-        guard let fn = declaration.as(FunctionDeclSyntax.self) else {
+        guard let funcDecl = declaration.as(FunctionDeclSyntax.self) else {
             return []
         }
 
-        let availableLabels = externalParameterLabels(of: fn)
+        let availableLabels = externalParameterLabels(of: funcDecl)
         if !availableLabels.contains(byValue) {
             context.diagnose(Diagnostic(
                 node: Syntax(byExpression),
@@ -183,9 +183,9 @@ private func stringLiteralValue(of expression: ExprSyntax) -> String? {
 /// Returns the external parameter labels of a function declaration, in
 /// declaration order. Wildcards (`_ name: T`) contribute no label — a
 /// parameter with no external label cannot be named by `by:`.
-private func externalParameterLabels(of fn: FunctionDeclSyntax) -> [String] {
+private func externalParameterLabels(of funcDecl: FunctionDeclSyntax) -> [String] {
     var labels: [String] = []
-    for parameter in fn.signature.parameterClause.parameters {
+    for parameter in funcDecl.signature.parameterClause.parameters {
         if parameter.firstName.tokenKind == .wildcard {
             continue
         }
