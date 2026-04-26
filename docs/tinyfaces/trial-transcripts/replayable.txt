@@ -1,0 +1,23 @@
+warning: 'swiftprojectlint': dependency 'swiftprojectlintmodels' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintvisitors' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintregistry' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintrules' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintconfig' is not used by any target
+warning: 'swiftprojectlint': dependency 'yams' is not used by any target
+Building for debugging...
+[0/3] Write swift-version--58304C5D6DBC2206.txt
+Build of product 'CLI' complete! (0.23s)
+Sources/App/Controllers/AuthenticationController.swift:39: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'sendMagicEmail' is declared `@lint.context replayable` but calls 'sendEmail', whose effect is inferred `non_idempotent` from its body via 2-hop chain of un-annotated callees. If the inference is wrong, annotate 'sendEmail' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
+  suggestion: Replace 'sendEmail' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/App/Controllers/AuthenticationController.swift:46: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'sendMagicEmail' is declared `@lint.context replayable` but calls 'sendEmail', whose effect is inferred `non_idempotent` from its body via 2-hop chain of un-annotated callees. If the inference is wrong, annotate 'sendEmail' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
+  suggestion: Replace 'sendEmail' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/App/Controllers/StripeWebhookController.swift:80: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'portalRedirect' is declared `@lint.context replayable` but calls 'create', whose effect is inferred `non_idempotent` from the callee name `create`. If the inference is wrong, annotate 'create' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'create' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/App/Controllers/StripeWebhookController.swift:143: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'checkoutCompleted' is declared `@lint.context replayable` but calls 'createIfNotExist', whose effect is inferred `non_idempotent` from the callee-name prefix `create` (in `createIfNotExist`). If the inference is wrong, annotate 'createIfNotExist' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'createIfNotExist' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/App/Controllers/LicenseController.swift:98: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'commercialCalculate' is declared `@lint.context replayable` but calls 'create', whose effect is inferred `non_idempotent` from the callee name `create`. If the inference is wrong, annotate 'create' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'create' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+Sources/App/Controllers/LicenseController.swift:104: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'commercialCalculate' is declared `@lint.context replayable` but calls 'create', whose effect is inferred `non_idempotent` from the callee name `create`. If the inference is wrong, annotate 'create' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'create' with an idempotent alternative, or route the call through a deduplication guard or idempotency-key mechanism.
+
+Found 6 issues (6 errors)
