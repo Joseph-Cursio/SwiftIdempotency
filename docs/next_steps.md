@@ -47,13 +47,13 @@ value-per-effort, top to bottom.
   `@ExternallyIdempotent(by:)` are exercised by the root test target
   and by every adopter road-test. **Slot 6 — consumer-context
   validation — is fully closed.**
-- **Adopter road-tests**: **sixteen rounds completed** —
+- **Adopter road-tests**: **seventeen rounds completed** —
   `todos-fluent/`, `pointfreeco/`, `swift-nio/`,
   `swift-composable-architecture/`, `swift-aws-lambda-runtime/`,
   `penny-bot/`, `isowords/`, `spi-server/`, `prospero/`,
   `myfavquotes-api/`, `hummingbird-examples-open-telemetry/`,
   `luka-vapor/`, `hellovapor/`, `grpc-swift-2/`, `graphiti/`,
-  **`matool/`**. The TCA
+  `matool/`, **`tinyfaces/`**. The TCA
   round closed **all three** cluster-level gaps it surfaced (return-
   trailing annotation, send-on-closure-parameter, dependency-client
   declarations) across PRs #17 / #18 / #19; current TCA residual on
@@ -184,19 +184,23 @@ has four entries:
 
 ## Recommended next-session opener
 
-**State snapshot (2026-04-25).** Two parallel workstreams are in
+**State snapshot (2026-04-26).** Two parallel workstreams are in
 stable state:
 
-1. **Linter road-tests** — eight production-app rounds + eight
+1. **Linter road-tests** — nine production-app rounds + eight
    framework/demo rounds complete (added grpc-swift-2 + graphiti
    + matool on 2026-04-25 — first gRPC, first GraphQL, and first
-   *production-app* AWS Lambda targets respectively under the
-   post-2026-04-24 domain/shape novelty selection rule). The
-   matool round closed the CLAUDE.md gap on Lambda FP-rate
-   evidence: 4/6 Run A catches (Swift surface) → 2 real-bug
-   catches (after data-layer audit), where awslabs/Examples
-   gave 0/6. All three completion criteria met since myfavquotes-
-   api; rounds since have been slice-driven.
+   *production-app* AWS Lambda targets; added **tinyfaces** on
+   2026-04-26 — first **Stripe-using adopter**, direct exercise
+   of the `IdempotencyKey` named use case). The matool round
+   closed the CLAUDE.md gap on Lambda FP-rate evidence: 4/6
+   Run A catches (Swift surface) → 2 real-bug catches (after
+   data-layer audit), where awslabs/Examples gave 0/6. The
+   tinyfaces round produced 6/6 yield (1.00 incl. silent /
+   1.50 excl.) with 3 distinct real-bug shapes after data-
+   layer audit — best yield of any round to date. All three
+   completion criteria met since myfavquotes-api; rounds since
+   have been slice-driven.
    Slots 2, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
    20, 21, 22 all closed.
 2. **Package-integration (Option B) trials** — v0.3.1 shipped; nine
@@ -239,18 +243,25 @@ slices still get validated the same way. The plan stays alive;
 it just stops blocking on new targets."* Both workstreams are
 in this post-criteria mode. Options, in value-per-effort order:
 
-- **Cross-adopter triage filing** — ten real-bug shapes documented
-  across six adopters. **Two filed:**
+- **Cross-adopter triage filing** — **fifteen** real-bug shapes
+  documented across **eight** adopters. **Two filed:**
   - **HelloVapor PR #1** (2026-04-22) — Acronym missing unique constraint.
     [`sinduke/HelloVapor#1`](https://github.com/sinduke/HelloVapor/pull/1).
   - **prospero PR #8** (2026-04-22) — ActivityPattern missing composite
     `(user_id, name)` unique constraint.
     [`samalone/prospero#8`](https://github.com/samalone/prospero/pull/8).
-  Both await maintainer response. The remaining 8 shapes (Penny × 4,
-  isowords × 2, myfavquotes-api × 1, luka-vapor × 1) stay parked —
-  Penny's four in [`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md),
-  others not yet scoped. Filing policy: keep it narrow, one finding
-  per PR, use the draft pattern established in
+  Both await maintainer response. The remaining 13 shapes stay parked
+  (Penny × 4, isowords × 2, myfavquotes-api × 1, luka-vapor × 1,
+  matool × 2, **tinyfaces × 3**). Penny's four in
+  [`ideas/penny-bot-triage-issues.md`](ideas/penny-bot-triage-issues.md);
+  others not yet scoped. **TinyFaces** has the highest-impact
+  unfiled shape — Stripe customer orphan on retry without
+  `Idempotency-Key` (`commercialCalculate`) — direct demonstration
+  of the `SwiftIdempotency.IdempotencyKey` named use case; gated
+  on TinyFaces' missing LICENSE file (proposed posture: file the
+  Stripe-customer-orphan PR first, await maintainer response, file
+  the other two only if it lands). Filing policy: keep it narrow,
+  one finding per PR, use the draft pattern established in
   [`ideas/pointfreeco-triage-issue.md`](ideas/pointfreeco-triage-issue.md).
 
 - **Bcrypt-crypto-gap** (1-adopter, 1 fire from myfavquotes-api).
@@ -291,6 +302,41 @@ in this post-criteria mode. Options, in value-per-effort order:
   same shape. 1-adopter evidence so far; awaiting second
   adopter that uses Cognito SDK for user creation.
 
+- **Email-on-retry without idempotency key** — promoted to
+  **2-adopter slice candidate** by tinyfaces (2026-04-26).
+  Vendor-independent shape: matool uses AWS Cognito
+  `adminCreateUser` (invitation email); tinyfaces uses Brevo
+  `SendInBlue.sendEmail` (magic-link auth). Both are external
+  email APIs called inside a `replayable` handler with no
+  caller-supplied dedup key, both produce user-visible duplicate
+  emails on LB retry. Slice direction: extend the
+  `idempotentReceiverMethodsByFramework` infrastructure to
+  recognise common email-API send-method shapes (`sendEmail`,
+  `adminCreateUser`, `sendTransactional`, etc.) under their
+  framework imports, and route to a non-idempotent verdict with
+  a suggestion specifically pointing at `IdempotencyKey` /
+  `@ExternallyIdempotent(by:)`.
+
+- **Switch-dispatch deep-chain inference** (1-adopter, tinyfaces).
+  `StripeWebhookController.index` dispatches via
+  `switch (event.type, event.data?.object)` to four sibling
+  handlers and is silent in Run A despite the sub-handlers being
+  non-idempotent. The inferrer doesn't walk `SwitchExprSyntax`
+  case bodies as direct callees of the enclosing function. Likely
+  recurs on any webhook adopter (Stripe, GitHub, Slack, Discord);
+  trigger condition for slice work is a 2nd-adopter round that
+  exhibits the same shape. Fix direction:
+  `EffectSymbolTable.runInferencePass` to walk switch case bodies
+  as direct callees, not nested expressions.
+
+- **Stripe-kit framework whitelist** (1-adopter, tinyfaces). Add
+  `request.stripe.*` namespace to
+  `idempotentReceiverMethodsByFramework` (commit `040f186`):
+  `verifySignature` / `sessions.retrieve` / `customers.retrieve`
+  as idempotent, `customers.create` / `sessions.create` /
+  `portalSession.create` as non-idempotent. Single-adopter for
+  now; defer until 2nd Vapor + Stripe adopter triggers.
+
 Deferred — no urgent triggering evidence:
 
 - Slot 5 (perf fix) — no corpus has stressed the wall-clock
@@ -304,12 +350,13 @@ Deferred — no urgent triggering evidence:
   the body inferrer and does not surface receiver-resolution
   collisions. Slot 3 trigger condition remains unchanged.
 
-**Twelve real-bug shapes** caught by the linter across Penny +
+**Fifteen real-bug shapes** caught by the linter across Penny +
 isowords + prospero + myfavquotes-api + luka-vapor + hellovapor
-+ **matool** (added 2026-04-25 — `DistrictController.post` and
-`.postReissue` both fire Cognito `adminCreateUser` invitation
-emails on retry) all map to `IdempotencyKey` /
-`@ExternallyIdempotent(by:)`.
++ matool + **tinyfaces** (added 2026-04-26 — Subscription
+find-or-create race without `.unique(on: "stripe_id")`, Stripe
+customer orphan on retry without `Idempotency-Key`, magic-link
+email double-send via Brevo on LB retry — all three map to
+`IdempotencyKey` / `@ExternallyIdempotent(by:)`).
 **Nine production adopters** have the Option B surface validated
 end-to-end. Twenty-seven green Option B tests across
 package-integration trials (Penny 8 + Vernissage 9 + plc 3 +
