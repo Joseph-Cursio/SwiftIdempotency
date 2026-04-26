@@ -14,11 +14,13 @@ struct IdempotencyKeyTypeTests {
     // MARK: - Construction from Identifiable entity
 
     @Test
-    func fromIdentifiableEntity_uuidID_producesStableRawValue() {
+    func fromIdentifiableEntity_uuidID_producesStableRawValue() throws {
         struct Event: Identifiable {
             let id: UUID
         }
-        let fixedUUID = UUID(uuidString: "11111111-2222-3333-4444-555555555555")!
+        let fixedUUID = try #require(
+            UUID(uuidString: "11111111-2222-3333-4444-555555555555")
+        )
         let event = Event(id: fixedUUID)
         let key = IdempotencyKey(fromEntity: event)
         #expect(key.rawValue == "11111111-2222-3333-4444-555555555555")

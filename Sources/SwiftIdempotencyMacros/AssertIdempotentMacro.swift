@@ -97,7 +97,7 @@ private func extractClosureSource(
 }
 
 /// Diagnostic messages surfaced by `AssertIdempotentMacro`.
-enum AssertIdempotentDiagnostic: String, DiagnosticMessage {
+private enum AssertIdempotentDiagnostic: String, DiagnosticMessage {
     case requiresClosureArgument
 
     var message: String {

@@ -212,7 +212,7 @@ struct ExternallyIdempotentDiagnostic: DiagnosticMessage {
         identifier: "externallyIdempotent.argumentMustBeStringLiteral"
     )
 
-    static func dottedPathNotSupported(value: String) -> Self {
+    fileprivate static func dottedPathNotSupported(value: String) -> Self {
         Self(
             message: "@ExternallyIdempotent(by: \"\(value)\") contains a dotted "
                 + "key path, which is not supported. The `by:` argument must "
@@ -225,7 +225,7 @@ struct ExternallyIdempotentDiagnostic: DiagnosticMessage {
         )
     }
 
-    static func unknownParameterLabel(value: String, available: [String]) -> Self {
+    fileprivate static func unknownParameterLabel(value: String, available: [String]) -> Self {
         let listing: String
         if available.isEmpty {
             listing = "the annotated function has no externally-labelled parameters"
