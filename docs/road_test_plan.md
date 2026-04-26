@@ -37,7 +37,16 @@ blend packages in one directory.
 ### Pre-flight
 
 - Verify the linter is on a known-green tip (`swift test` passes).
-  Pin the commit SHA in the scope doc.
+  Pin the commit SHA in the scope doc. **If the local working tree
+  was just fast-forwarded more than a handful of commits**, run
+  `rm -rf .build && swift test` instead — `.build/` carries
+  compiled test binaries from the pre-fast-forward SHA, and stale
+  binaries against fresh test sources can produce phantom
+  "failures" that look like pre-existing regressions. This was
+  the root cause of the bogus 2-failure narrative in the tinyfaces
+  round (round 17, 2026-04-26) — see
+  [`tinyfaces/trial-retrospective.md`](tinyfaces/trial-retrospective.md)
+  §"Policy notes" for the post-mortem.
 - Verify the target clone is clean and on a known SHA or tag. Pin
   both in the scope doc.
 - **git-lfs check.** If the target uses git-lfs (check
