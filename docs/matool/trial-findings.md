@@ -1,9 +1,15 @@
 # MaTool — Trial Findings
 
+> **Note (2026-05-01):** At the MaTool author's request, the trial
+> fork `Joseph-Cursio/MaTool-idempotency-trial` was deleted from
+> GitHub (it accidentally contained configuration data). Code
+> excerpts below are from the public upstream
+> `kmatsushita1012/MaTool@e6a40d1`. This analysis is preserved as
+> the engineering record of the round.
+
 Linter SHA `0ca8a12`. Target `kmatsushita1012/MaTool` @ `e6a40d1`.
-Fork `Joseph-Cursio/MaTool-idempotency-trial` on branch
-`trial-matool`. Six controller methods annotated `/// @lint.context
-replayable` then flipped to `strict_replayable`.
+Trial fork (now deleted) carried six controller methods annotated
+`/// @lint.context replayable`, then flipped to `strict_replayable`.
 
 ## Run A — replayable
 

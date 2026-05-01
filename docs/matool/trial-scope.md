@@ -1,5 +1,10 @@
 # MaTool — Trial Scope
 
+> **Note (2026-05-01):** At the MaTool author's request, the trial
+> fork `Joseph-Cursio/MaTool-idempotency-trial` was deleted from
+> GitHub (it accidentally contained configuration data). This
+> scope doc is preserved as the engineering record of the round.
+
 Sixteenth adopter road-test. **First production-app round in
 the AWS Lambda domain** — closes the gap CLAUDE.md explicitly
 flagged: *"For FP-rate evidence on Lambda specifically, a

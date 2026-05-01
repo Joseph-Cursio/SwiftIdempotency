@@ -1,5 +1,10 @@
 # MaTool — Trial Retrospective
 
+> **Note (2026-05-01):** At the MaTool author's request, the trial
+> fork `Joseph-Cursio/MaTool-idempotency-trial` was deleted from
+> GitHub (it accidentally contained configuration data). This
+> retrospective is preserved as the engineering record of the round.
+
 ## Did the scope hold?
 
 Yes — measurement-only, doc-comment annotations only, no logic
