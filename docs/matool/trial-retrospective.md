@@ -25,11 +25,13 @@ that the non-idempotent leaf is the Cognito `adminCreateUser`
 call several layers below the controller surface. Both fire
 verdicts hold up after data-layer audit because the side
 effect (sending an invitation email) is **outside DynamoDB's
-key-based dedup** — Cognito doesn't dedup invitations on its
-side, so each `adminCreateUser` call with the same username
-either re-emails (until user exists) or throws
-`UsernameExistsException` (after user exists), and during
-the create-then-throw race window the email goes out anyway.
+key-based dedup** — `adminCreateUser` has no client-side
+idempotency token, so a retry whose first attempt committed
+server-side but failed to deliver the response will either
+re-create the user and re-send the invitation email (if the
+original write hasn't propagated) or throw
+`UsernameExistsException` without emailing (if it has). The
+duplicate-email window is real and unguarded by AWS.
 
 The 2-hop chain depth on `postReissue` is shorter than `post`
 because the usecase calls Cognito directly without going
