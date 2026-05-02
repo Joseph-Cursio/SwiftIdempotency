@@ -8,7 +8,6 @@ import Foundation
 /// inherent to the type's lack of a UUID constructor and are asserted via
 /// the absence of such initialisers in the public API — if someone adds
 /// one, the "Deliberately NOT provided" comment flags the review.
-@Suite
 struct IdempotencyKeyTypeTests {
 
     // MARK: - Construction from Identifiable entity

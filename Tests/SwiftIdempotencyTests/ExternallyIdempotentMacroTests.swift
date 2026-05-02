@@ -16,7 +16,6 @@ import Testing
 ///
 /// Paired positive cases in `AttributeRecognitionTests` verify that
 /// correct usages still compile cleanly.
-@Suite
 struct ExternallyIdempotentMacroTests {
 
     private let testMacros: [String: Macro.Type] = [

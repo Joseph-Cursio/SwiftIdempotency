@@ -9,7 +9,6 @@ import SwiftIdempotency
 /// textual form. These tests cover the runtime contract:
 /// invoke-twice, return both results, propagate throws, work for sync
 /// + async + throwing + non-throwing closure shapes.
-@Suite
 struct IdempotencyInvokeTwiceRuntimeTests {
 
     @Test
@@ -82,17 +81,11 @@ struct IdempotencyInvokeTwiceRuntimeTests {
             }
         }
         let gate = Gate()
-        var caught = false
-        do {
+        await #expect(throws: TestError.self) {
             _ = try await SwiftIdempotency.__idempotencyInvokeTwice {
                 try await gate.step()
             }
-        } catch is TestError {
-            caught = true
-        } catch {
-            Issue.record("unexpected error type: \(error)")
         }
-        #expect(caught)
         let calls = await gate.calls
         #expect(calls == 1, "second invocation must not run when first throws")
     }
@@ -109,16 +102,10 @@ struct IdempotencyInvokeTwiceRuntimeTests {
             }
         }
         let gate = Gate()
-        var caught = false
-        do {
+        await #expect(throws: TestError.self) {
             _ = try await SwiftIdempotency.__idempotencyInvokeTwice {
                 try await gate.step()
             }
-        } catch is TestError {
-            caught = true
-        } catch {
-            Issue.record("unexpected error type: \(error)")
         }
-        #expect(caught)
     }
 }

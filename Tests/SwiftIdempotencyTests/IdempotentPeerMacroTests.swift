@@ -18,7 +18,6 @@ import Testing
 /// design but not the round-8 shape — they're gone. See
 /// `IdempotencyTestsMacroTests` for the current test-generation
 /// expansion surface.
-@Suite
 struct IdempotentPeerMacroTests {
 
     private let testMacros: [String: Macro.Type] = [

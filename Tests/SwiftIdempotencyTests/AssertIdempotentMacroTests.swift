@@ -9,7 +9,6 @@ import SwiftIdempotency
 /// macro. Split into expansion-verification tests (exact textual form the
 /// macro produces) and runtime-behaviour tests (the expanded code
 /// actually works in context).
-@Suite
 struct AssertIdempotentMacroTests {
 
     private let testMacros: [String: Macro.Type] = [
@@ -101,8 +100,7 @@ struct AssertIdempotentMacroTests {
     func throwingClosureInFirstCall_propagates() {
         struct TestError: Error, Equatable {}
         var shouldThrow = true
-        var caught = false
-        do {
+        #expect(throws: TestError.self) {
             _ = try #assertIdempotent { () -> Int in
                 if shouldThrow {
                     shouldThrow = false
@@ -110,12 +108,7 @@ struct AssertIdempotentMacroTests {
                 }
                 return 0
             }
-        } catch is TestError {
-            caught = true
-        } catch {
-            Issue.record("unexpected error type: \(error)")
         }
-        #expect(caught)
     }
 
     // Note: the "non-idempotent closure trips precondition" case isn't
@@ -219,17 +212,11 @@ struct AssertIdempotentMacroTests {
             }
         }
         let gate = Gate()
-        var caught = false
-        do {
+        await #expect(throws: TestError.self) {
             _ = try await #assertIdempotent {
                 try await gate.next()
             }
-        } catch is TestError {
-            caught = true
-        } catch {
-            Issue.record("unexpected error type: \(error)")
         }
-        #expect(caught)
     }
 
     /// Overload resolution sanity check — a closure with no `await` still

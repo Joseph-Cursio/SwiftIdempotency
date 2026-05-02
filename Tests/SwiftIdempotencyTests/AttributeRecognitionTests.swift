@@ -5,7 +5,6 @@ import Testing
 /// peer declarations, so "does the attribute compile" is the entirety of
 /// the test surface at this phase. Phase 3 will add expansion-verification
 /// tests using `SwiftSyntaxMacrosTestSupport`.
-@Suite
 struct AttributeRecognitionTests {
 
     // MARK: - @Idempotent

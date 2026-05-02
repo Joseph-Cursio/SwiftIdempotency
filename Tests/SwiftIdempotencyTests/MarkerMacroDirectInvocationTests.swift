@@ -23,31 +23,36 @@ import Testing
 /// (an attribute with arguments but no `by:` label — unreachable
 /// through normal Swift syntax because `by:` is the only declared
 /// argument label, but defensible-by-construction).
-@Suite
 struct MarkerMacroDirectInvocationTests {
 
     /// Synthesises a `func compute() {}` decl + a parsed attribute,
     /// returning both ready to feed to a `PeerMacro.expansion(...)`
-    /// call.
+    /// call. Threads `SourceLocation` so a fixture-parsing regression
+    /// points at the calling test rather than this helper.
     private func makeAttributedFunction(
-        attribute attributeSource: String
-    ) -> (AttributeSyntax, FunctionDeclSyntax) {
+        attribute attributeSource: String,
+        sourceLocation: Testing.SourceLocation = #_sourceLocation
+    ) throws -> (AttributeSyntax, FunctionDeclSyntax) {
         let attributeFile = Parser.parse(source: "\(attributeSource)\nfunc compute() {}")
         // Locate the FunctionDeclSyntax — it's the first FunctionDecl in the file.
         // The attribute is also attached to it via Swift syntax's normal
         // parsing of `@Foo \n func compute()`.
-        guard let funcDecl = attributeFile.statements.first?.item.as(FunctionDeclSyntax.self) else {
-            preconditionFailure("test fixture failed to parse")
-        }
-        guard let attribute = funcDecl.attributes.first?.as(AttributeSyntax.self) else {
-            preconditionFailure("test fixture has no attribute")
-        }
+        let funcDecl = try #require(
+            attributeFile.statements.first?.item.as(FunctionDeclSyntax.self),
+            "test fixture failed to parse",
+            sourceLocation: sourceLocation
+        )
+        let attribute = try #require(
+            funcDecl.attributes.first?.as(AttributeSyntax.self),
+            "test fixture has no attribute",
+            sourceLocation: sourceLocation
+        )
         return (attribute, funcDecl)
     }
 
     @Test
     func idempotent_expansion_returnsEmpty() throws {
-        let (attribute, funcDecl) = makeAttributedFunction(attribute: "@Idempotent")
+        let (attribute, funcDecl) = try makeAttributedFunction(attribute: "@Idempotent")
         let context = BasicMacroExpansionContext()
         let result = try IdempotentMacro.expansion(
             of: attribute,
@@ -60,7 +65,7 @@ struct MarkerMacroDirectInvocationTests {
 
     @Test
     func nonIdempotent_expansion_returnsEmpty() throws {
-        let (attribute, funcDecl) = makeAttributedFunction(attribute: "@NonIdempotent")
+        let (attribute, funcDecl) = try makeAttributedFunction(attribute: "@NonIdempotent")
         let context = BasicMacroExpansionContext()
         let result = try NonIdempotentMacro.expansion(
             of: attribute,
@@ -73,7 +78,7 @@ struct MarkerMacroDirectInvocationTests {
 
     @Test
     func observational_expansion_returnsEmpty() throws {
-        let (attribute, funcDecl) = makeAttributedFunction(attribute: "@Observational")
+        let (attribute, funcDecl) = try makeAttributedFunction(attribute: "@Observational")
         let context = BasicMacroExpansionContext()
         let result = try ObservationalMacro.expansion(
             of: attribute,
@@ -92,7 +97,7 @@ struct MarkerMacroDirectInvocationTests {
         // `@ExternallyIdempotent` — but the macro impl has a defensive
         // fallback `return nil` for the case. The fallback was sitting
         // at 0 hits in the coverage profile.
-        let (attribute, funcDecl) = makeAttributedFunction(
+        let (attribute, funcDecl) = try makeAttributedFunction(
             attribute: #"@ExternallyIdempotent(other: "x")"#
         )
         let context = BasicMacroExpansionContext()
