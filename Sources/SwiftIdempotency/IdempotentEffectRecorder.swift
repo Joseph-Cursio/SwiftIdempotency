@@ -18,6 +18,40 @@ import Foundation
 /// state must survive closure captures by reference; a struct conformance
 /// would lose updates across closure boundaries.
 ///
+/// ### `Sendable` under Swift 6 strict concurrency
+///
+/// This protocol does **not** require `Sendable`. The package itself
+/// imposes only `AnyObject`. Adopters working in a Swift 6 strict-
+/// concurrency target whose surrounding code requires the conformer
+/// to be `Sendable` (e.g. the conformer also implements an injected
+/// repository protocol that is `Sendable`, or is captured across an
+/// actor boundary) will hit:
+///
+/// ```text
+/// error: stored property 'X' of 'Sendable'-conforming class
+///        'MockY' is mutable
+/// ```
+///
+/// because mutable stored properties on a `Sendable` class are
+/// rejected by strict concurrency, and `effectCount` (or the call
+/// log backing a custom `Snapshot`) must be mutable for the recorder
+/// to do its job. Two resolutions:
+///
+/// - **`@unchecked Sendable`** — declare the conformer
+///   `final class MyMock: ..., @unchecked Sendable`. The adopter
+///   takes responsibility for thread safety. Mocks used inside a
+///   single test body (the common case) are single-threaded by
+///   construction; this annotation matches the same posture Fluent
+///   `Model` and similar reference-typed test fixtures already use.
+/// - **Actor-based shape** — declare the conformer as an `actor`.
+///   Heavier idiom, but appropriate when the recorder is shared
+///   across concurrent calls and you need real isolation rather than
+///   single-threaded discipline.
+///
+/// The `@unchecked Sendable` route is recommended for ordinary test
+/// mocks. Reach for the actor shape only when the test exercises a
+/// genuinely concurrent body.
+///
 /// The `Snapshot` associated type defaults to `Int` (backed by
 /// `effectCount` via the default `snapshot()` implementation).
 /// Adopters with richer mock state — a call log, an ordered list of
