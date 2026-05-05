@@ -1,0 +1,21 @@
+warning: 'swiftprojectlint': dependency 'swiftprojectlintmodels' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintvisitors' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintregistry' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintrules' is not used by any target
+warning: 'swiftprojectlint': dependency 'swiftprojectlintconfig' is not used by any target
+warning: 'swiftprojectlint': dependency 'yams' is not used by any target
+Building for debugging...
+[0/3] Write swift-version--58304C5D6DBC2206.txt
+Build of product 'CLI' complete! (0.20s)
+Sources/VaporWalletPasses/PassesServiceCustom+RouteCollection.swift:52: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'registerPass' is declared `@lint.context replayable` but calls 'createRegistration', whose effect is inferred `non_idempotent` from its body. If the inference is wrong, annotate 'createRegistration' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
+  suggestion: Replace 'createRegistration' with an idempotent alternative, or route the call through a deduplication guard such as `IdempotencyKey` or `@ExternallyIdempotent(by:)` from the `SwiftIdempotency` package.
+Sources/VaporWalletPasses/PassesServiceCustom+RouteCollection.swift:55: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'registerPass' is declared `@lint.context replayable` but calls 'create', whose effect is inferred `non_idempotent` from the callee name `create`. If the inference is wrong, annotate 'create' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'create' with an idempotent alternative, or route the call through a deduplication guard such as `IdempotencyKey` or `@ExternallyIdempotent(by:)` from the `SwiftIdempotency` package.
+Sources/VaporWalletPasses/PassesServiceCustom+RouteCollection.swift:56: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'registerPass' is declared `@lint.context replayable` but calls 'createRegistration', whose effect is inferred `non_idempotent` from its body. If the inference is wrong, annotate 'createRegistration' explicitly with `/// @lint.effect <tier>` to override the body-based inference.
+  suggestion: Replace 'createRegistration' with an idempotent alternative, or route the call through a deduplication guard such as `IdempotencyKey` or `@ExternallyIdempotent(by:)` from the `SwiftIdempotency` package.
+Sources/VaporWalletPasses/PassesServiceCustom+RouteCollection.swift:176: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'unregisterPass' is declared `@lint.context replayable` but calls 'delete', whose effect is inferred `non_idempotent` from the FluentKit ORM verb `delete`. If the inference is wrong, annotate 'delete' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'delete' with an idempotent alternative, or route the call through a deduplication guard such as `IdempotencyKey` or `@ExternallyIdempotent(by:)` from the `SwiftIdempotency` package.
+Sources/VaporWalletPasses/PassesServiceCustom+RouteCollection.swift:218: error: [Non-Idempotent In Retry Context] Non-idempotent call in replayable context: 'personalizedPass' is declared `@lint.context replayable` but calls 'create', whose effect is inferred `non_idempotent` from the callee name `create`. If the inference is wrong, annotate 'create' explicitly with `/// @lint.effect <tier>` to override.
+  suggestion: Replace 'create' with an idempotent alternative, or route the call through a deduplication guard such as `IdempotencyKey` or `@ExternallyIdempotent(by:)` from the `SwiftIdempotency` package.
+
+Found 5 issues (5 errors)
