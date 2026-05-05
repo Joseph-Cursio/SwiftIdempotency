@@ -306,20 +306,29 @@ in this post-criteria mode. Options, in value-per-effort order:
   same shape. 1-adopter evidence so far; awaiting second
   adopter that uses Cognito SDK for user creation.
 
-- **Email-on-retry without idempotency key** — promoted to
-  **2-adopter slice candidate** by tinyfaces (2026-04-26).
-  Vendor-independent shape: matool uses AWS Cognito
-  `adminCreateUser` (invitation email); tinyfaces uses Brevo
-  `SendInBlue.sendEmail` (magic-link auth). Both are external
-  email APIs called inside a `replayable` handler with no
-  caller-supplied dedup key, both produce user-visible duplicate
-  emails on LB retry. Slice direction: extend the
-  `idempotentReceiverMethodsByFramework` infrastructure to
-  recognise common email-API send-method shapes (`sendEmail`,
-  `adminCreateUser`, `sendTransactional`, etc.) under their
-  framework imports, and route to a non-idempotent verdict with
-  a suggestion specifically pointing at `IdempotencyKey` /
-  `@ExternallyIdempotent(by:)`.
+- **Email-on-retry without idempotency key** — **shipped 2026-04-26**
+  via SwiftProjectLint commit `ec33d32` ("Name SwiftIdempotency
+  surface in non-idempotent suggestion"). Two-adopter evidence:
+  matool's AWS Cognito `adminCreateUser` (invitation email) and
+  tinyfaces's Brevo `SendInBlue.sendEmail` (magic-link auth). Both
+  are external email APIs called inside a `replayable` handler with
+  no caller-supplied dedup key, both produce user-visible duplicate
+  emails on LB retry. The shipped fix updates the
+  `nonIdempotentInRetryContext` rule's suggestion text to name
+  `IdempotencyKey` and `@ExternallyIdempotent(by:)` from the
+  `SwiftIdempotency` package directly — the rule was already firing
+  on these shapes via `HeuristicEffectInferrer`'s camelCase prefix
+  heuristic (`send`, `create`); the missing piece was actionable
+  remediation guidance in the diagnostic.
+  **Field-reverified 2026-05-05** on tinyfaces at slot tip
+  `5397858`: 6 original fires reproduce identically with the new
+  SwiftIdempotency-naming suggestion text on every fire (transcript:
+  [`tinyfaces/trial-transcripts/replayable-reverify-2026-05-05.txt`](tinyfaces/trial-transcripts/replayable-reverify-2026-05-05.txt)).
+  The original "extend `idempotentReceiverMethodsByFramework` …
+  route to a non-idempotent verdict" framing was structurally
+  wrong — that whitelist suppresses non-idempotent diagnostics, so
+  it cannot carry non-idempotent verdicts; the actual shipped path
+  is a one-shot suggestion-text rewrite. No further work parked.
 
 - **Switch-dispatch deep-chain inference** — **shipped 2026-04-26**
   ([`Joseph-Cursio/SwiftProjectLint#35`](https://github.com/Joseph-Cursio/SwiftProjectLint/pull/35)).
@@ -337,6 +346,19 @@ in this post-criteria mode. Options, in value-per-effort order:
   `WebhookOperation.load(with:)` regained 2 fires (lines 75 + 82)
   on the `handle(...)` calls via 2-hop upward inference through
   the switch arms.
+  **Cross-adopter datapoint added 2026-05-05** (during email-on-retry
+  shipping verification): the same field re-verify on tinyfaces
+  (slot tip `5397858` vs trial-time `0ca8a12`) surfaces 8 additional
+  fires beyond the original 6, all downstream of the storage-gate
+  fix — 4 in switch-dispatch sub-handlers
+  (`StripeWebhookController`'s `index` → `checkoutCompleted` /
+  `invoiceUpdate` / `subscriptionUpdate` arms) and 4 on direct-call
+  replayable handlers whose bodies use FluentKit `save` (slot 19's
+  ORM-verb gate, previously suppressed because the
+  `@lint.context`-only-annotated handler signatures couldn't store
+  their inferred non-idempotent body classification). Slot 23 paid
+  out a second cross-adopter benefit beyond the unidoc evidence
+  that triggered it.
 
 - **Enum-case-pattern false positive** (1-adopter, unidoc).
   `case .create(let event):` fires the linter's name-prefix
