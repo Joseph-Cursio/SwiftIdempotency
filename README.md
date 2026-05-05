@@ -6,6 +6,21 @@ in Swift. Complements the static analysis rules in
 package raises the ceiling on what can be enforced without running the
 code.
 
+## Documentation
+
+This README is a broad overview. Three companion documents go deeper:
+
+- **[TUTORIAL.md](TUTORIAL.md)** — build a payment-webhook handler from
+  zero, layering on all four tiers in order. Start here if you're new
+  to the package and want one coherent walkthrough.
+- **[USER_GUIDE.md](USER_GUIDE.md)** — task-oriented reference: when to
+  reach for which tier, integrating with Fluent / SwiftData / Vapor /
+  Hummingbird / AWS Lambda, the inline-closure refactor, design
+  boundaries, and coordination with SwiftProjectLint.
+- **[REFERENCE.md](REFERENCE.md)** — symbol-by-symbol API reference for
+  every public macro, type, initializer, and helper, organised by
+  library product.
+
 ## What it provides
 
 Three tiers of safety. Strongest first.
@@ -790,11 +805,14 @@ passing tests:
   `@Idempotent`-marked members get auto-generated tests. Parameterised
   functions can either use `#assertIdempotent` at test sites, or wait
   for a future slice that introduces an `IdempotencyTestArgs` protocol.
-- **Dynamic observable-equivalence checking.** The current
-  implementation uses Option C semantics — same return value + no throw
-  on second call. It doesn't capture side effects via mocks. Genuinely
-  non-idempotent functions whose side effects are invisible to the
-  return value will not be caught by the auto-generated test alone.
+- **Dynamic equivalence checking inside `@IdempotencyTests`
+  auto-generation.** The auto-generated tests use Option C semantics
+  — same return value + no throw on second call — and do not inject
+  mocks. Side-effect equivalence (Option B) ships as a separate
+  opt-in helper, `assertIdempotentEffects` + `IdempotentEffectRecorder`
+  (see §"Effect-observation testing" above), but adopters wire it up
+  manually at test sites; the macro-generated path doesn't reach for
+  it.
 
 ## Using without SwiftProjectLint
 
@@ -849,19 +867,29 @@ value independent of static analysis.
 Early release. Annotation attributes (`@Idempotent`, `@NonIdempotent`,
 `@Observational`, `@ExternallyIdempotent`), `IdempotencyKey`, zero-arg
 `@IdempotencyTests` extension expansion, and `#assertIdempotent` (sync +
-async) are implemented and tested. v0.2.0 adds a dedicated
+async) are implemented and tested. v0.2.0 added a dedicated
 `SwiftIdempotencyFluent` product with
 `IdempotencyKey.init(fromFluentModel:)` for Fluent `Model` adopters —
-see §"Using with Fluent ORM" above. Deferred for future work:
+see §"Using with Fluent ORM" above. v0.3.0 added Option B
+effect-observation testing via `IdempotentEffectRecorder` and
+`assertIdempotentEffects` — see §"Effect-observation testing" above.
+
+For a consolidated inventory of what the original PRD proposed but
+isn't in the package today (or shipped in a different shape), see
+[REFERENCE.md §Deferred and not-shipped features](REFERENCE.md#deferred-and-not-shipped-features).
+The headline gaps:
 
 - Parameterised `@IdempotencyTests` expansion — today only zero-arg
   `@Idempotent`-marked members get auto-generated tests; extending to
   parameterised members needs an `IdempotencyTestArgs` protocol design
-  so the macro has a stable way to synthesise arguments
-- Option A / B observable-equivalence (dependency-injected mocks)
+  so the macro has a stable way to synthesise arguments.
+- Auto-injection of effect recorders into the `@IdempotencyTests`
+  auto-generated path. `IdempotentEffectRecorder` itself ships;
+  the auto-generated tests just don't wire it up. Adopters add
+  `assertIdempotentEffects` at explicit test sites.
 - Additional framework-specific integrations beyond Fluent (Hummingbird,
   SwiftNIO, and others would follow the `SwiftIdempotencyFluent` opt-in
-  product pattern)
+  product pattern).
 
 See the design document in
 [swiftIdempotency/docs](https://github.com/Joseph-Cursio/swiftIdempotency/tree/main/docs)
