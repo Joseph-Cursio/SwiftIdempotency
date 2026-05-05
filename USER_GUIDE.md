@@ -628,6 +628,83 @@ on reads.
 The two compose. Use both when the handler has a meaningful return
 *and* observable side effects.
 
+### Throw-on-retry handlers
+
+A common dedup-by-construction shape is "check existence, throw on
+collision, otherwise write":
+
+```swift
+@Idempotent
+func dedupGuardedCreate(name: String, repo: UserRepositoryProtocol)
+    async throws -> User
+{
+    if try await repo.findByName(name) != nil {
+        throw HTTPError(.conflict)   // ← second invocation lands here
+    }
+    let user = User(name: name)
+    try await repo.save(user)
+    return user
+}
+```
+
+The handler *is* idempotent on observable effect — the second call
+never reaches `save`, so the recorder's `effectCount` stays at one.
+But the second invocation throws, and `assertIdempotentEffects`
+rethrows from its body closure. Calling the helper directly fails
+the test with the *thrown error*, not with a clear non-idempotency
+diagnostic.
+
+Wrap the body in a swallow-conflict catch so the helper sees a
+non-throwing closure on both invocations, then assert `effectCount`
+explicitly afterwards as a sanity check:
+
+```swift
+@Test("create handler is idempotent under throw-on-retry dedup")
+func createIsIdempotent() async {
+    let repo = MockUserRepo()
+    await assertIdempotentEffects(recorders: [repo]) {
+        do {
+            _ = try await dedupGuardedCreate(name: "alice", repo: repo)
+        } catch {
+            // Expected on the second invocation; the handler's
+            // dedup contract is "throw on collision".
+        }
+    }
+    #expect(repo.effectCount == 1)
+}
+```
+
+Pair this with a *separate* return-divergence test that asserts the
+second call's throwing behaviour explicitly — the two tests are
+complementary, not alternatives:
+
+```swift
+@Test("create handler throws on duplicate name")
+func createThrowsOnDuplicate() async throws {
+    let repo = MockUserRepo()
+    _ = try await dedupGuardedCreate(name: "alice", repo: repo)
+    await #expect(throws: HTTPError.self) {
+        try await dedupGuardedCreate(name: "alice", repo: repo)
+    }
+}
+```
+
+This is the concrete shape of the *atomic vs unconditional*
+distinction from
+[Foundational concepts §Partial failure](#partial-failure-and-the-retry-contract).
+Throw-on-retry handlers are unconditionally idempotent on observable
+effect (no intermediate state survives a thrown second call), but
+their *return contract* diverges deliberately. Tier 4 is the right
+tool for the effect side; the explicit throw test covers the return
+side.
+
+Variants of this shape appear across frameworks: Fluent's
+`Acronym.find(...) != nil` precondition, GORM-style
+`upsert-or-throw`, message-queue consumers that throw on
+already-seen-message-id. The recipe is the same: swallow the
+expected throw inside the helper body, assert `effectCount`
+separately, write a sibling test for the throwing return contract.
+
 ### Failure modes
 
 ```swift
