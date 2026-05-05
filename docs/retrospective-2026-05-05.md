@@ -114,8 +114,12 @@ the next two Vapor/Fluent rounds.
   against; deferred pending a triage decision.
 - **Adoption gaps named**: +1
   (`cross-function-dedup-guard-not-propagated`, 1-adopter).
-- **Email-on-retry slice**: still 2-adopter evidence, still
-  parked.
+- **Email-on-retry slice**: already shipped (SwiftProjectLint
+  `ec33d32`, 2026-04-26 — a one-line suggestion-text rewrite in
+  `NonIdempotentInRetryContextVisitor` naming `IdempotencyKey`
+  + `@ExternallyIdempotent(by:)`). The 2026-05-04 retrospective's
+  "still parked" note was stale bookkeeping; verified on
+  tinyfaces at slot tip on 2026-05-05 (commit `ecae768`).
 - **Documentation**: `road_test_plan.md` refined; no other doc
   changes.
 - **Memory**: `MEMORY.md` index updated with the heuristic
@@ -172,9 +176,9 @@ two of the three suggested adopter probes are still unexplored:
   queries) — known DSL-shape opacity from round 15; mutations
   may surface a different sub-shape.
 
-If a slice ship is warranted: email-on-retry remains the highest-
-value parked candidate (2-adopter cross-vendor evidence
-unchanged).
+If a slice ship is warranted: no slice currently queued — the
+2026-05-04 retrospective's "email-on-retry parked" claim was
+stale; verification on 2026-05-05 confirmed it shipped 2026-04-26.
 
 If triage filings are warranted: the wallet `personalizedPass`
 catch is fileable (MIT-licensed upstream, clean shape, single
