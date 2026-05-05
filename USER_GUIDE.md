@@ -884,6 +884,72 @@ Standard `@Idempotent` / `@ExternallyIdempotent(by:)` annotations work
 on extracted handler functions. The Hummingbird adopter trial under
 `docs/hummingbird-examples/` covers the integration shape end-to-end.
 
+#### Tier 4 presupposes a protocol-injected repository
+
+`assertIdempotentEffects` (Tier 4) requires a recorder mock standing
+in for whatever the handler writes to. Production Hummingbird codebases
+that already use service-oriented dependency injection — a
+`UserRepositoryProtocol` injected into `UserController`, a
+`MailerProtocol` injected into the auth flow — get Option B for free:
+the existing test seam is exactly the shape `IdempotentEffectRecorder`
+expects.
+
+Codebases written in the example-style idiom — `User.query(on: db)`
+called directly inside the controller method, with the controller
+holding a concrete `Fluent` instance — need to extract a repository
+protocol *before* Tier 4 can drop in. Concretely, on a Fluent-backed
+create handler:
+
+```swift
+// Before — example-shape, no test seam.
+func create(_ request: Request, context: Context) async throws -> User {
+    let payload = try await request.decode(as: UserPayload.self, context: context)
+    if try await User.query(on: fluent.db()).filter(\.$name == payload.name).first() != nil {
+        throw HTTPError(.conflict)
+    }
+    let user = User(name: payload.name, passwordHash: hash(payload.password))
+    try await user.save(on: fluent.db())
+    return user
+}
+
+// After — repository extracted, Tier 4 can mock against the protocol.
+protocol UserRepositoryProtocol: AnyObject, Sendable {
+    func findByName(_ name: String) async throws -> User?
+    func save(_ user: User) async throws
+}
+
+func create(
+    _ request: Request,
+    context: Context,
+    repo: UserRepositoryProtocol
+) async throws -> User {
+    let payload = try await request.decode(as: UserPayload.self, context: context)
+    if try await repo.findByName(payload.name) != nil {
+        throw HTTPError(.conflict)
+    }
+    let user = User(name: payload.name, passwordHash: hash(payload.password))
+    try await repo.save(user)
+    return user
+}
+```
+
+The refactor cost on the auth-jwt example was ~30–40 LOC: protocol
+declaration (~5), `FluentUserRepository` adapter (~15), controller
+field swap and body rewrite (~10), `Application+build` wire-up (~3).
+On a production Hummingbird codebase that's already DI-shaped, the
+delta drops to ~15–25 LOC per handler — only the protocol declaration
+plus the test-side mock conforming to both the new protocol and
+`IdempotentEffectRecorder`.
+
+This is a structural property of Fluent's idiomatic static-method
+shape (`Model.query(on:)`, `model.save(on:)`), not a SwiftIdempotency
+limitation. Tiers 1–3 don't depend on the seam — `IdempotencyKey`,
+the annotation attributes, and `#assertIdempotent` all work directly
+on the example-shape handler. Only Tier 4 forces the question.
+
+Worked Option B integration with the full mock + handler + test in
+[`docs/hummingbird-auth-jwt-package-trial/`](docs/hummingbird-auth-jwt-package-trial/).
+
 ## Integrating with AWS Lambda
 
 `swift-aws-lambda-events` event types (`SQSEvent.Message`,
