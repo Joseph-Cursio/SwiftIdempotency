@@ -222,14 +222,33 @@ shows any of:
   the row lands.
 
 For **Fluent adopters specifically**, check the migration
-`.unique(on:)` calls before reading SQL — Fluent compiles
-`.unique(on:)` to a Postgres `UNIQUE` constraint. If a `create`
-handler's model migration declares `.unique(on: <natural-key>)`,
-the create-on-retry hits a DB-level dedup just like a raw
-`ON CONFLICT (...) DO NOTHING`. This shortcut covers most Fluent
-CRUD audits. Confirmed on `myfavquotes-api` (both `Quote` and
-`User` migrations declare `.unique(on:)` → both `create` handler
-diagnostics flip to defensible-by-design without reading raw SQL).
+`.unique(on:)` calls — Fluent compiles `.unique(on:)` to a
+Postgres `UNIQUE` constraint. **`.unique(on:)` alone is *not*
+equivalent to `ON CONFLICT (...) DO NOTHING`**: the DB rejects
+the duplicate, but Fluent's `try await X.create(on:)` propagates
+the violation as a thrown error rather than swallowing it. So a
+unique constraint without handler-side cooperation turns
+duplicate-insert into a 5xx, which in a spec-mandated retry
+context (Apple Wallet, AWS Lambda, etc.) loops the retry rather
+than satisfying it.
+
+Flip a `create`-style diagnostic to defensible **only when** the
+migration declares `.unique(on: <natural-key>)` *and* the handler
+also does *one* of:
+
+- (a) **read-first**: queries the natural key before
+  `create(on:)`, returns success on hit (e.g.
+  `myfavquotes-api`'s `create` paths look up the model first).
+- (b) **catch-the-violation**: wraps `create(on:)` in `do/catch`
+  and converts the unique-violation error into the spec-required
+  success status.
+
+If neither (a) nor (b) holds, the diagnostic remains a **real
+catch** — the constraint is doing the wrong half of the job.
+Confirmed on `myfavquotes-api` (read-first → defensible) and
+`wallet` (`personalizedPass` has neither (a) nor (b) → real
+catch even though `PersonalizationInfo` declares
+`.unique(on: passID)`; see `docs/wallet-package-trial/`).
 
 Evidence from this round's experience: isowords Run A would have
 been mis-scored as 3 real-bug catches without this pass (actual:
