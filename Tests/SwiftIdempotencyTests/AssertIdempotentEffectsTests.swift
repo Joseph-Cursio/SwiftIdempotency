@@ -196,7 +196,7 @@ struct AssertIdempotentEffectsTests {
     // MARK: - Default Snapshot (Int) behavior
 
     @Test("Default Snapshot == Int: recorder without custom snapshot() gets effectCount-backed default")
-    func defaultIntSnapshot_matchesEffectCount() async {
+    func defaultIntSnapshot_matchesEffectCount() {
         let recorder = CountingRecorder()
         recorder.record()
         recorder.record()

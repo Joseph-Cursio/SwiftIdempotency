@@ -224,10 +224,13 @@ struct AssertIdempotentMacroTests {
     /// covers the selection rule at the user's call site.
     @Test
     func syncClosure_stillResolvesToSyncOverload() async throws {
-        // No `await` in the body, so Swift picks the sync overload. If
-        // overload resolution ever regressed to always pick async, the
-        // outer `try` would become unnecessary (warning) and the absence
-        // of `await` would become a compile error.
+        // No `await` in the body of the assertion call, so Swift picks
+        // the sync overload. If overload resolution ever regressed to
+        // always pick async, the outer `try` would become unnecessary
+        // (warning) and the absence of `await` would become a compile
+        // error. The unrelated `await Task.yield()` keeps the test in
+        // an async context so the regression check is meaningful.
+        await Task.yield()
         let result = try #assertIdempotent { () -> Int in 7 }
         #expect(result == 7)
     }

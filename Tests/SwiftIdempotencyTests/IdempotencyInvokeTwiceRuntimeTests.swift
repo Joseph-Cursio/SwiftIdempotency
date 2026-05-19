@@ -54,7 +54,7 @@ struct IdempotencyInvokeTwiceRuntimeTests {
     func async_nonThrowing_invokesTwice() async throws {
         actor Counter {
             private(set) var calls = 0
-            func bump() async -> String {
+            func bump() -> String {
                 calls += 1
                 return "ok"
             }

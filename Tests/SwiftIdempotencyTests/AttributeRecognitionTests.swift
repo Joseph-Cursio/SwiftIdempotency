@@ -18,7 +18,10 @@ struct AttributeRecognitionTests {
     @Test
     func idempotent_onAsyncThrowsFunction_compiles() async throws {
         @Idempotent
-        func persist(_ value: String) async throws -> Int { value.count }
+        func persist(_ value: String) async throws -> Int {
+            await Task.yield()
+            return value.count
+        }
         let result = try await persist("hello")
         #expect(result == 5)
     }
