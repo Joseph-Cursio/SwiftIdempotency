@@ -28,7 +28,9 @@ struct PropertyBasedAssertIdempotentTests {
     /// Idempotent pure operation: inserting `value` into a sorted unique
     /// list produces the same list whether called once or twice.
     static func insertSortedUnique(_ value: Int, into base: [Int]) -> [Int] {
-        if base.contains(value) { return base }
+        if base.contains(value) {
+            return base
+        }
         return (base + [value]).sorted()
     }
 

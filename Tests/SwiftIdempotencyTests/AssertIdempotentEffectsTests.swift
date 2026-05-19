@@ -47,7 +47,9 @@ struct AssertIdempotentEffectsTests {
         let gate = Gate()
 
         await assertIdempotentEffects(recorders: [recorder]) {
-            guard gate.tryTake() else { return }
+            guard gate.tryTake() else {
+                return
+            }
             recorder.record()
         }
 
@@ -166,7 +168,9 @@ struct AssertIdempotentEffectsTests {
         let gate = Gate()
 
         await assertIdempotentEffects(recorders: [recorder]) {
-            guard gate.tryTake() else { return }
+            guard gate.tryTake() else {
+                return
+            }
             recorder.record("putItem(id=42)")
         }
 
@@ -218,7 +222,9 @@ struct AssertIdempotentEffectsTests {
         private var taken = false
 
         func tryTake() -> Bool {
-            guard !taken else { return false }
+            guard !taken else {
+                return false
+            }
             taken = true
             return true
         }

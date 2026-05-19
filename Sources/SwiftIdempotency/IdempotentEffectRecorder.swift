@@ -172,7 +172,9 @@ public struct _IdempotencySnapshotBox {
         self._value = value
         self.description = String(describing: value)
         self.equals = { other in
-            guard let otherValue = other._value as? T else { return false }
+            guard let otherValue = other._value as? T else {
+                return false
+            }
             return value == otherValue
         }
     }

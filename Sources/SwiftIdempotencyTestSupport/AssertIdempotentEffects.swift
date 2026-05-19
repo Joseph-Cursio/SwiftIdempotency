@@ -121,6 +121,7 @@ public func assertIdempotentEffects(
         switch failureMode {
         case .preconditionFailure:
             preconditionFailure(message, file: file, line: line)
+
         case .issueRecord:
             Issue.record(
                 Comment(rawValue: message),

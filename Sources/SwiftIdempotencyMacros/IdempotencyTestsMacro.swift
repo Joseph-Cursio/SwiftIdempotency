@@ -60,7 +60,9 @@ public struct IdempotencyTestsMacro: ExtensionMacro {
             .filter(hasIdempotentAttribute)
             .filter { $0.signature.parameterClause.parameters.isEmpty }
 
-        guard !functions.isEmpty else { return [] }
+        guard !functions.isEmpty else {
+            return []
+        }
 
         let members = functions
             .map(generateTestMember)
@@ -119,10 +121,17 @@ public struct IdempotencyTestsMacro: ExtensionMacro {
 
         let innerEffectPrefix: String
         switch (isAsync, isThrowing) {
-        case (false, false): innerEffectPrefix = ""
-        case (false, true):  innerEffectPrefix = "try "
-        case (true, false):  innerEffectPrefix = "await "
-        case (true, true):   innerEffectPrefix = "try await "
+        case (false, false):
+            innerEffectPrefix = ""
+
+        case (false, true):
+            innerEffectPrefix = "try "
+
+        case (true, false):
+            innerEffectPrefix = "await "
+
+        case (true, true):
+            innerEffectPrefix = "try await "
         }
 
         let outerEffectPrefix = isThrowing ? "try await " : "await "
