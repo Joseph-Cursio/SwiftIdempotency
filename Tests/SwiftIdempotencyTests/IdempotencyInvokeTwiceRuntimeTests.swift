@@ -14,6 +14,7 @@ struct IdempotencyInvokeTwiceRuntimeTests {
     func sync_nonThrowing_invokesTwice_returnsBothResults() async throws {
         actor Counter {
             private(set) var calls = 0
+
             func bump() -> Int {
                 calls += 1
                 return 7
@@ -36,6 +37,7 @@ struct IdempotencyInvokeTwiceRuntimeTests {
         // just returns both values; the caller decides.
         actor Sequence {
             private var next = 0
+
             func step() -> Int {
                 let value = next
                 next += 1
@@ -54,6 +56,7 @@ struct IdempotencyInvokeTwiceRuntimeTests {
     func async_nonThrowing_invokesTwice() async throws {
         actor Counter {
             private(set) var calls = 0
+
             func bump() -> String {
                 calls += 1
                 return "ok"
@@ -74,6 +77,7 @@ struct IdempotencyInvokeTwiceRuntimeTests {
         struct TestError: Error, Equatable {}
         actor Gate {
             private(set) var calls = 0
+
             func step() throws -> Int {
                 calls += 1
                 throw TestError()
@@ -94,9 +98,12 @@ struct IdempotencyInvokeTwiceRuntimeTests {
         struct TestError: Error, Equatable {}
         actor Gate {
             private var calls = 0
+
             func step() throws -> Int {
                 calls += 1
-                if calls == 2 { throw TestError() }
+                if calls == 2 {
+                    throw TestError()
+                }
                 return 0
             }
         }

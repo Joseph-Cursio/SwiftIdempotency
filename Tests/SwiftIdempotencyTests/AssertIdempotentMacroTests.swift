@@ -183,6 +183,7 @@ struct AssertIdempotentMacroTests {
     func asyncIdempotentClosure_returnsFirstValue() async throws {
         actor Counter {
             private(set) var calls = 0
+
             func bump() -> Int {
                 calls += 1
                 return 42
@@ -202,6 +203,7 @@ struct AssertIdempotentMacroTests {
         struct TestError: Error, Equatable {}
         actor Gate {
             private var shouldThrow = true
+
             func next() throws -> Int {
                 if shouldThrow {
                     shouldThrow = false
