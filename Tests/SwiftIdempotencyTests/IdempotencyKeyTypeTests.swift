@@ -56,7 +56,7 @@ struct IdempotencyKeyTypeTests {
         // the caller. Documented here so the behaviour is intentional, not
         // an oversight.
         let key = IdempotencyKey(fromAuditedString: "")
-        #expect(key.rawValue == "")
+        #expect(key.rawValue.isEmpty)
     }
 
     // MARK: - Hashable / equatable

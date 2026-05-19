@@ -2,6 +2,30 @@ import SwiftIdempotency
 import SwiftIdempotencyTestSupport
 import Testing
 
+/// Recorder that opts into a richer `Snapshot` — an ordered call log
+/// rather than an integer count. Lets `assertIdempotentEffects` detect
+/// non-idempotency invisible to `effectCount` alone (e.g. retries that
+/// undo-then-redo, leaving count unchanged but snapshot diverged).
+///
+/// File-scope rather than nested in `AssertIdempotentEffectsTests` to
+/// avoid a SwiftLint `nesting` violation on the `Snapshot` typealias —
+/// a typealias inside a class inside a struct is depth-2, which the
+/// default nesting rule forbids.
+final class CallLogRecorder: IdempotentEffectRecorder, @unchecked Sendable {
+    typealias Snapshot = [String]
+
+    private(set) var callLog: [String] = []
+    var effectCount: Int { callLog.count }
+
+    func record(_ operation: String) {
+        callLog.append(operation)
+    }
+
+    func snapshot() -> [String] { callLog }
+
+    deinit { /* fixture recorder, no cleanup */ }
+}
+
 /// Unit tests for `assertIdempotentEffects` in
 /// `SwiftIdempotencyTestSupport` + the `IdempotentEffectRecorder`
 /// protocol in `SwiftIdempotency` (moved to the main target in v0.3.0).
@@ -235,28 +259,4 @@ struct AssertIdempotentEffectsTests {
     enum TestError: Error {
         case synthetic
     }
-}
-
-/// Recorder that opts into a richer `Snapshot` — an ordered call log
-/// rather than an integer count. Lets `assertIdempotentEffects` detect
-/// non-idempotency invisible to `effectCount` alone (e.g. retries that
-/// undo-then-redo, leaving count unchanged but snapshot diverged).
-///
-/// File-scope rather than nested in `AssertIdempotentEffectsTests` to
-/// avoid a SwiftLint `nesting` violation on the `Snapshot` typealias —
-/// a typealias inside a class inside a struct is depth-2, which the
-/// default nesting rule forbids.
-final class CallLogRecorder: IdempotentEffectRecorder, @unchecked Sendable {
-    typealias Snapshot = [String]
-
-    private(set) var callLog: [String] = []
-    var effectCount: Int { callLog.count }
-
-    func record(_ operation: String) {
-        callLog.append(operation)
-    }
-
-    func snapshot() -> [String] { callLog }
-
-    deinit { /* fixture recorder, no cleanup */ }
 }

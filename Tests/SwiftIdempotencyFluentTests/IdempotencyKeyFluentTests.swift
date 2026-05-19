@@ -4,6 +4,83 @@ import SwiftIdempotency
 @testable import SwiftIdempotencyFluent
 import Testing
 
+// MARK: - Fixture Fluent Models
+
+/// Minimal UUID-id Fluent Model mirroring the shape of hellovapor's
+/// `Acronym`. Used to verify the post-save / pre-save id paths.
+final class Acronym: Model, @unchecked Sendable {
+    static let schema = "acronyms"
+
+    @ID(key: .id)
+    var id: UUID?
+
+    @Field(key: "short")
+    var short: String
+
+    @Field(key: "long")
+    var long: String
+
+    init() { /* Fluent requires a no-arg init */ }
+    deinit { /* fixture model, no cleanup */ }
+}
+
+/// Int-id Model. Covers the `Int: CustomStringConvertible` case —
+/// digits in, digits out.
+final class CounterEntry: Model, @unchecked Sendable {
+    static let schema = "counter_entries"
+
+    @ID(custom: .id, generatedBy: .database)
+    var id: Int?
+
+    @Field(key: "label")
+    var label: String
+
+    init() { /* Fluent requires a no-arg init */ }
+    deinit { /* fixture model, no cleanup */ }
+}
+
+/// String-id Model. Covers the `String: CustomStringConvertible`
+/// case — `String(describing: "x")` is `"x"` (no surrounding quotes).
+final class SessionToken: Model, @unchecked Sendable {
+    static let schema = "session_tokens"
+
+    @ID(custom: .id, generatedBy: .user)
+    var id: String?
+
+    @Field(key: "user")
+    var user: String
+
+    init() { /* Fluent requires a no-arg init */ }
+    deinit { /* fixture model, no cleanup */ }
+}
+
+// MARK: - Compile-time and documentation notes (not executed)
+//
+// 1. Models whose `IDValue` does not conform to
+//    `CustomStringConvertible` (e.g., custom struct composite IDs via
+//    `@CompositeID`) are rejected at compile time with
+//
+//        error: initializer 'init(fromFluentModel:)' requires that
+//               'CompositeIDModel.IDValue' conform to 'CustomStringConvertible'
+//
+//    This is deliberate: composite IDs should route through
+//    `IdempotencyKey(fromAuditedString:)` on a manually-composed
+//    string rather than a silent `String(describing:)` that would
+//    produce something like `"CompositeID(key1: ..., key2: ...)"`.
+//
+// 2. Non-Fluent types can't be passed to this initializer; the
+//    generic constraint `M: Model` forces a FluentKit `Model`
+//    conformance. Callers with SwiftData `@Model` or plain
+//    `Identifiable` types should use
+//    `IdempotencyKey(fromEntity:)` from the main SwiftIdempotency
+//    module instead.
+//
+// 3. `@unchecked Sendable` on the fixture Models is a test-time
+//    convenience — Fluent Models are reference-type property-
+//    wrapper aggregates that aren't Sendable by default. Swift 6
+//    strict concurrency would warn without the opt-out, and
+//    real adopters' Models typically are declared identically.
+
 @Suite("IdempotencyKey.init(fromFluentModel:) — Fluent integration")
 struct IdempotencyKeyFluentTests {
     // MARK: - Post-save (id non-nil) — succeeds for each common IDValue
@@ -118,80 +195,3 @@ struct IdempotencyKeyFluentTests {
         #expect(key1 == key2)
     }
 }
-
-// MARK: - Fixture Fluent Models
-
-/// Minimal UUID-id Fluent Model mirroring the shape of hellovapor's
-/// `Acronym`. Used to verify the post-save / pre-save id paths.
-final class Acronym: Model, @unchecked Sendable {
-    static let schema = "acronyms"
-
-    @ID(key: .id)
-    var id: UUID?
-
-    @Field(key: "short")
-    var short: String
-
-    @Field(key: "long")
-    var long: String
-
-    init() { /* Fluent requires a no-arg init */ }
-    deinit { /* fixture model, no cleanup */ }
-}
-
-/// Int-id Model. Covers the `Int: CustomStringConvertible` case —
-/// digits in, digits out.
-final class CounterEntry: Model, @unchecked Sendable {
-    static let schema = "counter_entries"
-
-    @ID(custom: .id, generatedBy: .database)
-    var id: Int?
-
-    @Field(key: "label")
-    var label: String
-
-    init() { /* Fluent requires a no-arg init */ }
-    deinit { /* fixture model, no cleanup */ }
-}
-
-/// String-id Model. Covers the `String: CustomStringConvertible`
-/// case — `String(describing: "x")` is `"x"` (no surrounding quotes).
-final class SessionToken: Model, @unchecked Sendable {
-    static let schema = "session_tokens"
-
-    @ID(custom: .id, generatedBy: .user)
-    var id: String?
-
-    @Field(key: "user")
-    var user: String
-
-    init() { /* Fluent requires a no-arg init */ }
-    deinit { /* fixture model, no cleanup */ }
-}
-
-// MARK: - Compile-time and documentation notes (not executed)
-//
-// 1. Models whose `IDValue` does not conform to
-//    `CustomStringConvertible` (e.g., custom struct composite IDs via
-//    `@CompositeID`) are rejected at compile time with
-//
-//        error: initializer 'init(fromFluentModel:)' requires that
-//               'CompositeIDModel.IDValue' conform to 'CustomStringConvertible'
-//
-//    This is deliberate: composite IDs should route through
-//    `IdempotencyKey(fromAuditedString:)` on a manually-composed
-//    string rather than a silent `String(describing:)` that would
-//    produce something like `"CompositeID(key1: ..., key2: ...)"`.
-//
-// 2. Non-Fluent types can't be passed to this initializer; the
-//    generic constraint `M: Model` forces a FluentKit `Model`
-//    conformance. Callers with SwiftData `@Model` or plain
-//    `Identifiable` types should use
-//    `IdempotencyKey(fromEntity:)` from the main SwiftIdempotency
-//    module instead.
-//
-// 3. `@unchecked Sendable` on the fixture Models is a test-time
-//    convenience — Fluent Models are reference-type property-
-//    wrapper aggregates that aren't Sendable by default. Swift 6
-//    strict concurrency would warn without the opt-out, and
-//    real adopters' Models typically are declared identically.

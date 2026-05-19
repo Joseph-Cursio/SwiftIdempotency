@@ -4,7 +4,8 @@ import FoundationEssentials
 import Foundation
 #endif
 
-@_spi(Internals) import SwiftIdempotency
+@_spi(Internals)
+import SwiftIdempotency
 import Testing
 
 /// Runs `body` twice, asserting that the second invocation produces a
