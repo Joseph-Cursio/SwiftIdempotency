@@ -4,6 +4,64 @@ import FoundationEssentials
 import Foundation
 #endif
 
+// swiftlint:disable type_name
+
+/// Type-erased snapshot + comparer pair. Captured inside a generic
+/// extension so the concrete `Snapshot` type is known statically, then
+/// returned via `Any` so heterogeneous recorders (each with their own
+/// `Snapshot` associatedtype) can coexist in a single
+/// `[any IdempotentEffectRecorder]` array.
+///
+/// Not part of the public API. Exposed to `SwiftIdempotencyTestSupport`
+/// via `@_spi(Internals)`. The leading underscore is the Swift SPI
+/// convention; SwiftLint's `identifier_name` / `type_name` rules are
+/// suppressed at file scope because the marker is load-bearing.
+@_spi(Internals)
+public struct _IdempotencySnapshotBox {
+    /// Describes the snapshot for diagnostic messages. Derived from
+    /// `String(describing:)` at capture time so we don't need to keep
+    /// the recorder alive for rendering.
+    public let description: String
+
+    /// Compares this snapshot against another box's erased value.
+    /// Returns `false` if the type of the other box's value doesn't
+    /// match the type captured at construction (defensive; shouldn't
+    /// happen in practice because both boxes come from the same
+    /// recorder).
+    public let equals: (Self) -> Bool
+
+    private let _value: Any
+
+    init<T: Equatable>(_ value: T) {
+        self._value = value
+        self.description = String(describing: value)
+        self.equals = { other in
+            guard let otherValue = other._value as? T else {
+                return false
+            }
+            return value == otherValue
+        }
+    }
+}
+
+// swiftlint:enable type_name
+
+/// How `assertIdempotentEffects` reports a detected non-idempotency.
+///
+/// - `preconditionFailure`: the historical default. Calls
+///   `Swift.preconditionFailure(_:file:line:)`, which aborts the
+///   process. Matches `#assertIdempotent`'s Option C failure mode;
+///   usable outside a Swift Testing context.
+/// - `issueRecord`: reports via `Testing.Issue.record(_:sourceLocation:)`.
+///   Fails the enclosing `@Test` without aborting the process, so
+///   failure-path tests (intentionally non-idempotent bodies) can be
+///   exercised via `withKnownIssue { }` or similar. Only meaningful
+///   inside a Swift Testing run.
+public enum IdempotencyFailureMode: Sendable {
+    case issueRecord
+    case preconditionFailure
+}
+
 /// A test-only recorder that observes side-effecting operations made by
 /// a handler during a test run. The handler's test double (mock
 /// `DynamoDB`, mock `HTTPClient`, mock mail sender, etc.) should conform
@@ -110,85 +168,25 @@ public protocol IdempotentEffectRecorder: AnyObject {
     func snapshot() -> Snapshot
 }
 
-extension IdempotentEffectRecorder where Snapshot == Int {
+public extension IdempotentEffectRecorder where Snapshot == Int {
     /// Default `snapshot()` implementation for the common case where
     /// `effectCount` is sufficient to detect non-idempotency. Adopters
     /// who don't declare a custom `Snapshot` typealias get this
     /// automatically.
-    public func snapshot() -> Int { effectCount }
+    func snapshot() -> Int { effectCount }
 }
 
-/// How `assertIdempotentEffects` reports a detected non-idempotency.
-///
-/// - `preconditionFailure`: the historical default. Calls
-///   `Swift.preconditionFailure(_:file:line:)`, which aborts the
-///   process. Matches `#assertIdempotent`'s Option C failure mode;
-///   usable outside a Swift Testing context.
-/// - `issueRecord`: reports via `Testing.Issue.record(_:sourceLocation:)`.
-///   Fails the enclosing `@Test` without aborting the process, so
-///   failure-path tests (intentionally non-idempotent bodies) can be
-///   exercised via `withKnownIssue { }` or similar. Only meaningful
-///   inside a Swift Testing run.
-public enum IdempotencyFailureMode: Sendable {
-    case preconditionFailure
-    case issueRecord
-}
-
-// MARK: - Internal SPI (consumed by SwiftIdempotencyTestSupport)
-//
-// Leading underscores on the following declarations are the Swift
-// convention for SPI-internal API. SwiftLint's `identifier_name` /
-// `type_name` rules flag them, but the underscore is load-bearing —
-// it signals "don't reach past @_spi(Internals)" to adopters who
-// might otherwise import the SPI unaware. Suppressed inline.
-
-// swiftlint:disable identifier_name type_name
-
-/// Type-erased snapshot + comparer pair. Captured inside a generic
-/// extension so the concrete `Snapshot` type is known statically, then
-/// returned via `Any` so heterogeneous recorders (each with their own
-/// `Snapshot` associatedtype) can coexist in a single
-/// `[any IdempotentEffectRecorder]` array.
-///
-/// Not part of the public API. Exposed to `SwiftIdempotencyTestSupport`
-/// via `@_spi(Internals)`.
-@_spi(Internals)
-public struct _IdempotencySnapshotBox {
-    /// Describes the snapshot for diagnostic messages. Derived from
-    /// `String(describing:)` at capture time so we don't need to keep
-    /// the recorder alive for rendering.
-    public let description: String
-
-    /// Compares this snapshot against another box's erased value.
-    /// Returns `false` if the type of the other box's value doesn't
-    /// match the type captured at construction (defensive; shouldn't
-    /// happen in practice because both boxes come from the same
-    /// recorder).
-    public let equals: (_IdempotencySnapshotBox) -> Bool
-
-    fileprivate let _value: Any
-
-    fileprivate init<T: Equatable>(_ value: T) {
-        self._value = value
-        self.description = String(describing: value)
-        self.equals = { other in
-            guard let otherValue = other._value as? T else {
-                return false
-            }
-            return value == otherValue
-        }
-    }
-}
+// swiftlint:disable identifier_name
 
 @_spi(Internals)
-extension IdempotentEffectRecorder {
+public extension IdempotentEffectRecorder {
     /// Captures the current snapshot into a type-erased box.
     /// Implementation is specialized per conforming type (so `Snapshot`
     /// is known), but the return type is erased for cross-recorder
     /// storage. Consumed by `assertIdempotentEffects`.
-    public func _snapshotBox() -> _IdempotencySnapshotBox {
+    func _snapshotBox() -> _IdempotencySnapshotBox {
         _IdempotencySnapshotBox(snapshot())
     }
 }
 
-// swiftlint:enable identifier_name type_name
+// swiftlint:enable identifier_name
