@@ -58,7 +58,7 @@ public struct IdempotencyTestsMacro: ExtensionMacro {
         let functions = declaration.memberBlock.members
             .compactMap { $0.decl.as(FunctionDeclSyntax.self) }
             .filter(hasIdempotentAttribute)
-            .filter { $0.signature.parameterClause.parameters.isEmpty }
+            .filter(\.signature.parameterClause.parameters.isEmpty)
 
         guard !functions.isEmpty else {
             return []
@@ -84,8 +84,9 @@ public struct IdempotencyTestsMacro: ExtensionMacro {
     /// its attribute list. Matches by trailing identifier segment.
     private static func hasIdempotentAttribute(_ function: FunctionDeclSyntax) -> Bool {
         function.attributes.contains { attribute in
-            guard let attr = attribute.as(AttributeSyntax.self),
-                  let identifier = attr.attributeName.as(IdentifierTypeSyntax.self)
+            guard
+                let attr = attribute.as(AttributeSyntax.self),
+                let identifier = attr.attributeName.as(IdentifierTypeSyntax.self)
             else {
                 return false
             }

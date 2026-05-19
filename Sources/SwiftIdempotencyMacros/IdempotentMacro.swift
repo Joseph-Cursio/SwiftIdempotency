@@ -3,55 +3,6 @@ import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-/// `@Idempotent` — marker-only since the round-8 peer-macro redesign.
-///
-/// Primary value is existing as a recognisable attribute name that both
-/// the linter (`SwiftProjectLint`'s `EffectAnnotationParser`) and
-/// `@IdempotencyTests` (this package's member-scanning macro) can detect.
-/// Emits no peer declarations of its own.
-///
-/// ## Why marker-only
-///
-/// The original Phase 3 design had `@Idempotent` peer-emit a
-/// `@Test func testIdempotencyOf<Name>()`. Round-7 validation (see
-/// `docs/phase5-round-7/trial-findings.md`, Finding 4) surfaced that
-/// Swift Testing's `@Test` macro interacts poorly with any outer macro
-/// that emits it at peer or member scope inside a struct — the nested
-/// expansion produces `@used`/`@section` properties referencing `self`
-/// during property initialisation, which the compiler rejects.
-///
-/// Round 8 (`docs/claude_phase_5_peer_macro_redesign_plan.md`) spiked
-/// three candidate redesigns. Candidate B — an `@attached(extension)`
-/// role on a separate `@IdempotencyTests` attribute attached to the
-/// `@Suite` type — turned out to sidestep Finding 4 because the emitted
-/// `@Test`s live in a fresh extension decl, outside the original
-/// struct's member layout. That shape landed; `@Idempotent` reverted
-/// to marker-only.
-///
-/// ## Usage
-///
-/// ```swift
-/// @Suite
-/// @IdempotencyTests
-/// struct Checks {
-///     @Idempotent
-///     func currentSystemStatus() -> Int { 200 }
-/// }
-/// ```
-///
-/// `@IdempotencyTests` scans the struct's members, finds `@Idempotent`-
-/// marked zero-argument functions, and emits a `@Test` per match inside
-/// an extension of the struct.
-public struct IdempotentMacro: PeerMacro {
-    public static func expansion(
-        of _: AttributeSyntax,
-        providingPeersOf _: some DeclSyntaxProtocol,
-        in _: some MacroExpansionContext
-    ) throws -> [DeclSyntax] {
-        []
-    }
-}
-
 /// Marker implementation — see `IdempotentMacro`.
 public struct NonIdempotentMacro: PeerMacro {
     public static func expansion(
@@ -212,7 +163,7 @@ struct ExternallyIdempotentDiagnostic: DiagnosticMessage {
         identifier: "externallyIdempotent.argumentMustBeStringLiteral"
     )
 
-    fileprivate static func dottedPathNotSupported(value: String) -> Self {
+    static func dottedPathNotSupported(value: String) -> Self {
         Self(
             message: "@ExternallyIdempotent(by: \"\(value)\") contains a dotted "
                 + "key path, which is not supported. The `by:` argument must "
@@ -225,7 +176,7 @@ struct ExternallyIdempotentDiagnostic: DiagnosticMessage {
         )
     }
 
-    fileprivate static func unknownParameterLabel(value: String, available: [String]) -> Self {
+    static func unknownParameterLabel(value: String, available: [String]) -> Self {
         let listing: String
         if available.isEmpty {
             listing = "the annotated function has no externally-labelled parameters"
@@ -252,4 +203,53 @@ struct SwiftIdempotencyMacrosPlugin: CompilerPlugin {
         AssertIdempotentAsyncMacro.self,
         IdempotencyTestsMacro.self
     ]
+}
+
+/// `@Idempotent` — marker-only since the round-8 peer-macro redesign.
+///
+/// Primary value is existing as a recognisable attribute name that both
+/// the linter (`SwiftProjectLint`'s `EffectAnnotationParser`) and
+/// `@IdempotencyTests` (this package's member-scanning macro) can detect.
+/// Emits no peer declarations of its own.
+///
+/// ## Why marker-only
+///
+/// The original Phase 3 design had `@Idempotent` peer-emit a
+/// `@Test func testIdempotencyOf<Name>()`. Round-7 validation (see
+/// `docs/phase5-round-7/trial-findings.md`, Finding 4) surfaced that
+/// Swift Testing's `@Test` macro interacts poorly with any outer macro
+/// that emits it at peer or member scope inside a struct — the nested
+/// expansion produces `@used`/`@section` properties referencing `self`
+/// during property initialisation, which the compiler rejects.
+///
+/// Round 8 (`docs/claude_phase_5_peer_macro_redesign_plan.md`) spiked
+/// three candidate redesigns. Candidate B — an `@attached(extension)`
+/// role on a separate `@IdempotencyTests` attribute attached to the
+/// `@Suite` type — turned out to sidestep Finding 4 because the emitted
+/// `@Test`s live in a fresh extension decl, outside the original
+/// struct's member layout. That shape landed; `@Idempotent` reverted
+/// to marker-only.
+///
+/// ## Usage
+///
+/// ```swift
+/// @Suite
+/// @IdempotencyTests
+/// struct Checks {
+///     @Idempotent
+///     func currentSystemStatus() -> Int { 200 }
+/// }
+/// ```
+///
+/// `@IdempotencyTests` scans the struct's members, finds `@Idempotent`-
+/// marked zero-argument functions, and emits a `@Test` per match inside
+/// an extension of the struct.
+public struct IdempotentMacro: PeerMacro {
+    public static func expansion(
+        of _: AttributeSyntax,
+        providingPeersOf _: some DeclSyntaxProtocol,
+        in _: some MacroExpansionContext
+    ) throws -> [DeclSyntax] {
+        []
+    }
 }

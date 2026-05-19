@@ -4,6 +4,46 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+/// Async overload of `AssertIdempotentMacro`. Shape and diagnostics are
+/// identical; the only difference is the runtime helper — this one routes
+/// to `__idempotencyAssertRunTwiceAsync`, which is `async rethrows` and
+/// therefore requires `await` at the macro call site.
+public struct AssertIdempotentAsyncMacro: ExpressionMacro {
+    public static func expansion(
+        of node: some FreestandingMacroExpansionSyntax,
+        in context: some MacroExpansionContext
+    ) throws -> ExprSyntax {
+        guard let closureSource = try extractClosureSource(from: node, in: context) else {
+            return "fatalError(\"#assertIdempotent requires a closure literal argument\")"
+        }
+        return """
+            SwiftIdempotency.__idempotencyAssertRunTwiceAsync(\(raw: closureSource))
+            """
+    }
+}
+
+/// Diagnostic messages surfaced by `AssertIdempotentMacro`.
+private enum AssertIdempotentDiagnostic: DiagnosticMessage {
+    case requiresClosureArgument
+
+    var message: String {
+        switch self {
+        case .requiresClosureArgument:
+            return "#assertIdempotent requires a closure literal argument, " +
+                "e.g. `#assertIdempotent { ... }`"
+        }
+    }
+
+    var severity: DiagnosticSeverity { .error }
+
+    var diagnosticID: MessageID {
+        switch self {
+        case .requiresClosureArgument:
+            return MessageID(domain: "SwiftIdempotencyMacros", id: "requiresClosureArgument")
+        }
+    }
+}
+
 /// Expansion for `#assertIdempotent { body }`.
 ///
 /// Expands to a double-invocation with an Option-C equivalence check,
@@ -45,30 +85,9 @@ public struct AssertIdempotentMacro: ExpressionMacro {
         // that preserves the user's call-site effect specifiers (`try`,
         // `await`) without the macro needing to infer or emit a return-type
         // annotation — the helper's `rethrows` signature does the work.
-        let expansion: ExprSyntax = """
+        return """
             SwiftIdempotency.__idempotencyAssertRunTwice(\(raw: closureSource))
             """
-        return expansion
-    }
-}
-
-/// Async overload of `AssertIdempotentMacro`. Shape and diagnostics are
-/// identical; the only difference is the runtime helper — this one routes
-/// to `__idempotencyAssertRunTwiceAsync`, which is `async rethrows` and
-/// therefore requires `await` at the macro call site.
-public struct AssertIdempotentAsyncMacro: ExpressionMacro {
-    public static func expansion(
-        of node: some FreestandingMacroExpansionSyntax,
-        in context: some MacroExpansionContext
-    ) throws -> ExprSyntax {
-        guard let closureSource = try extractClosureSource(from: node, in: context) else {
-            return "fatalError(\"#assertIdempotent requires a closure literal argument\")"
-        }
-
-        let expansion: ExprSyntax = """
-            SwiftIdempotency.__idempotencyAssertRunTwiceAsync(\(raw: closureSource))
-            """
-        return expansion
     }
 }
 
@@ -94,23 +113,4 @@ private func extractClosureSource(
         message: AssertIdempotentDiagnostic.requiresClosureArgument
     ))
     return nil
-}
-
-/// Diagnostic messages surfaced by `AssertIdempotentMacro`.
-private enum AssertIdempotentDiagnostic: String, DiagnosticMessage {
-    case requiresClosureArgument
-
-    var message: String {
-        switch self {
-        case .requiresClosureArgument:
-            return "#assertIdempotent requires a closure literal argument, " +
-                "e.g. `#assertIdempotent { ... }`"
-        }
-    }
-
-    var severity: DiagnosticSeverity { .error }
-
-    var diagnosticID: MessageID {
-        MessageID(domain: "SwiftIdempotencyMacros", id: rawValue)
-    }
 }
