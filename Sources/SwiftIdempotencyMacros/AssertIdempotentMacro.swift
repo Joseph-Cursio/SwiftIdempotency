@@ -23,7 +23,7 @@ public struct AssertIdempotentAsyncMacro: ExpressionMacro {
 }
 
 /// Diagnostic messages surfaced by `AssertIdempotentMacro`.
-private enum AssertIdempotentDiagnostic: DiagnosticMessage {
+private enum AssertIdempotentDiagnostic: String, DiagnosticMessage {
     case requiresClosureArgument
 
     var message: String {
@@ -37,10 +37,7 @@ private enum AssertIdempotentDiagnostic: DiagnosticMessage {
     var severity: DiagnosticSeverity { .error }
 
     var diagnosticID: MessageID {
-        switch self {
-        case .requiresClosureArgument:
-            return MessageID(domain: "SwiftIdempotencyMacros", id: "requiresClosureArgument")
-        }
+        MessageID(domain: "SwiftIdempotencyMacros", id: rawValue)
     }
 }
 

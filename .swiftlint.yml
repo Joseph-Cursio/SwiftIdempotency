@@ -126,7 +126,6 @@ opt_in_rules:
 - multiline_arguments_brackets
 - attributes
 - empty_string
-- explicit_enum_raw_value
 - indentation_width
 - prefer_key_path
 - prefer_self_in_static_references
