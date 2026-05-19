@@ -24,7 +24,6 @@ import Testing
 /// through normal Swift syntax because `by:` is the only declared
 /// argument label, but defensible-by-construction).
 struct MarkerMacroDirectInvocationTests {
-
     /// Synthesises a `func compute() {}` decl + a parsed attribute,
     /// returning both ready to feed to a `PeerMacro.expansion(...)`
     /// call. Threads `SourceLocation` so a fixture-parsing regression

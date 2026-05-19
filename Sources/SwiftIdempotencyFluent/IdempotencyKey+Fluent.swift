@@ -2,7 +2,6 @@ import FluentKit
 import SwiftIdempotency
 
 public extension IdempotencyKey {
-
     /// Construct a key from a Fluent `Model`'s primary key. Post-save
     /// Models — whose `id` is non-nil by the time the initializer runs —
     /// are the intended use. Pre-save (create-handler) Models have a

@@ -19,7 +19,6 @@ import Testing
 /// `IdempotencyTestsMacroTests` for the current test-generation
 /// expansion surface.
 struct IdempotentPeerMacroTests {
-
     private let testMacros: [String: Macro.Type] = [
         "Idempotent": IdempotentMacro.self
     ]

@@ -19,7 +19,6 @@ import Testing
 /// See `docs/phase5-round-8/trial-findings.md` for the empirical reason
 /// the extension role was chosen over member and peer.
 struct IdempotencyTestsMacroTests {
-
     private let macros: [String: Macro.Type] = [
         "IdempotencyTests": IdempotencyTestsMacro.self,
         "Idempotent": IdempotentMacro.self

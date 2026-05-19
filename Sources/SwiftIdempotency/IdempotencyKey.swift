@@ -46,7 +46,6 @@ import Foundation
 /// - `Codable`: round-trips through JSON, webhook payloads, persistence.
 ///   The serialised representation is the raw string; no wrapper.
 public struct IdempotencyKey: Hashable, Sendable {
-
     /// The underlying string representation. Stable across retries by
     /// construction — callers choose from stability-preserving initialisers.
     public let rawValue: String

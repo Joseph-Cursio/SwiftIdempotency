@@ -13,7 +13,6 @@ import Testing
 /// by the shared message-rendering code path exercised by `.issueRecord`.
 @Suite("assertIdempotentEffects — Option B")
 struct AssertIdempotentEffectsTests {
-
     /// Counting-only recorder — conforms to the minimal `IdempotentEffectRecorder`
     /// protocol. Used throughout the test suite as a generic mock.
     final class CountingRecorder: IdempotentEffectRecorder, @unchecked Sendable {

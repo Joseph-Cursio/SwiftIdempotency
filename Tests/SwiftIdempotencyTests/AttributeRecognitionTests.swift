@@ -6,7 +6,6 @@ import Testing
 /// the test surface at this phase. Phase 3 will add expansion-verification
 /// tests using `SwiftSyntaxMacrosTestSupport`.
 struct AttributeRecognitionTests {
-
     // MARK: - @Idempotent
 
     @Test

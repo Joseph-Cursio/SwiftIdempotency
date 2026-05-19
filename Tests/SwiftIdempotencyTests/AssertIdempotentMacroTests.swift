@@ -10,7 +10,6 @@ import Testing
 /// macro produces) and runtime-behaviour tests (the expanded code
 /// actually works in context).
 struct AssertIdempotentMacroTests {
-
     private let testMacros: [String: Macro.Type] = [
         "assertIdempotent": AssertIdempotentMacro.self
     ]

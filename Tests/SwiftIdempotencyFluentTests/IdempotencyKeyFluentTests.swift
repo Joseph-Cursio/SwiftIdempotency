@@ -6,7 +6,6 @@ import Testing
 
 @Suite("IdempotencyKey.init(fromFluentModel:) — Fluent integration")
 struct IdempotencyKeyFluentTests {
-
     // MARK: - Post-save (id non-nil) — succeeds for each common IDValue
 
     @Test("UUID ID — produces key over String(describing:)")

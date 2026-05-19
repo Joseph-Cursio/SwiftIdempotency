@@ -17,7 +17,6 @@ import Testing
 /// Paired positive cases in `AttributeRecognitionTests` verify that
 /// correct usages still compile cleanly.
 struct ExternallyIdempotentMacroTests {
-
     private let testMacros: [String: Macro.Type] = [
         "ExternallyIdempotent": ExternallyIdempotentMacro.self
     ]

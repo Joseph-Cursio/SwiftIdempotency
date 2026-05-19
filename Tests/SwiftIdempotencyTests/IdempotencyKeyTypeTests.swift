@@ -9,7 +9,6 @@ import Testing
 /// the absence of such initialisers in the public API — if someone adds
 /// one, the "Deliberately NOT provided" comment flags the review.
 struct IdempotencyKeyTypeTests {
-
     // MARK: - Construction from Identifiable entity
 
     @Test

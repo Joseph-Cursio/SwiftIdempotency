@@ -25,7 +25,6 @@ import Testing
 /// for free.
 @Suite("#assertIdempotent — property-based wrap pattern")
 struct PropertyBasedAssertIdempotentTests {
-
     /// Idempotent pure operation: inserting `value` into a sorted unique
     /// list produces the same list whether called once or twice.
     static func insertSortedUnique(_ value: Int, into base: [Int]) -> [Int] {

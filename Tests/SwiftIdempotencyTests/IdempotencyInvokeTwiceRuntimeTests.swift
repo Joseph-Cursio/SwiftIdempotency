@@ -10,7 +10,6 @@ import Testing
 /// invoke-twice, return both results, propagate throws, work for sync
 /// + async + throwing + non-throwing closure shapes.
 struct IdempotencyInvokeTwiceRuntimeTests {
-
     @Test
     func sync_nonThrowing_invokesTwice_returnsBothResults() async throws {
         actor Counter {
