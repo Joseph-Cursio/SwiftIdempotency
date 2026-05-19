@@ -44,9 +44,9 @@ import SwiftSyntaxMacros
 /// an extension of the struct.
 public struct IdempotentMacro: PeerMacro {
     public static func expansion(
-        of node: AttributeSyntax,
-        providingPeersOf declaration: some DeclSyntaxProtocol,
-        in context: some MacroExpansionContext
+        of _: AttributeSyntax,
+        providingPeersOf _: some DeclSyntaxProtocol,
+        in _: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         []
     }
@@ -55,9 +55,9 @@ public struct IdempotentMacro: PeerMacro {
 /// Marker implementation — see `IdempotentMacro`.
 public struct NonIdempotentMacro: PeerMacro {
     public static func expansion(
-        of node: AttributeSyntax,
-        providingPeersOf declaration: some DeclSyntaxProtocol,
-        in context: some MacroExpansionContext
+        of _: AttributeSyntax,
+        providingPeersOf _: some DeclSyntaxProtocol,
+        in _: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         []
     }
@@ -66,9 +66,9 @@ public struct NonIdempotentMacro: PeerMacro {
 /// Marker implementation — see `IdempotentMacro`.
 public struct ObservationalMacro: PeerMacro {
     public static func expansion(
-        of node: AttributeSyntax,
-        providingPeersOf declaration: some DeclSyntaxProtocol,
-        in context: some MacroExpansionContext
+        of _: AttributeSyntax,
+        providingPeersOf _: some DeclSyntaxProtocol,
+        in _: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         []
     }

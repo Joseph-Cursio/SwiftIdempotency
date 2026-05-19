@@ -49,11 +49,11 @@ import SwiftSyntaxMacros
 /// C (two-macro split) was rendered unnecessary by B's success.
 public struct IdempotencyTestsMacro: ExtensionMacro {
     public static func expansion(
-        of node: AttributeSyntax,
+        of _: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
         providingExtensionsOf type: some TypeSyntaxProtocol,
-        conformingTo protocols: [TypeSyntax],
-        in context: some MacroExpansionContext
+        conformingTo _: [TypeSyntax],
+        in _: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
         let functions = declaration.memberBlock.members
             .compactMap { $0.decl.as(FunctionDeclSyntax.self) }

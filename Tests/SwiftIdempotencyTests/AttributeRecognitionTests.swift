@@ -11,7 +11,7 @@ struct AttributeRecognitionTests {
     @Test
     func idempotent_onSyncFunction_compiles() {
         @Idempotent
-        func upsertUser(id: Int) {}
+        func upsertUser(id _: Int) {}
         upsertUser(id: 1)  // Just ensure the decl site compiled.
     }
 
@@ -28,7 +28,7 @@ struct AttributeRecognitionTests {
     @Test
     func nonIdempotent_onVoidFunction_compiles() {
         @NonIdempotent
-        func sendNotification(_ msg: String) {}
+        func sendNotification(_: String) {}
         sendNotification("hi")
     }
 
@@ -37,7 +37,7 @@ struct AttributeRecognitionTests {
     @Test
     func observational_onLoggerLikeFunction_compiles() {
         @Observational
-        func logEvent(_ message: String) {}
+        func logEvent(_: String) {}
         logEvent("event")
     }
 
@@ -46,14 +46,14 @@ struct AttributeRecognitionTests {
     @Test
     func externallyIdempotent_withoutKeyName_compiles() {
         @ExternallyIdempotent
-        func sendEmail(to recipient: String, subject: String) {}
+        func sendEmail(to _: String, subject _: String) {}
         sendEmail(to: "a@b.com", subject: "hi")
     }
 
     @Test
     func externallyIdempotent_withKeyName_compiles() {
         @ExternallyIdempotent(by: "idempotencyKey")
-        func chargeCard(amount: Int, idempotencyKey: String) {}
+        func chargeCard(amount _: Int, idempotencyKey _: String) {}
         chargeCard(amount: 100, idempotencyKey: "stable-id-42")
     }
 
@@ -93,7 +93,7 @@ struct AttributeRecognitionTests {
     func externallyIdempotent_producesNoPeerMembers() {
         struct Host {
             @ExternallyIdempotent(by: "key")
-            func chargeCard(amount: Int, key: String) {}
+            func chargeCard(amount _: Int, key _: String) {}
         }
         let host = Host()
         host.chargeCard(amount: 100, key: "k")
