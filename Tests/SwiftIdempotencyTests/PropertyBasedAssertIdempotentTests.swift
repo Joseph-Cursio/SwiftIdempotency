@@ -1,6 +1,6 @@
-import Testing
 import PropertyBased
 import SwiftIdempotency
+import Testing
 
 /// Demonstrates wrapping `#assertIdempotent` in a property-based test via
 /// `swift-property-based`'s `propertyCheck`.

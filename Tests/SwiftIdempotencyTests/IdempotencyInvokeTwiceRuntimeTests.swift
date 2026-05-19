@@ -1,5 +1,5 @@
-import Testing
 import SwiftIdempotency
+import Testing
 
 /// Runtime tests for `SwiftIdempotency.__idempotencyInvokeTwice` —
 /// the helper the `@IdempotencyTests(for:)` macro expansion calls

@@ -1,5 +1,5 @@
-import Testing
 @testable import SwiftIdempotency
+import Testing
 
 /// Phase-1 attribute-recognition tests. The macros currently generate no
 /// peer declarations, so "does the attribute compile" is the entirety of

@@ -1,8 +1,8 @@
-import Foundation
-import Testing
 import FluentKit
+import Foundation
 import SwiftIdempotency
 @testable import SwiftIdempotencyFluent
+import Testing
 
 @Suite("IdempotencyKey.init(fromFluentModel:) — Fluent integration")
 struct IdempotencyKeyFluentTests {

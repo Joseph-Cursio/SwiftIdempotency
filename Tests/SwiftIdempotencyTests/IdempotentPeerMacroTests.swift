@@ -1,8 +1,8 @@
+@testable import SwiftIdempotencyMacros
 import SwiftSyntax
 import SwiftSyntaxMacros
 import SwiftSyntaxMacrosTestSupport
 import Testing
-@testable import SwiftIdempotencyMacros
 
 /// Expansion-verification tests for the `@Idempotent` peer macro.
 ///

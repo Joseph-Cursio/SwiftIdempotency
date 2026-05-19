@@ -1,6 +1,6 @@
-import Testing
 import Foundation
 @testable import SwiftIdempotency
+import Testing
 
 /// Phase-2 strong-type tests. Exercises `IdempotencyKey` construction paths,
 /// conformances, and round-trip serialisation. Compile-time-enforcement

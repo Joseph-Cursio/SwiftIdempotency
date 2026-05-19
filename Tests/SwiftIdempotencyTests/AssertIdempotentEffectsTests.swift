@@ -1,6 +1,6 @@
-import Testing
 import SwiftIdempotency
 import SwiftIdempotencyTestSupport
+import Testing
 
 /// Unit tests for `assertIdempotentEffects` in
 /// `SwiftIdempotencyTestSupport` + the `IdempotentEffectRecorder`

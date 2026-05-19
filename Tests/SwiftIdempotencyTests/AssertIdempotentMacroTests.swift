@@ -1,9 +1,9 @@
+import SwiftIdempotency
+@testable import SwiftIdempotencyMacros
 import SwiftSyntax
 import SwiftSyntaxMacros
 import SwiftSyntaxMacrosTestSupport
 import Testing
-@testable import SwiftIdempotencyMacros
-import SwiftIdempotency
 
 /// Phase-4 tests for the `#assertIdempotent` freestanding expression
 /// macro. Split into expansion-verification tests (exact textual form the
