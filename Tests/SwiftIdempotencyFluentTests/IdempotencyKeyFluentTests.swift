@@ -135,7 +135,8 @@ final class Acronym: Model, @unchecked Sendable {
     @Field(key: "long")
     var long: String
 
-    init() {}
+    init() { /* Fluent requires a no-arg init */ }
+    deinit { /* fixture model, no cleanup */ }
 }
 
 /// Int-id Model. Covers the `Int: CustomStringConvertible` case —
@@ -149,7 +150,8 @@ final class CounterEntry: Model, @unchecked Sendable {
     @Field(key: "label")
     var label: String
 
-    init() {}
+    init() { /* Fluent requires a no-arg init */ }
+    deinit { /* fixture model, no cleanup */ }
 }
 
 /// String-id Model. Covers the `String: CustomStringConvertible`
@@ -163,7 +165,8 @@ final class SessionToken: Model, @unchecked Sendable {
     @Field(key: "user")
     var user: String
 
-    init() {}
+    init() { /* Fluent requires a no-arg init */ }
+    deinit { /* fixture model, no cleanup */ }
 }
 
 // MARK: - Compile-time and documentation notes (not executed)

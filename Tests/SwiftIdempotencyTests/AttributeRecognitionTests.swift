@@ -11,7 +11,7 @@ struct AttributeRecognitionTests {
     @Test
     func idempotent_onSyncFunction_compiles() {
         @Idempotent
-        func upsertUser(id _: Int) {}
+        func upsertUser(id _: Int) { /* no-op fixture */ }
         upsertUser(id: 1)  // Just ensure the decl site compiled.
     }
 
@@ -31,7 +31,7 @@ struct AttributeRecognitionTests {
     @Test
     func nonIdempotent_onVoidFunction_compiles() {
         @NonIdempotent
-        func sendNotification(_: String) {}
+        func sendNotification(_: String) { /* no-op fixture */ }
         sendNotification("hi")
     }
 
@@ -40,7 +40,7 @@ struct AttributeRecognitionTests {
     @Test
     func observational_onLoggerLikeFunction_compiles() {
         @Observational
-        func logEvent(_: String) {}
+        func logEvent(_: String) { /* no-op fixture */ }
         logEvent("event")
     }
 
@@ -49,14 +49,14 @@ struct AttributeRecognitionTests {
     @Test
     func externallyIdempotent_withoutKeyName_compiles() {
         @ExternallyIdempotent
-        func sendEmail(to _: String, subject _: String) {}
+        func sendEmail(to _: String, subject _: String) { /* no-op fixture */ }
         sendEmail(to: "a@b.com", subject: "hi")
     }
 
     @Test
     func externallyIdempotent_withKeyName_compiles() {
         @ExternallyIdempotent(by: "idempotencyKey")
-        func chargeCard(amount _: Int, idempotencyKey _: String) {}
+        func chargeCard(amount _: Int, idempotencyKey _: String) { /* no-op fixture */ }
         chargeCard(amount: 100, idempotencyKey: "stable-id-42")
     }
 
@@ -76,7 +76,7 @@ struct AttributeRecognitionTests {
     func nonIdempotent_producesNoPeerMembers() {
         struct Host {
             @NonIdempotent
-            func sendMessage() {}
+            func sendMessage() { /* no-op fixture */ }
         }
         let host = Host()
         host.sendMessage()  // Just verify the host compiles.
@@ -86,7 +86,7 @@ struct AttributeRecognitionTests {
     func observational_producesNoPeerMembers() {
         struct Host {
             @Observational
-            func logTrace() {}
+            func logTrace() { /* no-op fixture */ }
         }
         let host = Host()
         host.logTrace()
@@ -96,7 +96,7 @@ struct AttributeRecognitionTests {
     func externallyIdempotent_producesNoPeerMembers() {
         struct Host {
             @ExternallyIdempotent(by: "key")
-            func chargeCard(amount _: Int, key _: String) {}
+            func chargeCard(amount _: Int, key _: String) { /* no-op fixture */ }
         }
         let host = Host()
         host.chargeCard(amount: 100, key: "k")

@@ -21,6 +21,8 @@ struct AssertIdempotentEffectsTests {
         func record() {
             effectCount += 1
         }
+
+        deinit { /* fixture recorder, no cleanup */ }
     }
 
     @Test("Idempotent body (no effects inside) passes with zero-effect recorders")
@@ -220,6 +222,8 @@ struct AssertIdempotentEffectsTests {
             taken = true
             return true
         }
+
+        deinit { /* fixture gate, no cleanup */ }
     }
 
     enum TestError: Error {
@@ -247,4 +251,6 @@ final class CallLogRecorder: IdempotentEffectRecorder, @unchecked Sendable {
     }
 
     func snapshot() -> [String] { callLog }
+
+    deinit { /* fixture recorder, no cleanup */ }
 }
