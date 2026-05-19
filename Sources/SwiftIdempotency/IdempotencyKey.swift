@@ -45,7 +45,7 @@ import Foundation
 /// - `Sendable`: safe to pass across actor / isolation boundaries.
 /// - `Codable`: round-trips through JSON, webhook payloads, persistence.
 ///   The serialised representation is the raw string; no wrapper.
-public struct IdempotencyKey: Hashable, Sendable {
+public struct IdempotencyKey: Hashable, Sendable, CustomStringConvertible, Codable {
     /// The underlying string representation. Stable across retries by
     /// construction — callers choose from stability-preserving initialisers.
     public let rawValue: String
@@ -94,13 +94,9 @@ public struct IdempotencyKey: Hashable, Sendable {
     // adopter has a genuine need for one of these paths, the answer is
     // almost always `fromAuditedString` with a justification comment at
     // the call site.
-}
 
-extension IdempotencyKey: CustomStringConvertible {
     public var description: String { rawValue }
-}
 
-extension IdempotencyKey: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         self.rawValue = try container.decode(String.self)
