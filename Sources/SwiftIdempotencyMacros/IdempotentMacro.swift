@@ -3,8 +3,14 @@ import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-/// Marker implementation — see `IdempotentMacro`.
-public struct NonIdempotentMacro: PeerMacro {
+/// Peer macros that emit no declarations — pure annotation markers whose
+/// only job is to exist as a recognisable attribute name for the linter
+/// and `@IdempotencyTests`. Each marker stays a distinct type because the
+/// compiler plugin registers macros by concrete type, but the empty
+/// `expansion` body is shared here rather than triplicated.
+protocol EmptyPeerMacro: PeerMacro {}
+
+extension EmptyPeerMacro {
     public static func expansion(
         of _: AttributeSyntax,
         providingPeersOf _: some DeclSyntaxProtocol,
@@ -15,15 +21,10 @@ public struct NonIdempotentMacro: PeerMacro {
 }
 
 /// Marker implementation — see `IdempotentMacro`.
-public struct ObservationalMacro: PeerMacro {
-    public static func expansion(
-        of _: AttributeSyntax,
-        providingPeersOf _: some DeclSyntaxProtocol,
-        in _: some MacroExpansionContext
-    ) throws -> [DeclSyntax] {
-        []
-    }
-}
+public struct NonIdempotentMacro: EmptyPeerMacro {}
+
+/// Marker implementation — see `IdempotentMacro`.
+public struct ObservationalMacro: EmptyPeerMacro {}
 
 /// Marker + argument validator. Emits no peer declarations (like the
 /// three sibling marker macros), but *does* validate the `by:` argument
@@ -244,12 +245,4 @@ struct SwiftIdempotencyMacrosPlugin: CompilerPlugin {
 /// `@IdempotencyTests` scans the struct's members, finds `@Idempotent`-
 /// marked zero-argument functions, and emits a `@Test` per match inside
 /// an extension of the struct.
-public struct IdempotentMacro: PeerMacro {
-    public static func expansion(
-        of _: AttributeSyntax,
-        providingPeersOf _: some DeclSyntaxProtocol,
-        in _: some MacroExpansionContext
-    ) throws -> [DeclSyntax] {
-        []
-    }
-}
+public struct IdempotentMacro: EmptyPeerMacro {}
