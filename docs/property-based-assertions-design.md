@@ -21,7 +21,7 @@ and "parameterised `@IdempotencyTests` expansion" as not-shipped.
 
 Separately, when a counterexample *is* found, it is a `precondition`/`Issue.record`
 string — not minimal, not replayable. The ecosystem's shrinking + replay-corpus
-machinery (SwiftPropertyLaws `M5` + SwiftInfer's `.swiftinfer/verify-corpus.json`)
+machinery (SwiftPropertyLaws `v2.4` + SwiftInfer's `.swiftinfer/verify-corpus.json`)
 exists but is unreachable from a hand-written `#assertIdempotent` test.
 
 ## Goal
@@ -60,7 +60,7 @@ semantics stay identical.
 
 A property-based sibling to `__idempotencyAssertRunTwice`. Adopter supplies (or has
 derived) a generator; the helper runs N trials of `f(f(x)) == f(x)`, and on failure
-invokes the kit's `M5` shrinker to report the **minimal** failing `x`.
+invokes the kit's `v2.4` shrinker to report the **minimal** failing `x`.
 
 ```swift
 // SwiftIdempotencyPropertyBased
@@ -79,7 +79,7 @@ double-invoke expansion.
 
 ### W6.B — minimal + replayable
 
-- On failure, surface the shrunk value (from `M5`'s shrink-aware backend), not the
+- On failure, surface the shrunk value (from `v2.4`'s shrink-aware backend), not the
   first failing one.
 - Persist `{ seed (base64), counterexample, environment }` to the **same**
   `.swiftinfer/verify-corpus.json` schema SwiftInfer v1.143 defines, reusing
@@ -117,7 +117,7 @@ not this note.
 
 ## Dependency / sequencing
 
-Depends on SwiftPropertyLaws `M5` (shrinking) and SwiftInfer v1.143 (corpus schema /
+Depends on SwiftPropertyLaws `v2.4` (shrinking) and SwiftInfer v1.143 (corpus schema /
 `Seed`/`Environment` reuse). Can ship in parallel with SwiftInfer v1.142–v1.144.
 Semver: target **v0.4.0** (no milestone/calibration convention in this repo;
 releases tagged post-hoc per feature, as with 0.2.0 Fluent / 0.3.0 effect recorders).
