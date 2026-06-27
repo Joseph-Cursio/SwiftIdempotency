@@ -1,8 +1,14 @@
 # Property-Based Idempotency Assertions — `SwiftIdempotencyPropertyBased` (design note)
 
-**Status:** **W6.A shipped (v0.4.0)** — `SwiftIdempotencyPropertyBased` product +
-`assertIdempotentProperty(over:)`. W6.B (corpus persistence) and W6.C
-(effect-sequence shrinking) remain. Companion to SwiftInferProperties'
+**Status:** **W6.A + W6.C shipped (v0.4.0); W6.B rejected.**
+`SwiftIdempotencyPropertyBased` ships `assertIdempotentProperty(over:)` (W6.A)
+and `assertIdempotentEffectsProperty(over:makeRun:)` (W6.C). **W6.B (a corpus
+for hand-written property tests) is rejected:** `swift-property-based` already
+provides `FixedSeedTrait` / `.fixedSeed(_:)` — its own seed-based replay for
+re-running a failing property — so a custom corpus would duplicate it, and
+sharing SwiftInfer's corpus is a wrong-direction cross-repo dependency (plus the
+seed-model mismatch noted below). The replay idiom for these tests is
+`@Test(.fixedSeed("…"))`. Companion to SwiftInferProperties'
 *Minimal-Counterexample & Replay-Corpus* epic
 (`SwiftInferProperties/docs/v1.141 Calibration Plan.md`, workstream W6).
 
@@ -91,7 +97,19 @@ expand to `assertIdempotentProperty` instead of skipping them (closes REFERENCE.
 "parameterised expansion" deferral). Zero-arg members keep the existing
 double-invoke expansion.
 
-### W6.B — minimal + replayable
+### W6.B — minimal + replayable — **REJECTED**
+
+> Not built. Shrinking already comes from `propertyCheck` (W6.A/C surface the
+> minimal failing input/sequence). The persistence half is rejected:
+> `swift-property-based`'s `FixedSeedTrait` (`.fixedSeed(_:)`) already replays a
+> failing property from its seed — a custom corpus would duplicate it; it doesn't
+> expose the failing seed/minimal programmatically for auto-persistence (would
+> need forking the runner); reconstructing a typed input from a stored string is
+> infeasible; and "share SwiftInfer's `.swiftinfer/verify-corpus.json`" is a
+> wrong-direction cross-repo dependency *and* a seed-model mismatch (SwiftInfer's
+> corpus stores its own `SeedHex`, not SwiftPropertyLaws' `Seed`). Replay idiom
+> for these tests: `@Test(.fixedSeed("…")) func …`. The original sketch follows
+> for the record.
 
 - On failure, surface the shrunk value (from `v2.6`'s shrink-aware backend), not the
   first failing one.
@@ -103,13 +121,17 @@ double-invoke expansion.
 - Corpus-first replay, `Environment`-guarded (skip-with-note on
   `ReplayEnvironmentMismatch`, never spurious-fail across toolchain skew).
 
-### W6.C — effect-sequence assertion (seed of model-based testing)
+### W6.C — effect-sequence assertion (seed of model-based testing) — **SHIPPED**
 
-Extend `assertIdempotentEffects` / `IdempotentEffectRecorder` the same way: generate
-*sequences* of operations, run `body` over them, and on divergence shrink to the
-**minimal operation sequence** that breaks effect-idempotency; persist its seed.
-Keep this minimal here — full stateful/model-based testing is SwiftInfer epic #2,
-not this note.
+Shipped as `assertIdempotentEffectsProperty(over:makeRun:)`: generates action
+sequences, builds a fresh system per trial via `makeRun` (returning the
+`IdempotentEffectRecorder`s + an `apply` closure), applies the sequence **twice**
+(the retry), and asserts the second pass adds no new effects (compares
+`_snapshotBox()` snapshots). On divergence, `swift-property-based`'s array
+shrinker minimizes to the smallest action sequence that breaks effect-idempotence.
+Failures record a Testing issue (non-fatal) so they compose with the shrinker.
+(No seed persisted — see W6.B; `.fixedSeed` is the replay idiom.) Full
+stateful/model-based testing remains SwiftInfer epic #2.
 
 ## Interop with SwiftInferProperties
 
