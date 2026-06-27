@@ -1,8 +1,22 @@
 # Property-Based Idempotency Assertions — `SwiftIdempotencyPropertyBased` (design note)
 
-**Status:** proposed (target v0.4.0). Companion to SwiftInferProperties'
+**Status:** **W6.A shipped (v0.4.0)** — `SwiftIdempotencyPropertyBased` product +
+`assertIdempotentProperty(over:)`. W6.B (corpus persistence) and W6.C
+(effect-sequence shrinking) remain. Companion to SwiftInferProperties'
 *Minimal-Counterexample & Replay-Corpus* epic
 (`SwiftInferProperties/docs/v1.141 Calibration Plan.md`, workstream W6).
+
+> **Shipped note (W6.A).** Simpler than the original sketch below: the shrinking
+> comes from `swift-property-based`'s own `propertyCheck` (which generates inputs
+> **and** shrinks), so W6.A needs **only** a `swift-property-based` dep — *not*
+> `PropertyLawKit`/`Seed`/the v2.6 kit shrinker. The shipped signature is
+> `assertIdempotentProperty(over generator: Generator<Input, _>, count: Int = 100, _ operation: (Input) async throws -> Result) async`;
+> it records a Testing issue via `#expect` (non-fatal) so a failing property is
+> shrunk to the minimal input — the gap `PropertyBasedAssertIdempotentTests`
+> documented. The `Seed`/`Environment`/corpus machinery below is W6.B (deferred);
+> note the verify corpus uses SwiftInfer's own `SeedHex`, not SwiftPropertyLaws'
+> `Seed` (see the v1.141 plan's v1.143 correction), so W6.B's corpus reuse needs
+> revisiting against that reality.
 
 ## Problem
 
