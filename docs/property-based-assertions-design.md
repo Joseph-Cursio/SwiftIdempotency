@@ -99,11 +99,16 @@ not this note.
 
 ## Interop with SwiftInferProperties
 
-- SwiftInfer v1.142's auto-bridge, when the target package depends on
-  `SwiftIdempotency`, emits a `#assertIdempotent`-based regression rather than a
-  bespoke `Tests/Generated/SwiftInfer/` stub — so the durable artifact uses the
-  adopter's own macro. With this product present, that regression can be the
-  property-based form seeded by the shrunk counterexample.
+- **Correction (v1.142):** the auto-bridge does **not** emit `#assertIdempotent`
+  from a SwiftInfer idempotence counterexample. The two are *different
+  properties*: `#assertIdempotent { body }` asserts `body() == body()` —
+  **retry** idempotence (a closure called twice yields the same result/effects) —
+  whereas SwiftInfer's idempotence template is **algebraic** `f(f(x)) == f(x)`.
+  `#assertIdempotent { f(x) }` would pass for a pure `f` and miss an algebraic
+  counterexample. SwiftInfer's auto-bridge therefore emits the generic
+  `ConvertCounterexampleEngine` stub (which correctly asserts `f(f(x)) == f(x)`).
+  This product (`SwiftIdempotencyPropertyBased`) serves the *retry* notion — its
+  own concern — not SwiftInfer's algebraic template.
 - Attribute grammar is unchanged: SwiftEffectInference's `EffectAnnotationParser`
   keeps matching `@Idempotent` / `@NonIdempotent` / `@Observational` /
   `@ExternallyIdempotent(by:)` by string. No macro renames.
