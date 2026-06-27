@@ -344,12 +344,64 @@ package-integration trial against an adopter-realistic coin-double-
 grant bug — see [`docs/penny-package-trial/`](docs/penny-package-trial/)
 for the full trial artifacts (scope, findings, retrospective).
 
+### 5. Property-based idempotence testing via `SwiftIdempotencyPropertyBased` (v0.4.0)
+
+`#assertIdempotent` and `@IdempotencyTests` check **one fixed input**.
+`SwiftIdempotencyPropertyBased` (an opt-in library — add it only if you want
+it; it pulls in [`swift-property-based`](https://github.com/x-sheep/swift-property-based))
+checks idempotence across **generated inputs**, and — crucially — **shrinks a
+failure to the minimal counterexample**. `#assertIdempotent` fails via
+`precondition`, which terminates the process before a shrinker can run; these
+helpers record a `Testing` issue instead, so they compose with
+`swift-property-based`'s shrinker.
+
+**Value-level** (`assertIdempotentProperty`) — for each generated input, runs
+the operation twice and asserts the results match (retry-stability):
+
+```swift
+import SwiftIdempotencyPropertyBased
+import PropertyBased
+
+@Test func upsertIsRetryIdempotent() async {
+    let service = UserService()
+    await assertIdempotentProperty(over: Gen<Int>.int(in: 0 ... 1_000)) { id in
+        await service.upsert(id)   // run twice per id; results must match
+    }
+}
+```
+
+This is also the answer for **parameterised** `@Idempotent` functions:
+`@IdempotencyTests` only generates tests for *zero-argument* members; cover
+functions that take arguments with `assertIdempotentProperty` over a generator
+of those arguments.
+
+**Effect-level** (`assertIdempotentEffectsProperty`) — generates *sequences* of
+actions, applies each sequence twice against a fresh system, and asserts the
+retry adds **no new effects** (the [`IdempotentEffectRecorder`](#4-effect-observation-testing-via-idempotenteffectrecorder)
+snapshots match). On failure the action sequence is shrunk to the minimal one
+that breaks retry-safety — the seed of model-based testing:
+
+```swift
+@Test func handlerIsEffectIdempotentAcrossSequences() async {
+    await assertIdempotentEffectsProperty(
+        over: Gen<Int>.int(in: 0 ... 5).array(of: 0 ... 8)
+    ) {
+        let repo = MockRepo()                          // fresh per trial
+        let handler = Handler(repo: repo)
+        return (recorders: [repo], apply: { id in await handler.upsert(id) })
+    }
+}
+```
+
+To **replay** a failing property from its reported seed, use
+`swift-property-based`'s own trait: `@Test(.fixedSeed("…")) func …`.
+
 ## Installation
 
 ```swift
 // Package.swift
 dependencies: [
-    .package(url: "https://github.com/Joseph-Cursio/SwiftIdempotency.git", from: "0.3.0"),
+    .package(url: "https://github.com/Joseph-Cursio/SwiftIdempotency.git", from: "0.4.0"),
 ],
 targets: [
     .target(
@@ -367,6 +419,11 @@ targets: [
             // SwiftIdempotency library; test targets using only that
             // macro don't need this product.
             .product(name: "SwiftIdempotencyTestSupport", package: "SwiftIdempotency"),
+            // Only add when using assertIdempotentProperty /
+            // assertIdempotentEffectsProperty (section 5). Pulls in
+            // swift-property-based; omit if you don't write property-based
+            // idempotence tests.
+            .product(name: "SwiftIdempotencyPropertyBased", package: "SwiftIdempotency"),
         ]
     ),
 ]
@@ -873,16 +930,26 @@ async) are implemented and tested. v0.2.0 added a dedicated
 see §"Using with Fluent ORM" above. v0.3.0 added Option B
 effect-observation testing via `IdempotentEffectRecorder` and
 `assertIdempotentEffects` — see §"Effect-observation testing" above.
+v0.4.0 added the opt-in `SwiftIdempotencyPropertyBased` product —
+`assertIdempotentProperty` (value-level) and
+`assertIdempotentEffectsProperty` (action-sequence, effect-level):
+generated-input, **shrinking** retry-idempotence checks that compose with
+`swift-property-based`'s shrinker. See §5 "Property-based idempotence
+testing" above.
 
 For a consolidated inventory of what the original PRD proposed but
 isn't in the package today (or shipped in a different shape), see
 [REFERENCE.md §Deferred and not-shipped features](REFERENCE.md#deferred-and-not-shipped-features).
 The headline gaps:
 
-- Parameterised `@IdempotencyTests` expansion — today only zero-arg
-  `@Idempotent`-marked members get auto-generated tests; extending to
-  parameterised members needs an `IdempotencyTestArgs` protocol design
-  so the macro has a stable way to synthesise arguments.
+- Parameterised `@IdempotencyTests` expansion — the macro auto-generates
+  tests only for zero-arg `@Idempotent`-marked members. **For parameterised
+  members, use `assertIdempotentProperty` from `SwiftIdempotencyPropertyBased`
+  (v0.4.0, §5)** over a generator of the arguments — that's the supported
+  parameterised path. An `@IdempotencyTests(inputs:)` macro that synthesised
+  the wiring would still need the adopter to supply each member's generator
+  (the macro can't invent one for an arbitrary parameter type), so it's
+  deferred pending a concrete arg-provision design.
 - Auto-injection of effect recorders into the `@IdempotencyTests`
   auto-generated path. `IdempotentEffectRecorder` itself ships;
   the auto-generated tests just don't wire it up. Adopters add

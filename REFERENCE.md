@@ -47,6 +47,7 @@ for a worked walkthrough see [TUTORIAL.md](TUTORIAL.md).
 | `SwiftIdempotency` | `IdempotencyKey`, all attribute and freestanding macros, `IdempotentEffectRecorder` protocol, runtime helpers backing `#assertIdempotent` | Always — main library. |
 | `SwiftIdempotencyTestSupport` | `assertIdempotentEffects(...)` | Test targets that use the effect-observation helper. |
 | `SwiftIdempotencyFluent` | `IdempotencyKey.init(fromFluentModel:)` | Adopters using Vapor's Fluent ORM. Pulls in `vapor/fluent-kit`. |
+| `SwiftIdempotencyPropertyBased` (v0.4.0) | `assertIdempotentProperty(over:)` (value-level), `assertIdempotentEffectsProperty(over:makeRun:)` (action-sequence, effect-level) | Test targets that want **generated-input, shrinking** retry-idempotence checks (incl. parameterised functions). Pulls in `swift-property-based`. |
 
 The compiler plugin target `SwiftIdempotencyMacros` is loaded
 automatically by the Swift compiler when expanding macros — adopters
