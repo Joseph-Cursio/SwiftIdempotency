@@ -35,6 +35,19 @@ let package = Package(
             name: "SwiftIdempotencyFluent",
             targets: ["SwiftIdempotencyFluent"]
         ),
+        /// Opt-in library for property-based idempotency testing. Provides
+        /// `assertIdempotentProperty(over:)` — a non-fatal, generated-input,
+        /// **shrinking** retry-idempotence assertion (the closure is run twice
+        /// per generated input and their results compared). Unlike
+        /// `#assertIdempotent` (which `precondition`-crashes and so can't
+        /// compose with a shrinker), this records a Testing issue, letting
+        /// `swift-property-based`'s shrinker report the minimal failing input.
+        /// Depending on this library pulls in `swift-property-based`; adopters
+        /// who only want the fixed-input macro should not add it.
+        .library(
+            name: "SwiftIdempotencyPropertyBased",
+            targets: ["SwiftIdempotencyPropertyBased"]
+        ),
     ],
     dependencies: [
         // Allow 602.x or 603.x — the macro APIs SwiftIdempotency uses
@@ -52,8 +65,10 @@ let package = Package(
         // so the conservative `from: "1.48.0"` floor is well ahead of the
         // API surface this integration uses.
         .package(url: "https://github.com/vapor/fluent-kit", from: "1.48.0"),
-        // Test-only: property-based testing for `#assertIdempotent`. Scoped
-        // to the SwiftIdempotencyTests target; adopters do not pull this in.
+        // Property-based testing. Used by the SwiftIdempotencyTests target and
+        // by the opt-in `SwiftIdempotencyPropertyBased` product (v0.4.0) for
+        // generated-input, shrinking retry-idempotence assertions. Adopters
+        // pay this cost only if they depend on `SwiftIdempotencyPropertyBased`.
         .package(url: "https://github.com/x-sheep/swift-property-based.git", from: "1.0.0"),
     ],
     targets: [
@@ -98,6 +113,17 @@ let package = Package(
                 .product(name: "FluentKit", package: "fluent-kit"),
             ]
         ),
+        /// Opt-in property-based testing integration (v0.4.0). Wraps
+        /// `swift-property-based`'s `propertyCheck` (which generates inputs +
+        /// shrinks) with a non-fatal retry-idempotence predicate. swift-
+        /// property-based is a real (non-test-only) dep of this target.
+        .target(
+            name: "SwiftIdempotencyPropertyBased",
+            dependencies: [
+                "SwiftIdempotency",
+                .product(name: "PropertyBased", package: "swift-property-based"),
+            ]
+        ),
         .testTarget(
             name: "SwiftIdempotencyTests",
             dependencies: [
@@ -113,6 +139,13 @@ let package = Package(
             dependencies: [
                 "SwiftIdempotencyFluent",
                 .product(name: "FluentKit", package: "fluent-kit"),
+            ]
+        ),
+        .testTarget(
+            name: "SwiftIdempotencyPropertyBasedTests",
+            dependencies: [
+                "SwiftIdempotencyPropertyBased",
+                .product(name: "PropertyBased", package: "swift-property-based"),
             ]
         ),
     ]
