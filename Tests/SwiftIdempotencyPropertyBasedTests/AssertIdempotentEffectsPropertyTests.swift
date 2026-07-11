@@ -51,7 +51,7 @@ struct AssertIdempotentEffectsPropertyTests {
         // `array(of: 1...8)` keeps sequences non-empty so the retry always
         // doubles the appended effects; the assertion records a Testing issue
         // (non-fatal) so the shrinker can minimize and `withKnownIssue` observes.
-        await withKnownIssue {
+        await withKnownIssue("negative control — the assertion is EXPECTED to record non-idempotency here; a pass without this issue would mean the detector went blind") {
             await assertIdempotentEffectsProperty(
                 over: Gen<Int>.int(in: 0 ... 5).array(of: 1 ... 8)
             ) {

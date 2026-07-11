@@ -57,7 +57,7 @@ struct AssertIdempotentPropertyTests {
         // The assertion records a Testing issue rather than `precondition`-
         // crashing, so `withKnownIssue` can observe the failure — the property
         // that makes it compose with swift-property-based's shrinker.
-        await withKnownIssue {
+        await withKnownIssue("negative control — the assertion is EXPECTED to record non-idempotency here; a pass without this issue would mean the detector went blind") {
             await assertIdempotentProperty(over: Gen<Int>.int(in: 0 ... 10)) { _ in
                 await counter.next()
             }
