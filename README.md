@@ -63,6 +63,9 @@ func sendWelcomeEmail(to user: User) async throws { ... }
 @Observational
 func logAudit(_ event: AuditEvent) { ... }
 
+@Pure
+func normalize(_ path: String) -> String { ... }  // lattice bottom: no effects, deterministic, total, synchronous
+
 @ExternallyIdempotent(by: "idempotencyKey")
 func chargeCard(amount: Int, idempotencyKey: IdempotencyKey) async throws { ... }
 

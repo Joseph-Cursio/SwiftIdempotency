@@ -32,6 +32,13 @@ public struct ObservationalMacro: EmptyPeerMacro {}
 /// `isClockDeterministic(declaration:)`.
 public struct ClockDeterministicMacro: EmptyPeerMacro {}
 
+/// Marker implementation — see `IdempotentMacro` for the marker-only
+/// rationale. Declares the lattice-bottom `@lint.effect pure` claim;
+/// SwiftEffectInference's default `AttributeRecognition` has recognised
+/// the name since the `pure` tier landed — this macro closes the gap
+/// where the attribute spelling had no shipped declaration.
+public struct PureMacro: EmptyPeerMacro {}
+
 /// Marker + argument validator. Emits no peer declarations (like the
 /// three sibling marker macros), but *does* validate the `by:` argument
 /// at expansion time — rejecting dotted paths, non-literal expressions,
@@ -205,6 +212,7 @@ struct SwiftIdempotencyMacrosPlugin: CompilerPlugin {
         IdempotentMacro.self,
         NonIdempotentMacro.self,
         ObservationalMacro.self,
+        PureMacro.self,
         ClockDeterministicMacro.self,
         ExternallyIdempotentMacro.self,
         AssertIdempotentMacro.self,
