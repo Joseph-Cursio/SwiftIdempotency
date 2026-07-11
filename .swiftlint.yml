@@ -1,154 +1,154 @@
 excluded:
-- .build
-- .swiftpm
-- DerivedData
-- Package.resolved
-
+  - .build
+  - .swiftpm
+  - DerivedData
+  - Package.resolved
 # Match the linting posture of SwiftProjectLint — the companion repo — so
 # the two packages have consistent code-style expectations.
 included:
-- Sources
-- Tests
+  - Sources
+  - Tests
 opt_in_rules:
-- closure_end_indentation
-- prohibited_super_call
-- implicit_return
-- operator_usage_whitespace
-- function_default_parameter_at_end
-- multiline_function_chains
-- redundant_nil_coalescing
-- convenience_type
-- no_magic_numbers
-- redundant_self
-- unhandled_throwing_task
-- explicit_init
-- contains_over_first_not_nil
-- contains_over_range_nil_comparison
-- discouraged_optional_boolean
-- nimble_operator
-- superfluous_else
-- toggle_bool
-- unowned_variable_capture
-- overridden_super_call
-- force_unwrapping
-- prefer_self_type_over_type_of_self
-- discouraged_object_literal
-- final_test_case
-- multiline_literal_brackets
-- private_swiftui_state
-- shorthand_optional_binding
-- yoda_condition
-- pattern_matching_keywords
-- nslocalizedstring_require_bundle
-- single_test_class
-- sorted_first_last
-- last_where
-- fatal_error_message
-- private_outlet
-- empty_count
-- discouraged_optional_collection
-- balanced_xctest_lifecycle
-- unavailable_function
-- multiline_parameters_brackets
-- private_subject
-- empty_collection_literal
-- shorthand_argument
-- trailing_closure
-- raw_value_for_camel_cased_codable_enum
-- return_value_from_void_function
-- non_overridable_class_declaration
-- empty_xctest_method
-- unneeded_parentheses_in_closure_argument
-- prefixed_toplevel_constant
-- static_operator
-- modifier_order
-- test_case_accessibility
-- ibinspectable_in_extension
-- collection_alignment
-- weak_delegate
-- contains_over_filter_is_empty
-- accessibility_trait_for_button
-- redundant_type_annotation
-- discarded_notification_center_observer
-- quick_discouraged_pending_test
-- prefer_nimble
-- number_separator
-- implicitly_unwrapped_optional
-- lower_acl_than_parent
-- multiline_arguments
-- file_header
-- discouraged_none_name
-- joined_default_parameter
-- incompatible_concurrency_annotation
-- xct_specific_matcher
-- required_enum_case
-- vertical_whitespace_closing_braces
-- missing_docs
-- array_init
-- fallthrough
-- quick_discouraged_focused_test
-- reduce_into
-- closure_spacing
-- nslocalizedstring_key
-- optional_enum_case_matching
-- prohibited_interface_builder
-- self_binding
-- strong_iboutlet
-- legacy_objc_type
-- expiring_todo
-- discouraged_assert
-- prefer_zero_over_explicit_init
-- unneeded_escaping
-- prefer_asset_symbols
-- identical_operands
-- anonymous_argument_in_multiline_closure
-- literal_expression_end_indentation
-- quick_discouraged_call
-- untyped_error_in_catch
-- first_where
-- contains_over_filter_count
-- vertical_parameter_alignment_on_call
-- closure_body_length
-- legacy_multiple
-- local_doc_comment
-- object_literal
-- comma_inheritance
-- accessibility_label_for_image
-- enum_case_associated_values_count
-- multiline_parameters
-- multiline_call_arguments
-- flatmap_over_map_reduce
-- period_spacing
-- file_name_no_space
-- private_action
-- override_in_extension
-- prefer_condition_list
-- multiline_arguments_brackets
-- attributes
-- empty_string
-- indentation_width
-- prefer_key_path
-- prefer_self_in_static_references
-- vertical_whitespace_between_cases
-- direct_return
-- extension_access_modifier
-- file_name
-- no_grouping_extension
-- sorted_enum_cases
-- async_without_await
-- strict_fileprivate
-- switch_case_on_newline
-- conditional_returns_on_newline
-- file_types_order
-- required_deinit
-- let_var_whitespace
-- no_empty_block
-- vertical_whitespace_opening_braces
-- sorted_imports
-- unused_parameter
+  - closure_end_indentation
+  - prohibited_super_call
+  - implicit_return
+  - operator_usage_whitespace
+  - function_default_parameter_at_end
+  - multiline_function_chains
+  - redundant_nil_coalescing
+  - convenience_type
+  - no_magic_numbers
+  - redundant_self
+  - unhandled_throwing_task
+  - explicit_init
+  - contains_over_first_not_nil
+  - contains_over_range_nil_comparison
+  - discouraged_optional_boolean
+  - nimble_operator
+  - superfluous_else
+  - toggle_bool
+  - unowned_variable_capture
+  - overridden_super_call
+  - force_unwrapping
+  - prefer_self_type_over_type_of_self
+  - discouraged_object_literal
+  - final_test_case
+  - multiline_literal_brackets
+  - private_swiftui_state
+  - shorthand_optional_binding
+  - yoda_condition
+  - pattern_matching_keywords
+  - nslocalizedstring_require_bundle
+  - single_test_class
+  - sorted_first_last
+  - last_where
+  - fatal_error_message
+  - private_outlet
+  - empty_count
+  - discouraged_optional_collection
+  - balanced_xctest_lifecycle
+  - unavailable_function
+  - multiline_parameters_brackets
+  - private_subject
+  - empty_collection_literal
+  - shorthand_argument
+  - trailing_closure
+  - raw_value_for_camel_cased_codable_enum
+  - return_value_from_void_function
+  - non_overridable_class_declaration
+  - empty_xctest_method
+  - unneeded_parentheses_in_closure_argument
+  - prefixed_toplevel_constant
+  - static_operator
+  - modifier_order
+  - test_case_accessibility
+  - ibinspectable_in_extension
+  - collection_alignment
+  - weak_delegate
+  - contains_over_filter_is_empty
+  - accessibility_trait_for_button
+  - redundant_type_annotation
+  - discarded_notification_center_observer
+  - quick_discouraged_pending_test
+  - prefer_nimble
+  - number_separator
+  - implicitly_unwrapped_optional
+  - lower_acl_than_parent
+  - multiline_arguments
+  - file_header
+  - discouraged_none_name
+  - joined_default_parameter
+  - incompatible_concurrency_annotation
+  - xct_specific_matcher
+  - required_enum_case
+  - vertical_whitespace_closing_braces
+  - missing_docs
+  - array_init
+  - fallthrough
+  - quick_discouraged_focused_test
+  - reduce_into
+  - closure_spacing
+  - nslocalizedstring_key
+  - optional_enum_case_matching
+  - prohibited_interface_builder
+  - self_binding
+  - strong_iboutlet
+  - legacy_objc_type
+  - expiring_todo
+  - discouraged_assert
+  - prefer_zero_over_explicit_init
+  - unneeded_escaping
+  - prefer_asset_symbols
+  - identical_operands
+  - anonymous_argument_in_multiline_closure
+  - literal_expression_end_indentation
+  - quick_discouraged_call
+  - untyped_error_in_catch
+  - first_where
+  - contains_over_filter_count
+  - vertical_parameter_alignment_on_call
+  - closure_body_length
+  - legacy_multiple
+  - local_doc_comment
+  - object_literal
+  - comma_inheritance
+  - accessibility_label_for_image
+  - enum_case_associated_values_count
+  - multiline_parameters
+  - multiline_call_arguments
+  - flatmap_over_map_reduce
+  - period_spacing
+  - file_name_no_space
+  - private_action
+  - override_in_extension
+  - prefer_condition_list
+  - multiline_arguments_brackets
+  - attributes
+  - empty_string
+  - indentation_width
+  - prefer_key_path
+  - prefer_self_in_static_references
+  - vertical_whitespace_between_cases
+  - direct_return
+  - extension_access_modifier
+  - file_name
+  - no_grouping_extension
+  - sorted_enum_cases
+  - async_without_await
+  - strict_fileprivate
+  - switch_case_on_newline
+  - conditional_returns_on_newline
+  - file_types_order
+  - required_deinit
+  - let_var_whitespace
+  - no_empty_block
+  - vertical_whitespace_opening_braces
+  - sorted_imports
+  - unused_parameter
+  - no_extension_access_modifier
 analyzer_rules:
-- capture_variable
-- typesafe_array_init
-- unused_declaration
-- unused_import
-- explicit_self
+  - capture_variable
+  - typesafe_array_init
+  - unused_declaration
+  - unused_import
+  - explicit_self

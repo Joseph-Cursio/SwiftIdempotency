@@ -65,9 +65,17 @@ func logAudit(_ event: AuditEvent) { ... }
 
 @ExternallyIdempotent(by: "idempotencyKey")
 func chargeCard(amount: Int, idempotencyKey: IdempotencyKey) async throws { ... }
+
+@ClockDeterministic
+func refresh() async { ... }  // deterministic given its injected Clock
 ```
 
 Equivalent to the doc-comment form `/// @lint.effect idempotent` etc.
+(`@ClockDeterministic` is the one non-effect marker: it declares the
+orthogonal `/// @lint.determinism clock_deterministic` claim — an async
+function deterministic given an injected `Clock` — consumed by
+SwiftEffectInference/SwiftInferProperties to admit the function to
+async property verification; see pbt-book Ch22 §22.6.)
 SwiftProjectLint's idempotency rules recognise both forms — pick the
 idiom that fits your codebase, or mix and match. Linter's
 `idempotencyViolation` and `nonIdempotentInRetryContext` rules fire
