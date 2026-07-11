@@ -57,7 +57,9 @@ let package = Package(
         // 603 (surfaced by Penny's DiscordBM via `@UnstableEnum`, which
         // only expands correctly on swift-syntax 603+). Upper bound stays
         // exclusive of 604 until verified on that version.
-        .package(url: "https://github.com/apple/swift-syntax.git", "602.0.0"..<"604.0.0"),
+        // Canonical URL is swiftlang/swift-syntax; the whole toolchain pins
+        // this spelling so SwiftPM never sees one identity via two URLs.
+        .package(url: "https://github.com/swiftlang/swift-syntax.git", "602.0.0"..<"604.0.0"),
         // FluentKit is an optional dependency for the `SwiftIdempotencyFluent`
         // product. Only adopters that declare a dependency on
         // `SwiftIdempotencyFluent` pay the compile cost. `requireID()` and
