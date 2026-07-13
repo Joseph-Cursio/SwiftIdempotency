@@ -93,7 +93,7 @@ public struct ExternallyIdempotentMacro: PeerMacro {
         }
 
         let availableLabels = externalParameterLabels(of: funcDecl)
-        if !availableLabels.contains(byValue) {
+        guard availableLabels.contains(byValue) else {
             context.diagnose(Diagnostic(
                 node: Syntax(byExpression),
                 message: ExternallyIdempotentDiagnostic.unknownParameterLabel(
@@ -101,9 +101,40 @@ public struct ExternallyIdempotentMacro: PeerMacro {
                     available: availableLabels
                 )
             ))
+            return []
+        }
+
+        // The label existing is not enough — it has to be *reachable*. A key the caller may
+        // omit is a key the caller does not control, and the whole claim is that the caller
+        // supplies the same key on a retry.
+        if let parameter = parameter(labelled: byValue, of: funcDecl),
+           let reason = OmittableKeyReason(parameter: parameter) {
+            context.diagnose(Diagnostic(
+                node: Syntax(parameter),
+                message: ExternallyIdempotentDiagnostic.keyParameterIsOmittable(
+                    value: byValue,
+                    reason: reason
+                )
+            ))
         }
 
         return []
+    }
+}
+
+/// Why a `by:` parameter could be absent from a call site.
+enum OmittableKeyReason {
+    case hasDefaultValue
+    case isVariadic
+
+    init?(parameter: FunctionParameterSyntax) {
+        if parameter.defaultValue != nil {
+            self = .hasDefaultValue
+        } else if parameter.ellipsis != nil {
+            self = .isVariadic
+        } else {
+            return nil
+        }
     }
 }
 
@@ -159,6 +190,16 @@ private func externalParameterLabels(of funcDecl: FunctionDeclSyntax) -> [String
     return labels
 }
 
+/// The parameter carrying the external label `label`, or `nil` when the function has none.
+private func parameter(
+    labelled label: String,
+    of funcDecl: FunctionDeclSyntax
+) -> FunctionParameterSyntax? {
+    funcDecl.signature.parameterClause.parameters.first { parameter in
+        parameter.firstName.tokenKind != .wildcard && parameter.firstName.text == label
+    }
+}
+
 // MARK: - Diagnostics
 
 struct ExternallyIdempotentDiagnostic: DiagnosticMessage {
@@ -187,6 +228,31 @@ struct ExternallyIdempotentDiagnostic: DiagnosticMessage {
                 + "downstream function whose parameter carries the key, and "
                 + "attach @ExternallyIdempotent there.",
             identifier: "externallyIdempotent.dottedPathNotSupported"
+        )
+    }
+
+    static func keyParameterIsOmittable(value: String, reason: OmittableKeyReason) -> Self {
+        let cause: String
+        switch reason {
+        case .hasDefaultValue:
+            cause = "has a default value"
+
+        case .isVariadic:
+            cause = "is variadic, and so may be passed nothing"
+        }
+
+        return Self(
+            message: "@ExternallyIdempotent(by: \"\(value)\"): the parameter \"\(value)\" "
+                + "\(cause), so a caller may omit it — and a key the caller does not supply "
+                + "is a key the caller cannot repeat on a retry, which is the entire claim "
+                + "this annotation makes. A default cannot rescue it either way: Swift forbids "
+                + "a default value from referring to another parameter, so the key can never be "
+                + "derived from this operation's inputs. It can only be a constant — in which "
+                + "case every distinct operation shares one key and the second is deduplicated "
+                + "as a replay of the first — or nondeterministic, like `UUID()`, in which case "
+                + "every retry mints a fresh key and the operation runs twice. Make \"\(value)\" "
+                + "a required parameter and let the caller own it.",
+            identifier: "externallyIdempotent.keyParameterIsOmittable"
         )
     }
 

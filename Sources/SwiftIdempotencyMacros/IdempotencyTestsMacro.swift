@@ -1,4 +1,5 @@
 import SwiftCompilerPlugin
+import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros
 
@@ -49,18 +50,41 @@ import SwiftSyntaxMacros
 /// C (two-macro split) was rendered unnecessary by B's success.
 public struct IdempotencyTestsMacro: ExtensionMacro {
     public static func expansion(
-        of _: AttributeSyntax,
+        of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
         providingExtensionsOf type: some TypeSyntaxProtocol,
         conformingTo _: [TypeSyntax],
-        in _: some MacroExpansionContext
+        in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
-        let functions = declaration.memberBlock.members
+        let annotated = declaration.memberBlock.members
             .compactMap { $0.decl.as(FunctionDeclSyntax.self) }
             .filter(hasIdempotentAttribute)
-            .filter(\.signature.parameterClause.parameters.isEmpty)
+
+        // The emitted test calls the function with no arguments, so the question is whether it
+        // is *callable* with none — not whether it *declares* none. Those are different
+        // predicates, and the difference is every defaulted and variadic parameter:
+        // `func status(verbose: Bool = false)` declares one parameter and `status()` compiles.
+        let functions = annotated.filter(isCallableWithNoArguments)
+
+        // Say so, rather than expanding to nothing. Silently emitting no test for a function the
+        // author explicitly marked `@Idempotent` is the worst outcome available: a green build,
+        // both annotations present, and no idempotency check anywhere.
+        for excluded in annotated where !isCallableWithNoArguments(excluded) {
+            context.diagnose(Diagnostic(
+                node: Syntax(excluded.name),
+                message: IdempotencyTestsDiagnostic.functionNeedsArguments(
+                    name: excluded.name.text
+                )
+            ))
+        }
 
         guard !functions.isEmpty else {
+            if annotated.isEmpty {
+                context.diagnose(Diagnostic(
+                    node: Syntax(node),
+                    message: IdempotencyTestsDiagnostic.noIdempotentFunctions
+                ))
+            }
             return []
         }
 
@@ -78,6 +102,19 @@ public struct IdempotencyTestsMacro: ExtensionMacro {
             return []
         }
         return [ext]
+    }
+
+    /// Whether `function` can be called with no arguments at all — which is what the emitted
+    /// test does.
+    ///
+    /// Not the same as declaring no parameters. A parameter with a default may be omitted, and a
+    /// variadic may be passed nothing, so `func status(verbose: Bool = false)` and
+    /// `func tally(_ counts: Int...)` are both callable as `status()` and `tally()`. Testing
+    /// `parameters.isEmpty` instead silently drops them.
+    private static func isCallableWithNoArguments(_ function: FunctionDeclSyntax) -> Bool {
+        function.signature.parameterClause.parameters.allSatisfy { parameter in
+            parameter.defaultValue != nil || parameter.ellipsis != nil
+        }
     }
 
     /// Returns `true` if the function declaration has `@Idempotent` in
@@ -146,5 +183,38 @@ public struct IdempotencyTestsMacro: ExtensionMacro {
                 #expect(__first == __second)
             }
             """
+    }
+}
+
+// MARK: - Diagnostics
+
+/// Why `@IdempotencyTests` generated nothing for a declaration.
+///
+/// These are warnings, not errors. The code is legal Swift and the author's intent is clear;
+/// what they need to know is that their intent did not take effect. An expansion that quietly
+/// produces no test is the failure mode worth shouting about — the build is green, both
+/// annotations are present, and nothing is being checked.
+struct IdempotencyTestsDiagnostic: DiagnosticMessage {
+    let message: String
+    let identifier: String
+
+    var severity: DiagnosticSeverity { .warning }
+    var diagnosticID: MessageID {
+        MessageID(domain: "SwiftIdempotencyMacros", id: identifier)
+    }
+
+    static let noIdempotentFunctions = Self(
+        message: "@IdempotencyTests generated no tests: this type has no @Idempotent functions.",
+        identifier: "idempotencyTests.noIdempotentFunctions"
+    )
+
+    static func functionNeedsArguments(name: String) -> Self {
+        Self(
+            message: "@IdempotencyTests generated no test for `\(name)`: the generated test "
+                + "calls it with no arguments, and `\(name)` has at least one parameter that "
+                + "must be supplied. Give the parameters defaults, or test it by hand with "
+                + "`#assertIdempotent` or `assertIdempotentProperty`.",
+            identifier: "idempotencyTests.functionNeedsArguments"
+        )
     }
 }
