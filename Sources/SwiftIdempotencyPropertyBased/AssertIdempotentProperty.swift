@@ -18,6 +18,16 @@ import Testing
 /// the shrinker: a failing run is shrunk to the **minimal failing input**,
 /// reported by `swift-property-based`.
 ///
+/// The cost is worse than an unshrunk counterexample — it is *no* counterexample.
+/// A shrinker minimises by running the property **again** on smaller inputs, and a
+/// trapping assertion denies it the "again"; the process dies holding the value.
+/// Measured on the same bug (non-idempotent only above 100), `#assertIdempotent`
+/// reports `Precondition failed: …` and signal 5 with no mention of the input,
+/// while this function reports `Failure occured with input 101.` — the boundary
+/// itself. Verified 2026-07-16; see `docs/property-based/trial-findings.md`, whose
+/// earlier reasoned-but-unverified prediction of a "raw randomised input" was
+/// optimistic.
+///
 /// ## Usage
 ///
 /// ```swift

@@ -116,13 +116,36 @@ cleanly.
 
 `#assertIdempotent` fails via `precondition`, which terminates the test
 process. On a failing `propertyCheck` iteration the process dies before
-PropertyBased's shrinker can minimise the counter-example. Users of the
-wrap pattern get the raw randomised input on failure rather than a
-shrunk one.
+PropertyBased's shrinker can minimise the counter-example.
 
-**Not experimentally verified** — no deliberately-failing property was
-written. Claim rests on reading `__idempotencyAssertRunTwice`'s source
-and the precondition semantics.
+**Verified 2026-07-16** — and the original prediction was wrong, in the
+optimistic direction. This entry used to say users "get the raw randomised
+input on failure rather than a shrunk one," reasoned from reading
+`__idempotencyAssertRunTwice`'s source, and was labelled *not
+experimentally verified*. Writing the deliberately-failing property took
+about five minutes and showed there is **no input in the output at all** —
+not a shrunk one, not a raw one. The process traps and the value goes with
+it. The same bug, non-idempotent only above 100, under the two assertion
+mechanisms:
+
+```swift
+// #assertIdempotent (precondition):
+ZZShrinkerProbe.swift:20: Precondition failed: #assertIdempotent: closure
+    returned different values on re-invocation — not idempotent
+error: … exited with unexpected signal code 5
+
+// #expect (issue record), same generator, same bug:
+Failure occured with input 101.
+```
+
+`101` is the boundary — the bug's definition as an integer. The trapping
+version reports a signal and a file:line, and nothing about `n`.
+
+The lesson is the one the reasoning missed: a shrinker minimises by running
+the property *again* on smaller inputs, so an assertion that halts the
+process denies it the "again." There is no degraded-but-useful mode; there
+is no output. `assertIdempotentProperty` (the `SwiftIdempotencyPropertyBased`
+product) exists to route around this and reports through `#expect`.
 
 ## Backlog
 
