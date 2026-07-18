@@ -1,0 +1,12 @@
+diff --git a/Sources/SwiftIdempotencyPropertyBased/AssertIdempotentEffectsProperty.swift b/Sources/SwiftIdempotencyPropertyBased/AssertIdempotentEffectsProperty.swift
+index b3773b1..54ffa9d 100644
+--- a/Sources/SwiftIdempotencyPropertyBased/AssertIdempotentEffectsProperty.swift
++++ b/Sources/SwiftIdempotencyPropertyBased/AssertIdempotentEffectsProperty.swift
+@@ -52,7 +52,6 @@ public func assertIdempotentEffectsProperty<Action, Shrinker: Sequence>(
+             let run = makeRun()
+             for action in sequence { try await run.apply(action) }
+             let afterFirst = run.recorders.map { $0._snapshotBox() }
+-            for action in sequence { try await run.apply(action) }
+             let afterSecond = run.recorders.map { $0._snapshotBox() }
+             for index in afterFirst.indices {
+                 #expect(

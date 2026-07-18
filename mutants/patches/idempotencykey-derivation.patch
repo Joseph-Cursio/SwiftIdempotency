@@ -1,0 +1,13 @@
+diff --git a/Sources/SwiftIdempotency/IdempotencyKey.swift b/Sources/SwiftIdempotency/IdempotencyKey.swift
+index b3940ac..3f1348b 100644
+--- a/Sources/SwiftIdempotency/IdempotencyKey.swift
++++ b/Sources/SwiftIdempotency/IdempotencyKey.swift
+@@ -67,7 +67,7 @@ public struct IdempotencyKey: Hashable, Sendable, CustomStringConvertible, Codab
+     /// to the Codable initialiser instead of this one, producing a
+     /// "Gift does not conform to Decoder" error.
+     public init<E: Identifiable>(fromEntity entity: E) where E.ID: CustomStringConvertible {
+-        self.rawValue = String(describing: entity.id)
++        self.rawValue = String(describing: entity)
+     }
+ 
+     /// Construct a key from a string the caller has **audited** as stable

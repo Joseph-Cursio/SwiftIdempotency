@@ -1,0 +1,13 @@
+diff --git a/Sources/SwiftIdempotencyPropertyBased/AssertIdempotentProperty.swift b/Sources/SwiftIdempotencyPropertyBased/AssertIdempotentProperty.swift
+index 512a3ba..1e4eee6 100644
+--- a/Sources/SwiftIdempotencyPropertyBased/AssertIdempotentProperty.swift
++++ b/Sources/SwiftIdempotencyPropertyBased/AssertIdempotentProperty.swift
+@@ -55,7 +55,7 @@ public func assertIdempotentProperty<Input, Result: Equatable, Shrinker: Sequenc
+         input: generator,
+         perform: { input in
+             let first = try await operation(input)
+-            let second = try await operation(input)
++            let second = first
+             #expect(
+                 first == second,
+                 "operation is not retry-idempotent: a second call with the same input returned \(second), not \(first)",

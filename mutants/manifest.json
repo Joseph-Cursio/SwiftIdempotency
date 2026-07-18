@@ -1,0 +1,30 @@
+{
+  "kind": "spm",
+  "note": "Private mutation/regression corpus for SwiftIdempotency — the kit dogfooding on itself (Chapter 30 §30.4.4). Mutants live in the library's own source; each is killed by the library's own tests, including the negative-control `withKnownIssue` tests whose whole job is to prove the detector isn't blind. Run via `swift test --filter`, which targets methods precisely under SPM. Not a scored benchmark — no frozen answer key.",
+  "mutants": [
+    {
+      "id": "assert-property-runs-once",
+      "patch": "patches/assert-property-runs-once.patch",
+      "shape": "retry-value",
+      "expected": "killed",
+      "test": "nonIdempotentFails",
+      "label": "assertIdempotentProperty runs the operation once (second = first) instead of twice — a non-retry-idempotent op is no longer detected"
+    },
+    {
+      "id": "effects-property-skips-retry",
+      "patch": "patches/effects-property-skips-retry.patch",
+      "shape": "retry-effect",
+      "expected": "killed",
+      "test": "nonEffectIdempotentFails",
+      "label": "assertIdempotentEffectsProperty drops the second (retry) pass — afterSecond == afterFirst always, so added effects on replay go unseen"
+    },
+    {
+      "id": "idempotencykey-derivation",
+      "patch": "patches/idempotencykey-derivation.patch",
+      "shape": "key-derivation",
+      "expected": "killed",
+      "test": "fromIdentifiableEntity_uuidID_producesStableRawValue",
+      "label": "IdempotencyKey(fromEntity:) derives from the entity, not its .id — the rawValue is no longer the stable identifier"
+    }
+  ]
+}
