@@ -5,6 +5,9 @@ import CompilerPluginSupport
 
 let package = Package(
     name: "SwiftIdempotency",
+    // Parallel List Drift spuriously pairs arrays inside this manifest: they all resolve to the
+    // `package` binding, so unrelated lists read as one drifted list. A manifest-DSL artifact.
+    // swiftprojectlint:disable:next parallel-list-drift
     platforms: [
         .macOS(.v13),
         .iOS(.v16),
