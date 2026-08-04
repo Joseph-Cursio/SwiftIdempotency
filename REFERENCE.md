@@ -86,18 +86,17 @@ the other at its tier; they address different classes of effect.
 
 | Tier | Macro on this package | Meaning |
 |---|---|---|
-| `pure` | (none — purity is not modelled here) | No side effects; same inputs always produce the same outputs. |
+| `pure` | `@Pure` | No side effects; same inputs always produce the same outputs. |
 | `idempotent` | `@Idempotent` | Re-invocation produces no additional observable effect on external state. |
 | `observational` | `@Observational` | Only side effects are append-only writes to observation sinks (loggers, metrics, tracing spans). Duplicate writes on retry are a feature, not a bug. |
 | `transactional_idempotent` | *not exposed as a macro; doc-comment-only via `/// @lint.effect transactional_idempotent`* | Side effects are individually non-idempotent but commit atomically — typically inside a database transaction. |
 | `externallyIdempotent` | `@ExternallyIdempotent(by:)` | Idempotent only when routed through a caller-supplied dedup key. |
 | `non_idempotent` | `@NonIdempotent` | Re-invocation produces additional observable effects. |
-| `unknown` | (none — emerges from inference) | The linter could not determine an effect (e.g., calls into an un-annotated third-party API). |
+| `unknown` | `@EffectUnknown` | The effect could not be determined (e.g., calls into an un-annotated third-party API). Also emerges from inference — but writing it says something inference cannot: *someone looked and could not decide*, as against nobody having looked. |
 
-The package ships macro attributes for five of the seven tiers
-(`idempotent`, `observational`, `externallyIdempotent`,
-`non_idempotent`, plus the call-graph-only `unknown` and `pure` tiers
-that need no marker). `transactional_idempotent` is intentionally
+The package ships macro attributes for six of the seven tiers
+(`idempotent`, `observational`, `externallyIdempotent`, `non_idempotent`,
+`pure`, and `unknown`). `transactional_idempotent` is intentionally
 left at the doc-comment level — it requires a transaction boundary
 that the macro can't verify, and the doc-comment form already carries
 the necessary `@lint.txn_boundary` companion annotation.
