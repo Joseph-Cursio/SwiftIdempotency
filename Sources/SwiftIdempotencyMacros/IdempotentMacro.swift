@@ -33,6 +33,15 @@ public struct ObservationalMacro: EmptyPeerMacro {}
 public struct ClockDeterministicMacro: EmptyPeerMacro {}
 
 /// Marker implementation — see `IdempotentMacro` for the marker-only
+/// rationale. Declares the `unknown` tier: the effect could not be determined.
+/// Distinct from carrying no annotation at all — absence means nobody looked,
+/// this means someone looked and could not decide. Incomparable to
+/// `non_idempotent` rather than ordered against it, which is why
+/// `SwiftEffectInference` reads it as its own question instead of admitting it
+/// to the linear `Effect` chain.
+public struct EffectUnknownMacro: EmptyPeerMacro {}
+
+/// Marker implementation — see `IdempotentMacro` for the marker-only
 /// rationale. Declares the lattice-bottom `@lint.effect pure` claim;
 /// SwiftEffectInference's default `AttributeRecognition` has recognised
 /// the name since the `pure` tier landed — this macro closes the gap
@@ -280,6 +289,7 @@ struct SwiftIdempotencyMacrosPlugin: CompilerPlugin {
         ObservationalMacro.self,
         PureMacro.self,
         ClockDeterministicMacro.self,
+        EffectUnknownMacro.self,
         ExternallyIdempotentMacro.self,
         AssertIdempotentMacro.self,
         AssertIdempotentAsyncMacro.self,
