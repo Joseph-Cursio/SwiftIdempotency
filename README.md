@@ -21,6 +21,41 @@ This README is a broad overview. Three companion documents go deeper:
   every public macro, type, initializer, and helper, organised by
   library product.
 
+## Two kinds of idempotency
+
+"Idempotent" names two unrelated things in Swift, and this package is about
+the second — so it's worth drawing the line before the API tour.
+
+- **Value idempotence** — `f(f(x)) == f(x)` for a *pure* function.
+  Normalising a path, clamping a number, canonicalising a URL: applying it a
+  second time changes nothing about the result. This is an algebraic property
+  of a return value, and it's what tools like SwiftInferProperties'
+  `IdempotenceTemplate` already discover. `#assertIdempotent` and
+  `@IdempotencyTests` over pure functions cover it here, but it is not the
+  hard problem.
+
+- **Replay idempotence** — a *side-effecting* handler is safe to run twice.
+  A webhook redelivered by Stripe, a retried order insert, a resumed upload:
+  the function may return different values on the second call (`true` then
+  `false`), but its **observable effects happen once**. The safety comes not
+  from the return value but from a mechanism in the body — a dedup gate, a
+  stable `IdempotencyKey`, a fetch-before-insert. This is the retry-safety
+  problem, and it's what the rest of this package exists for:
+  `IdempotencyKey`, `@ExternallyIdempotent(by:)`, and
+  `assertIdempotentEffects`.
+
+The confusion between the two is real — same word, unrelated meanings — so
+the effect lattice keeps them apart as tiers (`pure` < `observational` <
+`idempotent` < `externallyIdempotent` < `nonIdempotent`), and the assertions
+split by which one you're checking: return-equality for value idempotence,
+effect-equality for replay idempotence.
+
+If you're trying to recognise the replay shape in your own code, the
+**[replay-idempotency shape catalog](docs/replay-idempotency-shape-catalog.md)**
+names the four canonical handler shapes — key-from-entity, dedup-gate,
+fetch-or-insert, route-through-key — and, for each, the refutable property it
+admits and the twin that breaks it.
+
 ## What it provides
 
 Three tiers of safety. Strongest first.
