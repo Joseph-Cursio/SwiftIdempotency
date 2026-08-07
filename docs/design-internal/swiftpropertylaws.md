@@ -160,7 +160,7 @@ from "it ran elsewhere" (the log's **emptiness** is what tells them apart).
 ~300.** That kills the Daikon-flood argument for auditing rather than un-vetoing, and simultaneously
 kills the case *for* un-vetoing.
 
-**3. 13 of 56 `(key, law)` claims were false** (`docs/protocol-coverage-law-drift.md`, kit `4a2dada`).
+**3. 13 of 56 `(key, law)` claims were false** (`SwiftInferProperties/docs/measurements/protocol-coverage-law-drift.md`, kit `4a2dada`).
 The live one: `checkSetAlgebraPropertyLaws` runs fifteen laws and **union associativity was not one of
 them** — yet the map claimed it, a template emitted it, and a green test *pinned the suppression as
 correct*. **Both halves are now fixed**, and the current source shows it — `"SetAlgebra"` lists six
@@ -257,8 +257,8 @@ unseeded finite path and now says so at the call site.
 | emitting kit suite calls, and the 51% derivability bound | `Sources/SwiftInferCLI/KitSuiteEmitter.swift` |
 | the veto, key by key | `Sources/SwiftInferCore/ProtocolCoverageMap.swift` |
 | whether the veto's premise is true | `Sources/SwiftInferCore/ProtocolCoverageAudit.swift` |
-| whether the claims are true **law by law** | `docs/protocol-coverage-law-drift.md` |
+| whether the claims are true **law by law** | `SwiftInferProperties/docs/measurements/protocol-coverage-law-drift.md` |
 | kit verdicts feeding back into scoring | `Sources/SwiftInferCore/KitEvidence*.swift` |
-| does the emitted suite catch a real bug? | `docs/kit-suite-backtest-plan.md` — Arm 1 is a measured HIT |
+| does the emitted suite catch a real bug? | `SwiftInferProperties/docs/plans/kit-suite-backtest-plan.md` — Arm 1 is a measured HIT |
 | the sibling packages | `docs/design-internal/swiftprojectlint.md`, `swifteffectinference.md` |
 | vocabulary — *Strategist / generator recipe*, *Stub*, *Outcome* | `docs/design-internal/glossary.md` § Verify |
