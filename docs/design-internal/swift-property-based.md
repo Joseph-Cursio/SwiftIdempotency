@@ -165,7 +165,7 @@ counterexample at all**, not a coarse one. SwiftIdempotency measured both sides 
 This repo's Pass 1 / Pass 2 split is the same constraint arriving from another direction: boundary
 values cannot go in the verdict pass, because `x + 1` traps at `Int.max` and a trap is not a test
 result — mixing them in turned three integration tests into `signal 5` crashes. **A composed law that
-can trap is a law whose counterexample you will not get.** See `docs/verify-edge-pass.md`.
+can trap is a law whose counterexample you will not get.** See `SwiftInferProperties/docs/design/verify-edge-pass.md`.
 
 **Seeded means seeded all the way down.** The kit's `doubleWithNaN` / `floatWithNaN` drew their
 finite values from `Double.random(in:)` — the *system* RNG, invisible to the engine's seed. NaN
@@ -208,7 +208,7 @@ whether its inputs are reproducible*. Anything that reaches for `.random` instea
 | replay semantics and the two-seeds `Issue` | `Sources/PropertyBased/FixedSeedTrait.swift` |
 | the 11 shrinkers | `Sources/PropertyBased/Shrink*.swift` |
 | where the 10-member cap resurfaces | `SwiftPropertyLaws/Sources/PropertyLawCore/DerivationStrategy.swift` |
-| why a trapping assertion costs the counterexample | `docs/design-internal/swiftidempotency.md`, `docs/verify-edge-pass.md` |
+| why a trapping assertion costs the counterexample | `docs/design-internal/swiftidempotency.md`, `SwiftInferProperties/docs/design/verify-edge-pass.md` |
 | the curated layer on top of this engine | `docs/design-internal/swiftpropertylaws.md` |
 
 **Checkout path:** `.build/checkouts/swift-property-based` (gitignored; also resolved under
