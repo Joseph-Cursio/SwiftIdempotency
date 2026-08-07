@@ -35,7 +35,7 @@ Three docs already describe this repo and none of them describes its *shape*:
 
 This one is the **architecture**: the targets, the stage order a suggestion actually travels, the
 extension points, and the invariants that govern the whole thing. It deliberately does not restate
-the narrative history — `git log` and `docs/archive/claude-md-narrative-history.md` own that.
+the narrative history — `git log` and `SwiftInferProperties/docs/archive/claude-md-narrative-history.md` own that.
 
 ---
 
@@ -258,6 +258,6 @@ before you touch anything:
 | why `verify` declines so much (it is not the carrier) | `SwiftInferProperties/docs/measurements/verify-carrier-reach-census.md` |
 | why 88% of default output was `predicate` | `SwiftInferProperties/docs/design/predicate-display-order.md` |
 | the catalog health census, and how to A/B a template | findings §10 |
-| product scope and success criteria | `docs/SwiftInferProperties PRD v1.0.md` + `v2.0.md` |
-| the full shipped-cycle changelog | `docs/archive/claude-md-narrative-history.md` |
+| product scope and success criteria | `SwiftInferProperties/docs/SwiftInferProperties PRD v1.0.md` + `v2.0.md` |
+| the full shipped-cycle changelog | `SwiftInferProperties/docs/archive/claude-md-narrative-history.md` |
 | the four sibling packages | `docs/design-internal/swift{projectlint,effectinference,propertylaws,idempotency}.md` |
