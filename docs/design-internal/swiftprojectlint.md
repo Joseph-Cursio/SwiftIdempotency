@@ -57,7 +57,7 @@ Three rules find pure logic, and they differ by **whether the logic already has 
 | `Pure Closure Property-Test Candidate` | a closure passed to `sorted`/`filter`/`map`/`reduce` | `extractable-kernel` | **no** — extract it first |
 | `Extractable Pure Kernel` | statements in the middle of an impure method | `extractable-kernel` | **no** — extract it first |
 
-The third is the valuable one and the reason this family exists. `Docs/rules/extractable-pure-kernel.md`
+The third is the valuable one and the reason this family exists. `SwiftProjectLint/Docs/rules/extractable-pure-kernel.md`
 carries the motivating case verbatim: `uploadRemainingChunks` is `private async throws`, does network
 I/O, and has chunk arithmetic inlined in it that is a function of `(data.count, chunkSize, index)`
 and nothing else. Two real bugs lived there — an unclamped resume counter that completes a partial
@@ -339,7 +339,7 @@ Worth reading `Sources/SwiftInferCLI/Discover+Seeds.swift` in full; the short ve
 | reachability's three values | `Packages/SwiftProjectLintModels/…/TestReachability.swift` |
 | why the report collapses candidates but the manifest does not | `Sources/Core/Export/CandidateInventory.swift` |
 | what counts as a pure-function candidate | `Packages/SwiftProjectLintVisitors/…/PropertyTestCandidacy.swift` |
-| the kernel motivating case, with its two real bugs | `Docs/rules/extractable-pure-kernel.md` |
+| the kernel motivating case, with its two real bugs | `SwiftProjectLint/Docs/rules/extractable-pure-kernel.md` |
 | policing the cure vs detecting the disease | `Docs/design/primitive-bypassing-domain-type-rule-design.md` |
 | the format wiring and the exit-gate bypass | `Sources/CLI/OutputFormat.swift`, `SwiftProjectLintCLI.swift` |
 | consumer side of the same hop | `SwiftInferProperties/Sources/SwiftInferCLI/Discover+Seeds.swift`, `SeedManifest.swift`, `SeedRole.swift` |

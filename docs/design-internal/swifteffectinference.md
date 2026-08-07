@@ -342,7 +342,7 @@ Open, in order:
 | collision-withdrawal and lookup precedence | `Sources/SwiftEffectInference/EffectSymbolTable.swift` |
 | why a name match needs an `import` to count | `Sources/…/Internal/FrameworkGates.swift` |
 | why `Set.insert` is not a non-idempotent `insert` | `Sources/…/Internal/StdlibIdempotentMutations.swift` |
-| the full design, including the migration plan §10 | `docs/SwiftEffectInference Design v0.2.md` |
+| the full design, including the migration plan §10 | `SwiftEffectInference/docs/SwiftEffectInference Design v0.2.md` |
 | **the meet this repo actually takes** | `SwiftInferProperties/Sources/SwiftInferCore/SoundPurity.swift` |
 | where the verdict is recorded at scan time | `…/FunctionScannerVisitor+Summary.swift:38`, `FunctionSummary.swift` |
 | the advisory channel it renders on | `…/EffectAnnotationAdvice.swift` |

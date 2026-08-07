@@ -10,7 +10,7 @@ sharing SwiftInfer's corpus is a wrong-direction cross-repo dependency (plus the
 seed-model mismatch noted below). The replay idiom for these tests is
 `@Test(.fixedSeed("…"))`. Companion to SwiftInferProperties'
 *Minimal-Counterexample & Replay-Corpus* epic
-(`SwiftInferProperties/docs/v1.141 Calibration Plan.md`, workstream W6).
+(`SwiftInferProperties/docs/archive/v1.141 Calibration Plan.md`, workstream W6).
 
 > **Shipped note (W6.A).** Simpler than the original sketch below: the shrinking
 > comes from `swift-property-based`'s own `propertyCheck` (which generates inputs
