@@ -1,5 +1,8 @@
 # swift-property-based — the engine underneath
 
+> **Status:** `reference` · **As of:** 2026-08-06
+
+
 **Repo:** [`github.com/x-sheep/swift-property-based`](https://github.com/x-sheep/swift-property-based)
 (Lennard Sprong) · **Book home:** Appendix C's closing section; `.fixedSeed` in Chapter 28 §28.1.1.
 
@@ -25,8 +28,31 @@ SwiftPropertyLaws ▶ swift-property-based ◀ SwiftIdempotencyPropertyBased
 SwiftInferProperties ─── emits `import PropertyBased` into stubs ───┘
 ```
 
-**Pinned at `1.2.0`** (`edaffedc`) in `Package.resolved`. ~3,745 lines across 32 files. Swift 6.2,
-built on swift-testing, Foundation-optional.
+**Pinned at `1.2.0`** (`edaffedc`) in `Package.resolved` — **re-verified 2026-08-06, unmoved**.
+~3,745 lines across 32 files. Swift 6.2, built on swift-testing, Foundation-optional.
+
+### In and out, precisely
+
+The only toolchain member this repo **never links**. Its I/O crosses into us through *generated
+source text* — we write `import PropertyBased` into a stub and hand it to `swiftc`, so every contract
+below is checked by a compiler in a subprocess, not by our build.
+
+| | what | shape |
+|---|---|---|
+| **consumes** | a `Generator` | composable generate + shrink; `Gen<Value>` is the factory namespace |
+| | a property closure | `(Value) -> Bool`, or a throwing/`#expect` body under swift-testing |
+| | a seed *(optional)* | `.fixedSeed` — the basis for replay |
+| **produces** | pass, or a **shrunk counterexample** | the minimal failing value, not the first one found |
+| | a swift-testing failure | it has no reporter of its own — it fails the enclosing test |
+
+**Its limits arrive here as our behaviour, three packages downstream and unrecognisable by then** —
+which is the whole reason this doc exists. A `.todo` in a generated stub, a replay that runs one
+trial instead of a hundred, a law that cannot be stated: each is this library's boundary, surfacing
+in our output without attribution.
+
+**Nothing in this repo's own suite exercises it.** The contract is verified only when `verify`
+compiles and runs a stub, which is why those suites are subprocess-tagged and slow — and why a
+breaking change here would surface as `build-failed` on every entry rather than as a test failure.
 
 ## Why this doc exists
 

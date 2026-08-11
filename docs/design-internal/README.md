@@ -7,8 +7,8 @@ companion package, plus a shared `glossary.md` and `open-threads.md`.
 | | |
 |---|---|
 | **Source** | `SwiftInferProperties/docs/design-internal/` |
-| **Imported from** | `dde5397` (2026-08-06) |
-| **Imported on** | 2026-08-06 |
+| **Imported from** | `5720cef` (2026-08-11) |
+| **Imported on** | 2026-08-11 |
 
 ## Read-only here
 
@@ -29,10 +29,12 @@ To refresh:
 
 ```sh
 cp ~/xcode_projects/SwiftInferProperties/docs/design-internal/*.md \
-   ~/xcode_projects/SwiftIdempotency/docs/design-internal/
+   ~/xcode_projects/swiftIdempotency/docs/design-internal/
 ```
 
-…and update the commit in the table above.
+…and update the commit in the table above. The checkout is `swiftIdempotency`,
+lower-cased — the spelling only matters off APFS, which is exactly where a stale
+copy would be noticed last.
 
 ## What each one is
 
@@ -57,18 +59,18 @@ process, and conflating them is the most expensive mistake available here.
 ## Known-stale as of import
 
 Every doc carries its own `doc-provenance` marker and a standing warning that
-**counts rot while diagnoses do not**. Two claims were overtaken by work landed
-the same day as this import, and are called out here so a reader does not act on
-them:
+**counts rot while diagnoses do not**.
 
-- **`swiftidempotency.md`** and the seed-manifest discussion in
-  `swiftprojectlint.md` / `swiftinferproperties.md` describe `.pbt/seeds.json` as
-  carrying the idempotency *violation* but not the *tier*. That gap is closed:
-  SwiftProjectLint#70 emits `effect` (declared tier, resolved tier, provenance,
-  depth, reason) on `idempotency` seeds, and SwiftInferProperties#134 consumes it.
-- The consumer acts only on `provenance: declared`. `inferred-upward` is withheld
-  because SwiftProjectLint supplies its heuristic name inferrer as the anchor
-  resolver to `applyBodyInference`, so an upward chain can bottom out on a name
-  guess — and the manifest's provenance describes only the final hop. Closing
-  *that* needs anchor-purity tracking in SwiftEffectInference's
-  `BodyEffectInferrer`, which is the open follow-up.
+The two claims the previous import called out are both **superseded by this
+one**, and the docs now record the outcome rather than the gap. The effect tier
+is described end to end (`swiftprojectlint.md` § *The effect tier*) and read on
+the consumer side as of `f33dfd1`; the `inferred-upward` withholding closed too,
+because the producer shipped `anchor`, which distinguishes a declaration-anchored
+chain from one that bottomed out on a name guess. `open-threads.md` item 28 has
+the whole arc, including the false demotion that building it exposed. What is
+still open there is smaller and named: whether an *inferred* tier should veto a
+proposed law or only demote it.
+
+One tension survives the import, upstream's to resolve: `swiftprojectlint.md`
+still heads that section *"a field this repo does not yet read"* while its body,
+forty lines down, records the field as read. The body is the current one.
