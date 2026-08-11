@@ -1,5 +1,8 @@
 # Glossary
 
+> **Status:** `reference` · **As of:** 2026-08-06
+
+
 Vocabulary used across this repo's source, docs, and CLI output. Terms are grouped by the
 stage they belong to and **alphabetical within each stage**, because several of them mean
 different things at different stages — **"template" in `discover` and "template" in `verify` are
@@ -11,12 +14,24 @@ themselves sort for finding a word, not for learning the order.
 Every definition here is keyed to code. Where a term's authority is a specific type or file,
 it is named — prefer reading that over trusting this file, which is a map and not the territory.
 
-> **As of 2026-08-03** · `SwiftInferProperties@7e7a633`. The **definitions** here do not expire; the
-> **measurements embedded in them do** — the 738-of-1,115 score-20 figure, the 95-of-251 composer
-> share, the 156 `unsupported-template` table, the 1,657-seeds-to-21-picks ratio. Re-verify a number
-> before citing it; the vocabulary around it stands.
+> **As of 2026-08-06** · `SwiftInferProperties@2c599c0`. The **definitions** here do not expire; the
+> **measurements embedded in them do**. Re-verify a number before citing it; the vocabulary around
+> it stands.
+>
+> **All four survey numbers were re-taken on 2026-08-06**, and every one had moved:
+>
+> | | was | now | how |
+> |---|---|---|---|
+> | score-20 share, swift-syntax | 738 / 1,115 | **606 / 979** | fresh `discover`, **different corpus revision** — a re-run, *not* a re-verification (see [Score](#score)) |
+> | composer-supported / `unsupported-template` | 95 / 156 of 251 | **24 of 281** template, **105** carrier | re-derived from the committed 2026-08-05 survey stream |
+> | seeds → default-tier picks | 1,657 → 21 | **2,096 → 180** | fresh linter + `discover` run |
+> | template files vs `TemplateName` cases | ~89 / 17 | **~92 / 18** | source count |
+>
+> **Two of these changed meaning, not just magnitude.** The composer table no longer partitions the
+> corpus — the bottleneck moved from *template* reach to *carrier* reach. And the seed funnel
+> inverted into a flood: 1,738 rows on a seeded run against 30 `strong`+`likely`.
 
-<!-- doc-provenance date=2026-08-03 subject=SwiftInferProperties@7e7a633e3e93073eef4623cbd6a305ebde6bc568 observer=SwiftInferProperties@7e7a633e3e93073eef4623cbd6a305ebde6bc568 -->
+<!-- doc-provenance date=2026-08-06 subject=SwiftInferProperties@38368c3 observer=SwiftInferProperties@38368c3 -->
 
 
 ---
@@ -123,11 +138,32 @@ value-semantic `(T) -> T` shape a template needs. `idempotence-lifted` is the te
 An integer assembled from weighted `Signal`s. Not calibrated in an absolute sense — the
 thresholds are documented as "v0.3 defaults, not load-bearing constants."
 
-**Known distribution problem:** scores land on a sparse lattice
-`{20,25,30,35,40,45,50,65,70,75,80,85}` with **nothing between 50 and 65**, and on swift-syntax
-**738 of 1,115 suggestions sit at exactly 20** — the `possible` floor. Moving that cut to 21
-deletes two-thirds of the output. Ranking anything by row count without accounting for the
-floor will mislead — and it is the [Daikon trap](#daikon-trap) arriving, measured.
+**Known distribution problem:** scores land on a sparse lattice with a **hole in the middle**, and
+on swift-syntax roughly **two-thirds of all suggestions sit at exactly 20** — the `possible` floor.
+Moving that cut to 21 deletes two-thirds of the output. Ranking anything by row count without
+accounting for the floor will mislead — and it is the [Daikon trap](#daikon-trap) arriving, measured.
+
+| | 2026-07 study | **2026-08-06 re-run** |
+|---|---|---|
+| suggestions at score 20 | **738 of 1,115 (66%)** | **606 of 979 (62%)** |
+| corpus revision | `1b5cd99f` | `9d6e738` |
+
+**Re-run, not re-verified — and the distinction is the point.** The study's corpus revision
+`1b5cd99f` is **no longer a reachable object** in `~/GitHub_projects/swift-syntax`, so the original
+number cannot be reproduced at all. 606-of-979 is a *new* measurement over a *different* corpus
+revision, and it is reported that way rather than substituted for the old one. What it establishes
+is that **the phenomenon is stable** (66% → 62% across a corpus move), which is the claim the entry
+actually rests on.
+
+Observed lattice on the 2026-08-06 run: `{20, 25, 30, 35, 40, 45, 65, 70, 75}` — the hole is real
+and is **45 → 65** on this corpus, wider than the "nothing between 50 and 65" this entry used to
+state. No suggestion scored 50, 80 or 85.
+
+> **Method trap, paid in this session.** `discover` over swift-syntax **`SIGBUS`es under the debug
+> binary** — reproducibly, in under a second, on `Sources/` alone. That is the stack-depth trap
+> `SwiftInferProperties/docs/measurements/parsing-catalog-gap.md` warns about, and the fix is the **release** binary (`swift build -c
+> release`), which completes in 105s. A debug-binary run does not produce a smaller number; it
+> produces *no* number and an exit code of 138.
 
 ### Seed / seed manifest
 `{file, line, symbol}` records emitted by SwiftProjectLint's `--format pbt-seeds`, naming
@@ -146,25 +182,61 @@ matched** still earns the generic determinism law `f(x) == f(x)`, synthesized do
 of the tier cut; and an empty manifest focuses to zero suggestions rather than to all of
 them. A missing or malformed file is an error, not a silent fallback.
 
-**A seed is not a suggestion.** 1,657 seeds have produced 21 default-tier picks on this
-repo.
+**A seed is not a suggestion.** Re-measured 2026-08-06 on this repo, twice the same day — the
+second time at `38368c3` with the linter at `SwiftProjectLint@db4be6b6`, both arms from one release
+binary over `--sources Sources`:
+
+| | 2026-08-03 | 2026-08-06 (`2c599c0` / `08a4b09`) | **2026-08-06 (`38368c3` / `db4be6b6`)** |
+|---|---|---|---|
+| seeds emitted | 1,657 | 2,096 | **2,108** |
+| default-tier picks, plain `discover` | 21 | 180 | **185** |
+
+The second move is **this repo growing, not the tool changing**: `c14dc7e` and `38368c3` added
+~1,600 lines of source, so more pure functions exist to seed.
+
+**The funnel narrowed from ~79:1 to ~11:1, and the reason is not that inference got better.** The
+decomposition says so — of those 185, only **3 are `strong` and 29 `likely`**; **151 are `possible`
+pulled up by the refutability rescue**, plus 2 advisory. Against the older, stricter reading of
+"default tier" as *likely and above*, the number is **32**, not 185. Both are given because the
+2026-08-03 figure does not record which reading it used, and 21 → 30 versus 21 → 180 tell different
+stories.
+
+**The seeded run is the surprising one.** `discover --seeds` prints **1,746**, *more* than the
+unseeded 185 — because a seed does not only focus, it also **vouches**: 659
+`restricted-function` seeds rescue **663** access-restricted functions into template analysis that a
+plain run never opens (663 > 659 because overloads share a seed). Every one of the extra
+1,561 rows is advisory or possible (1,455 · 261). So the headline still holds in the direction it
+was written — a seed is not a suggestion — but the modern failure mode is **flood, not funnel**.
+
+**The `strong` + `likely` sets are no longer identical, and the seeded run is the SMALLER one:
+32 unseeded, 30 seeded.** That was written as *"identical at 30 in both runs"* on 2026-08-06 and
+did not survive the same day. Focusing now costs two `likely` rows. It is not obviously a defect —
+the focus exists to narrow, and `keepRoleEntailedLaws` only overrides for laws the code *owes* — but
+it is the first time the high-confidence set has moved under focusing at all, and the direction is
+the one worth watching: the guard against this is `guardFinalAnswer`, which fires on an answer with
+**zero** refutable laws, not on one that quietly lost two. **Not yet diagnosed.**
+
+Seed kinds behind the 2,108: `pure-function` 1,189 · `restricted-function` 659 ·
+`extractable-kernel` 257 · `idempotency` 3.
 
 ### Template
 A named law shape that discovery can recognize from code — `idempotence`, `commutativity`,
 `round-trip`, `predicate`. A template decides *whether it fires* and *what score it assigns*,
 and ships the "why suggested / why this might be wrong" pair with each firing.
 
-The canonical name vocabulary is `TemplateName` (`Sources/SwiftInferCore/TemplateName.swift`),
+The canonical name vocabulary is `TemplateName` (`SwiftInferProperties/Sources/SwiftInferCore/TemplateName.swift`),
 which exists so the several curated subsets ("the verifiable ones", "the v1.46 hardcoded set")
 can't drift apart as string literals.
 
 **Trap:** `TemplateName` does *not* enumerate every template discovery can emit. It holds the
 verifiable set plus four extras; names like `predicate`, `input-totality`, and `filter-subset`
 are live in the index and absent from the enum. Counting templates by `TemplateName.allCases`
-undercounts. There are ~89 `*Template*.swift` files against 17 enum cases.
+undercounts. There are **~92** `*Template*.swift` files against **18** enum cases (2026-08-06; both
+figures were 89/17 three days earlier — **the ratio drifts in both terms**, which is why the trap is
+stated as a ratio and not as a number to memorise).
 
 ### Tier
-Visibility band derived from score (`Sources/SwiftInferCore/Tier.swift`):
+Visibility band derived from score (`SwiftInferProperties/Sources/SwiftInferCore/Tier.swift`):
 
 | tier | rule | shown by default |
 |---|---|---|
@@ -196,7 +268,7 @@ A law some type-correct, plausible implementation would be **rejected** by. The 
 this repo uses instead of suggestion count, because `f(x) == f(x)` passes "did discovery return
 > 0" and can never fail.
 
-Authority: `Refutability.isRefutable` (`Sources/SwiftInferCore/Refutability.swift`).
+Authority: `Refutability.isRefutable` (`SwiftInferProperties/Sources/SwiftInferCore/Refutability.swift`).
 
 **Caveat — it is declared, not measured.** The current implementation is set membership against
 `tautologicalTemplates`, which contains exactly one name (`determinism`). Everything else is
@@ -302,10 +374,12 @@ Three things it is **not**:
   and rendered to a reader exactly like any other suggestion — and then cannot be run. Measured on
   this repo's index (2026-08-01): **95 of 251 entries composer-supported (38%)**.
 
-  **That figure predates `predicate`'s composer and has not been re-measured.** `predicate` was
-  120 of the 156 unsupported entries in that same index, so the arithmetic consequence is ~215 of
-  251 (~86%) — *arithmetic on an old index, not a new run*, and recorded as such rather than
-  quietly restated as a measurement. Re-run before citing a number here.
+  **Re-measured 2026-08-06, and the estimate was good.** That figure predated `predicate`'s
+  composer; the arithmetic guess recorded here was *"~215 of 251 (~86%)"*, explicitly flagged as
+  arithmetic rather than a run. The 2026-08-05 whole-corpus stream puts template support at **257 of
+  281 (91%)** — the guess was ~5 points low, and low in the safe direction. The hedge was the right
+  call and is now discharged: **`unsupported-template` is 24, not 156**, and the live constraint is
+  `unsupported-carrier` at 105. See [Reach](#reach) for the full table.
 - **Not a quality signal.** It says a stub can be composed. Whether the law could have *failed*
   is [refutation reach](#reach), a different and later question.
 
@@ -315,7 +389,7 @@ attributing a decline to the wrong one is a documented way to build the wrong pl
 
 ### Decline
 Verify returning no verdict because it could not build the attempt at all — as distinct from
-running and passing. The `VerifyError` cases (`Sources/SwiftInferCLI/VerifyCommand.swift`):
+running and passing. The `VerifyError` cases (`SwiftInferProperties/Sources/SwiftInferCLI/VerifyCommand.swift`):
 
 | decline | meaning |
 |---|---|
@@ -332,7 +406,7 @@ governs only the v1.46 hardcoded Route 1; everything else derives from `RawType`
 `TypeShape`. Reading that constant and believing it produced a wrong plan once already.
 
 ### Outcome
-`VerifyEvidenceOutcome` (`Sources/SwiftInferCore/VerifyEvidence.swift`):
+`VerifyEvidenceOutcome` (`SwiftInferProperties/Sources/SwiftInferCore/VerifyEvidence.swift`):
 
 | outcome | meaning |
 |---|---|
@@ -392,27 +466,50 @@ set, not the catalog.
 **Refutation reach** — of the laws executed, how many could actually have failed. Bounded by the
 **generator**, and the newest of the three to be measurable.
 
-Measured on this repo's own 251-entry index (2026-08-01):
+**Re-verified 2026-08-06, and the two-row table below is superseded — the bottleneck moved.**
+Source: the frozen `fixtures/whole-corpus-survey/2026-08-05-whole-corpus.jsonl` (281 records, one per
+index entry, `verify --all-from-index`, subject `1ef7128`). Re-derived rather than re-run: that survey
+cost 76 minutes and 107 GB, and its stream is committed precisely so the numbers can be re-taken from
+evidence.
+
+| outcome | n | share |
+|---|---:|---:|
+| `measured-bothPass` | 130 | 46% |
+| `architectural-coverage-pending` | 131 | 47% |
+| `measured-error` | 11 | 4% |
+| `measured-defaultFails` | 9 | 3% |
+
+and the 131 pending split by **why**, which is where the framing changed:
+
+| detail | n | |
+|---|---:|---|
+| `unsupported-carrier` | **105** | the new bottleneck — no generator for the carrier type |
+| `unsupported-template` | **24** | down from 156 |
+| `monotonicity-domain-not-comparable` · `instance-method-shape-not-supported` | 1 each | |
+
+**`unsupported-template` collapsed 156 → 24, and `predicate` left the bucket entirely** —
+`composePredicatePass` shipped 2026-08-03 and its 120 rows are gone. What remains is led by
+`input-totality` (11), then `value-round-trip` and `filter-subset` (3 each).
+
+**So "composer-supported vs `unsupported-template`" no longer partitions the corpus.** The old
+two-row table implied one axis with two values summing to 251; today template reach is 24 of 281
+(9%) and **carrier reach is 105 (37%)** — a different axis, and the one worth working. That is the
+same 105 open-threads item 27 names, arrived at independently.
+
+**Historical — the 2026-08-01 measurement, on a 251-entry index:**
 
 | | entries | share |
 |---|---:|---:|
 | composer-supported | 95 | 38% |
 | `unsupported-template` | **156** | **62%** |
 
-and the 156 are not spread evenly:
-
-| template | n | note |
-|---|---:|---|
-| `predicate` | **120** | 77% of the whole bucket — **closed 2026-08-03**, `composePredicatePass` ships. The largest single reach gap this repo had, and the row that made the "arguably not a reach gap" hedge in this table look like a reason not to fix it |
-| `inverse-pair` | 14 | |
-| `input-totality` | 11 | |
-| `value-round-trip` | 3 | |
-| `filter-subset` | 3 | |
-| `differential-equivalence` | 2 | |
-| `comparator` / `override-precedence` / `invariant-preservation` | 1 each | |
-
-Net of `predicate`: **36 entries across 8 templates**, of which `inverse-pair` + `input-totality`
-are 25 — **69% of the actionable gap in two composers**.
+The 156 were not spread evenly: `predicate` **120** (77% of the bucket, since closed),
+`inverse-pair` 14, `input-totality` 11, `value-round-trip` 3, `filter-subset` 3,
+`differential-equivalence` 2, and `comparator` / `override-precedence` /
+`invariant-preservation` 1 each. Net of `predicate` that was **36 entries across 8 templates**, of
+which `inverse-pair` + `input-totality` were 25 — *"69% of the actionable gap in two composers"*, a
+prediction the 2026-08-05 stream partly bears out: `input-totality` is still the largest remaining
+row, while `inverse-pair` cleared entirely.
 
 **Since `predicate` shipped, that residual IS the gap** — the table above describes an index taken
 2026-08-01, and the 120 row is now composer-supported. `inverse-pair` (14) and `input-totality`
@@ -521,10 +618,15 @@ catalogue that produces hundreds of always-passing picks is the Daikon trap in a
 A wall of green unrefutable passes is the same failure as a wall of uninteresting suggestions —
 see [Refutable](#refutable).
 
-**Live, measured, and unresolved.** On swift-syntax, **738 of 1,115 suggestions sit at exactly
-score 20**, the `possible` floor; on `SwiftInferTemplates` the default surface is 88%
-`predicate`. That is the trap arriving, and the PRD's remedy would work mechanically — moving
-the cut from 20 to 21 deletes two-thirds of the output.
+**Live, measured, and unresolved — re-measured 2026-08-06 and still live.** On swift-syntax,
+**606 of 979 suggestions sit at exactly score 20** (62%), the `possible` floor — was 738 of 1,115
+(66%) on an earlier corpus revision, so the trap survived a corpus move intact. On
+`SwiftInferTemplates` the default surface is 88% `predicate`. That is the trap arriving, and the
+PRD's remedy would work mechanically — moving the cut from 20 to 21 deletes two-thirds of the output.
+
+**And there is now a second face of it**, from the seed side: `discover --seeds` on this repo prints
+**1,738** rows against 30 `strong`+`likely` ones — 1,447 of them advisory. The trap no longer needs a
+low threshold to arrive; the rescue path delivers it. See [Seed / seed manifest](#seed--seed-manifest).
 
 It has not been applied, for a documented reason pulling the other way: `3e38e34` established
 that **a law the code OWES is never hidden**, earned from a real incident where a reader complied

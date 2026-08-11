@@ -1,5 +1,8 @@
 # SwiftPropertyLaws — the law kit
 
+> **Status:** `reference` · **As of:** 2026-08-06
+
+
 **Repo:** `~/xcode_projects/SwiftPropertyLaws` (`github.com/Joseph-Cursio/SwiftPropertyLaws`) ·
 **Book home:** Chapters 13–14, Appendix A; law families surface in nearly every chapter.
 
@@ -32,6 +35,26 @@ that is the thing to hold onto. The pipeline diagram says "downstream" and the `
 **Pin:** `from: "3.26.0"` (`Package.swift:112`), resolving to `14d89875` / tag `v3.26.0` — currently
 **equal to the kit's `HEAD`**. Read the pin from `Package.swift`, never from prose; this line has
 been a full major version stale before.
+
+### In and out, precisely
+
+A library in **both** directions, with no CLI — so "consumes" and "produces" split by *when*, not by
+*which side*. Build-time it hands this repo a generator; run-time it takes a generated stub and
+returns a verdict.
+
+| | what | shape |
+|---|---|---|
+| **consumes** *(build-time, ↑)* | a type and its shape | `DerivationStrategist` is called by `swift-infer`; the kit answers *"can I generate values for this?"* |
+| **consumes** *(run-time, ↓)* | a compiled stub calling `check<Protocol>PropertyLaws` | plus a `Gen<T>` for the carrier |
+| **produces** *(↑)* | a derivation strategy, or a refusal | the refusal is the signal — `no generator for carrier` is 105 of 281 corpus-wide declines |
+| **produces** *(↓)* | pass / fail + a **counterexample** | printed by the stub; parsed back out of stdout by `VerifierSubprocess` |
+| **produces** *(↔)* | the set of laws it *has* | read as `ProtocolCoverageMap` — a claim made **in this repo about the kit**, not an API |
+
+**The `↔` row is the one that bites.** `ProtocolCoverageMap` is this repo's hand-maintained belief
+about which laws the kit ships, and it **vetoes** proposals for laws the kit cannot run. Nothing
+compiles the two together, so the kit gaining a law family does not automatically make it proposable —
+the SetAlgebra suite went from 5 laws to 15 inside one stale-pin window, unnoticed. A veto keyed to a
+stale belief is silent in the expensive direction: it suppresses laws that would now run.
 
 ---
 
@@ -253,12 +276,12 @@ unseeded finite path and now says so at the call site.
 | what a `.todo` tells the user | `…/PropertyLawCore/TodoReason.swift` |
 | the products and their dependency footprints | `SwiftPropertyLaws/Package.swift` |
 | the kit's own running notes (NaN seeding, codegen fixes) | `SwiftPropertyLaws/CLAUDE.md` |
-| **the pin, and why it must equal the verifier's** | `Sources/SwiftInferCLI/VerifierWorkdir+KitPin.swift`, `VerifierWorkdirKitPinTests` |
-| emitting kit suite calls, and the 51% derivability bound | `Sources/SwiftInferCLI/KitSuiteEmitter.swift` |
-| the veto, key by key | `Sources/SwiftInferCore/ProtocolCoverageMap.swift` |
-| whether the veto's premise is true | `Sources/SwiftInferCore/ProtocolCoverageAudit.swift` |
+| **the pin, and why it must equal the verifier's** | `SwiftInferProperties/Sources/SwiftInferCLI/VerifierWorkdir+KitPin.swift`, `VerifierWorkdirKitPinTests` |
+| emitting kit suite calls, and the 51% derivability bound | `SwiftInferProperties/Sources/SwiftInferCLI/KitSuiteEmitter.swift` |
+| the veto, key by key | `SwiftInferProperties/Sources/SwiftInferCore/ProtocolCoverageMap.swift` |
+| whether the veto's premise is true | `SwiftInferProperties/Sources/SwiftInferCore/ProtocolCoverageAudit.swift` |
 | whether the claims are true **law by law** | `SwiftInferProperties/docs/measurements/protocol-coverage-law-drift.md` |
-| kit verdicts feeding back into scoring | `Sources/SwiftInferCore/KitEvidence*.swift` |
+| kit verdicts feeding back into scoring | `SwiftInferProperties/Sources/SwiftInferCore/KitEvidence*.swift` |
 | does the emitted suite catch a real bug? | `SwiftInferProperties/docs/plans/kit-suite-backtest-plan.md` — Arm 1 is a measured HIT |
 | the sibling packages | `docs/design-internal/swiftprojectlint.md`, `swifteffectinference.md` |
 | vocabulary — *Strategist / generator recipe*, *Stub*, *Outcome* | `docs/design-internal/glossary.md` § Verify |
