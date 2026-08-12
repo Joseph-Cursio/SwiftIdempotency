@@ -42,7 +42,7 @@ struct OmittableKeyParameterTests {
                 DiagnosticSpec(
                     message: Self.omittableMessage(value: "idempotencyKey", cause: "has a default value"),
                     line: 2,
-                    column: 25
+                    column: 26
                 )
             ],
             macros: testMacros
@@ -65,7 +65,7 @@ struct OmittableKeyParameterTests {
                 DiagnosticSpec(
                     message: Self.omittableMessage(value: "key", cause: "has a default value"),
                     line: 2,
-                    column: 25
+                    column: 26
                 )
             ],
             macros: testMacros
@@ -90,7 +90,7 @@ struct OmittableKeyParameterTests {
                         cause: "is variadic, and so may be passed nothing"
                     ),
                     line: 2,
-                    column: 25
+                    column: 26
                 )
             ],
             macros: testMacros
