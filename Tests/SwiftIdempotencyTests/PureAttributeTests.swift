@@ -1,6 +1,4 @@
 import SwiftIdempotency
-import SwiftParser
-import SwiftSyntax
 import SwiftSyntaxMacroExpansion
 import SwiftSyntaxMacros
 import Testing
@@ -38,14 +36,9 @@ struct PureAttributeTests {
 
     @Test
     func pure_expansion_returnsEmpty() throws {
-        let file = Parser.parse(source: "@Pure\nfunc normalize(_ s: String) -> String { s }")
-        let funcDecl = try #require(
-            file.statements.first?.item.as(FunctionDeclSyntax.self),
-            "test fixture failed to parse"
-        )
-        let attribute = try #require(
-            funcDecl.attributes.first?.as(AttributeSyntax.self),
-            "test fixture has no attribute"
+        let (attribute, funcDecl) = try makeAttributedFunction(
+            attribute: "@Pure",
+            declaration: "func normalize(_ s: String) -> String { s }"
         )
         let context = BasicMacroExpansionContext()
         let result = try PureMacro.expansion(
