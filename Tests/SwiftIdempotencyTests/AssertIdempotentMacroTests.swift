@@ -9,6 +9,15 @@ import Testing
 /// macro. Split into expansion-verification tests (exact textual form the
 /// macro produces) and runtime-behaviour tests (the expanded code
 /// actually works in context).
+///
+/// **The expansion expectations are coupled to swift-syntax's pretty-printer,
+/// not just to this macro.** 603.0.2 began printing a closure argument across
+/// three lines where 603.0.0 kept it on one, and these expectations moved with
+/// it — the emitted code did not change. `Package.swift` deliberately accepts
+/// `602.0.0..<604.0.0` so adopters can resolve what their own graph needs, so
+/// the version *these* assertions describe is the one in `Package.resolved`.
+/// A failure here that is pure whitespace is that coupling, not a regression:
+/// check the resolved version before reading it as one.
 struct AssertIdempotentMacroTests {
     private let testMacros: [String: Macro.Type] = [
         "assertIdempotent": AssertIdempotentMacro.self
@@ -27,7 +36,9 @@ struct AssertIdempotentMacroTests {
             let r = #assertIdempotent { 42 }
             """,
             expandedSource: """
-            let r = SwiftIdempotency.__idempotencyAssertRunTwice({ 42 })
+            let r = SwiftIdempotency.__idempotencyAssertRunTwice({
+                    42
+                })
             """,
             macros: testMacros
         )
@@ -41,7 +52,9 @@ struct AssertIdempotentMacroTests {
             let r = #assertIdempotent({ 42 })
             """,
             expandedSource: """
-            let r = SwiftIdempotency.__idempotencyAssertRunTwice({ 42 })
+            let r = SwiftIdempotency.__idempotencyAssertRunTwice({
+                    42
+                })
             """,
             macros: testMacros
         )
@@ -131,7 +144,9 @@ struct AssertIdempotentMacroTests {
             let r = #assertIdempotent { 42 }
             """,
             expandedSource: """
-            let r = SwiftIdempotency.__idempotencyAssertRunTwiceAsync({ 42 })
+            let r = SwiftIdempotency.__idempotencyAssertRunTwiceAsync({
+                    42
+                })
             """,
             macros: testMacrosAsync
         )
@@ -144,7 +159,9 @@ struct AssertIdempotentMacroTests {
             let r = #assertIdempotent({ 42 })
             """,
             expandedSource: """
-            let r = SwiftIdempotency.__idempotencyAssertRunTwiceAsync({ 42 })
+            let r = SwiftIdempotency.__idempotencyAssertRunTwiceAsync({
+                    42
+                })
             """,
             macros: testMacrosAsync
         )

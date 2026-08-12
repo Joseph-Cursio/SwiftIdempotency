@@ -141,6 +141,14 @@ struct IdempotencyTestsMacroTests {
                 func withArg(_ x: Int) -> Int { x }
             }
             """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: IdempotencyTestsDiagnostic.functionNeedsArguments(name: "withArg").message,
+                    line: 4,
+                    column: 10,
+                    severity: .warning
+                )
+            ],
             macros: macros
         )
     }
@@ -159,6 +167,14 @@ struct IdempotencyTestsMacroTests {
                 func notMarked() -> Int { 1 }
             }
             """,
+            diagnostics: [
+                DiagnosticSpec(
+                    message: IdempotencyTestsDiagnostic.noIdempotentFunctions.message,
+                    line: 1,
+                    column: 1,
+                    severity: .warning
+                )
+            ],
             macros: macros
         )
     }
