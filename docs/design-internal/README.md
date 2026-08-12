@@ -7,8 +7,8 @@ companion package, plus a shared `glossary.md` and `open-threads.md`.
 | | |
 |---|---|
 | **Source** | `SwiftInferProperties/docs/design-internal/` |
-| **Imported from** | `5720cef` (2026-08-11) |
-| **Imported on** | 2026-08-11 |
+| **Imported from** | `7d90e82` (2026-08-12) |
+| **Imported on** | 2026-08-12 |
 
 ## Read-only here
 

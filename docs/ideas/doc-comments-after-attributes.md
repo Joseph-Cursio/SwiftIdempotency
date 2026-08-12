@@ -1,5 +1,14 @@
 # Historical record: `EffectAnnotationParser` missed `///` doc comments that appeared after attributes
 
+> **The round documents cited below are pruned, not missing.** The phase-1
+> trial results were dropped in `92d1363` ahead of the real-project road-tests
+> that replaced them; still readable with
+> `git show 92d1363^:docs/phase1-round-2/trial-findings.md`. Left spelled as
+> written, because each names the round that measured the claim.
+
+<!-- pruned-docs: 92d1363 -->
+
+
 **Status.** **Resolved.** Retained as historical record of the bug's shape and of the scope-discipline reasoning that kept it out of the Phase-1.1 OI-4 commit. The fix — `combinedDocTrivia(for:)` in `EffectAnnotationParser` — collects doc-comment trivia from the declaration's `leadingTrivia` plus every attribute's leading and trailing trivia plus each modifier's leading trivia plus the `funcKeyword` / `bindingSpecifier`'s leading trivia, and routes the union through the trivia-position-agnostic parser. Every annotation-reading site consumes the combined union, so ordering of `///` relative to attributes and modifiers no longer matters. Proposal-doc status tracked at OI-7.
 
 ## Origin
@@ -84,7 +93,7 @@ The same treatment is needed inside `EffectSymbolTable.merge(source:)`, which re
 
 ## Why it wasn't fixed in the Phase-1.1 commit
 
-The Phase-1.1 commit had a single-purpose charter — OI-4's signature-aware collision policy. The round-2 trial retrospective (`phase1-round-2/trial-retrospective.md`) explicitly praised the "no rule changes on the trial branch" scope-discipline rule. Adding an unrelated bug fix — even a small and clean one — to the same commit would have re-mixed measurement with evolution, which is exactly what the three-round scope commitment worked to avoid.
+The Phase-1.1 commit had a single-purpose charter — OI-4's signature-aware collision policy. The round-2 trial retrospective (`docs/phase1-round-2/trial-retrospective.md`) explicitly praised the "no rule changes on the trial branch" scope-discipline rule. Adding an unrelated bug fix — even a small and clean one — to the same commit would have re-mixed measurement with evolution, which is exactly what the three-round scope commitment worked to avoid.
 
 The fix is small enough to land as its own commit on `idempotency-trial` whenever convenient.
 

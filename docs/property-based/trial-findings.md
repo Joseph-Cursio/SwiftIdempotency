@@ -28,8 +28,13 @@ join used by upward inference. Not named `join`, but structurally the
 same operation over the four-element lattice
 `observational < idempotent < externallyIdempotent < nonIdempotent`.
 
-**File:** `Tests/CoreTests/Idempotency/LatticeLawsTests.swift` (114 lines,
-7 `@Test` properties + 1 edge case).
+**File:** `SwiftProjectLint/Tests/CoreTests/Idempotency/LatticeLawsTests.swift`
+(114 lines, 7 `@Test` properties + 1 edge case) — as it stood at the trial.
+SwiftProjectLint has since deleted it in `6f3ff587`, *Remove lattice laws now
+owned by SwiftEffectInference*, so recover with
+`git show 6f3ff587^:Tests/CoreTests/Idempotency/LatticeLawsTests.swift` **in
+that repo**. The laws did not disappear; ownership moved down a layer, which is
+the outcome this trial was arguing for.
 
 ### Laws asserted
 

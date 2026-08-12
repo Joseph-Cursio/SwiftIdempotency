@@ -108,7 +108,7 @@ struct FromEntityReachabilityTests {
 //    constraint. The sample uses `var` throughout; any real adopter
 //    migrating pre-Swift-6.3 code will have to do the same. First
 //    documented in the AmpFin trial pivot (see
-//    `../../docs/ampfin-package-trial/trial-scope.md`).
+//    `../../../../docs/ampfin-package-trial/trial-scope.md`).
 //
 // 2. `@Attribute(.unique)` on `id` makes the DB itself the final
 //    dedup guard. The macro surface expresses the *type-level*

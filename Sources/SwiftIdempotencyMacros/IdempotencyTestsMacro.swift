@@ -34,7 +34,9 @@ import SwiftSyntaxMacros
 /// ## Why an extension role, not peer or member
 ///
 /// Round-7 validation (see `docs/phase5-round-7/trial-findings.md`
-/// Finding 4) found Swift Testing's `@Test` macro expansion produces
+/// Finding 4 — pruned in `92d1363`; recover with
+/// `git show 92d1363^:docs/phase5-round-7/trial-findings.md`)
+/// found Swift Testing's `@Test` macro expansion produces
 /// `@used`/`@section` properties referencing `self` during property
 /// initialisation when emitted by another macro at peer or member scope
 /// inside a struct. The compiler rejects the nested expansion. Hand-

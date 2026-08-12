@@ -1,6 +1,16 @@
 # Deferred idea: first-class cross-reference for closure-bound bindings
 
-**Status.** Explicitly out-of-scope of the closure-handler annotation slice ([`claude_phase_2_closure_handler_annotation_plan.md`](../claude_phase_2_closure_handler_annotation_plan.md)). Shipped slice makes a closure binding's **body** walkable under its own annotation. This doc captures the two remaining pieces that would make closure-bound bindings fully first-class across the rule system.
+> **The round documents linked below are pruned, not missing.** The phase-2
+> closure-handler plan was consolidated into `docs/road_test_plan.md` in `8369f74`;
+> the round-6 trial results were dropped in `92d1363` ahead of the real-project
+> road-tests. Both are still readable — e.g.
+> `git show 92d1363^:docs/phase2-round-6/trial-scope.md`. The links are unlinked
+> rather than repointed, because each names the round that measured the claim.
+
+<!-- pruned-docs: 92d1363 8369f74 -->
+
+
+**Status.** Explicitly out-of-scope of the closure-handler annotation slice (`claude_phase_2_closure_handler_annotation_plan.md`). Shipped slice makes a closure binding's **body** walkable under its own annotation. This doc captures the two remaining pieces that would make closure-bound bindings fully first-class across the rule system.
 
 ## Origin
 
@@ -112,6 +122,6 @@ None of those triggers exist as of the post-R6 closure-binding-slice shipping da
 
 ## Related
 
-- Shipped slice: [`../claude_phase_2_closure_handler_annotation_plan.md`](../claude_phase_2_closure_handler_annotation_plan.md).
-- Verification doc: [`../phase2-round-6/closure-handler-verification.md`](../phase2-round-6/closure-handler-verification.md).
+- Shipped slice: `../claude_phase_2_closure_handler_annotation_plan.md`.
+- Verification doc: `../phase2-round-6/closure-handler-verification.md`.
 - Adjacent closure-region gap: [`inline-trailing-closure-annotation-gap.md`](inline-trailing-closure-annotation-gap.md).

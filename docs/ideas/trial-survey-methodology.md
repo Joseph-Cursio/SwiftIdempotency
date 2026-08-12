@@ -1,5 +1,15 @@
 # Methodology note: annotation-candidate surveys during trial Phase 0
 
+> **The round documents linked below are pruned, not missing.** The phase-2
+> closure-handler plan was consolidated into `docs/road_test_plan.md` in `8369f74`;
+> the round-6 trial results were dropped in `92d1363` ahead of the real-project
+> road-tests. Both are still readable — e.g.
+> `git show 92d1363^:docs/phase2-round-6/trial-scope.md`. The links are unlinked
+> rather than repointed, because each names the round that measured the claim.
+
+<!-- pruned-docs: 92d1363 8369f74 -->
+
+
 **Status.** Lesson learned, not an idea or a bug. Distilled from a small but real survey miss during round-6 Phase 0 that almost silently distorted the round's "annotatable surface" count. Saved here so future trial rounds have a checklist to consult before writing the grep.
 
 ## What went wrong
@@ -12,7 +22,7 @@ grep -rn "^\s*(public |mutating |)func handler\(" Examples/ --include="*.swift"
 
 This used a whitelist of modifier keywords (`public`, `mutating`, empty-string-for-no-modifier) and anchored on them. The survey returned 2 results.
 
-Post-round, while validating the closure-handler slice, I noticed `ServiceLifecycle+Postgres/Sources/Lambda.swift` contains:
+Post-round, while validating the closure-handler slice, I noticed `swift-aws-lambda-runtime/Examples/ServiceLifecycle+Postgres/Sources/Lambda.swift` contains:
 
 ```swift
 /// Function handler. This code is called at each function invocation
@@ -104,6 +114,6 @@ Until then: keep the manual grep, but write it using "match-then-filter" form an
 
 ## Related
 
-- Round-6 scope doc: [`../phase2-round-6/trial-scope.md`](../phase2-round-6/trial-scope.md) — the survey section from R6 that missed `private func handler`.
-- Round-6 retrospective: [`../phase2-round-6/trial-retrospective.md`](../phase2-round-6/trial-retrospective.md) — the "policy notes" section where this methodology lesson will eventually get cited.
-- Closure-handler verification doc: [`../phase2-round-6/closure-handler-verification.md`](../phase2-round-6/closure-handler-verification.md) — where the missed candidate was surfaced and the corrected count of 12/19 (~63%) recorded.
+- Round-6 scope doc: `../phase2-round-6/trial-scope.md` — the survey section from R6 that missed `private func handler`.
+- Round-6 retrospective: `../phase2-round-6/trial-retrospective.md` — the "policy notes" section where this methodology lesson will eventually get cited.
+- Closure-handler verification doc: `../phase2-round-6/closure-handler-verification.md` — where the missed candidate was surfaced and the corrected count of 12/19 (~63%) recorded.

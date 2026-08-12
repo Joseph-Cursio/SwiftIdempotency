@@ -253,7 +253,7 @@ lattice, it is the third.
 
 | question | file |
 |---|---|
-| the key type and its two construction paths | `SwiftIdempotency/Sources/SwiftIdempotency/IdempotencyKey.swift` |
+| the key type and its two construction paths | `swiftIdempotency/Sources/SwiftIdempotency/IdempotencyKey.swift` |
 | the five effect markers | `…/Sources/SwiftIdempotency/Idempotent.swift` |
 | **the one marker this repo reads**, and why it is off the lattice | `…/Sources/SwiftIdempotency/ClockDeterministic.swift` |
 | why a trapping assertion destroys a counterexample | `…/Sources/SwiftIdempotencyPropertyBased/AssertIdempotentProperty.swift` |

@@ -1,10 +1,17 @@
 # Deferred idea: annotations on inline trailing-closure Lambda handlers
 
+> **The round documents linked below are pruned, not missing.** The phase-2
+> closure-handler plan was consolidated into `docs/road_test_plan.md` in `8369f74`;
+> the round-6 trial results were dropped in `92d1363` ahead of the real-project
+> road-tests. Both are still readable — e.g.
+> `git show 92d1363^:docs/phase2-round-6/trial-scope.md`. The links are unlinked
+> rather than repointed, because each names the round that measured the claim.
+
 **Status.** Known scope gap. Explicitly out-of-scope for the closure-binding annotation slice that shipped post-round-6. Captured here because ~37% of `swift-aws-lambda-runtime`'s example surface still can't be annotated without a source refactor, and if demand evidence surfaces from a real adopter, this is the next bounded grammar slice to consider.
 
 ## Origin
 
-Surfaced during round 6's Phase-0 handler survey on `swift-aws-lambda-runtime` at `2.8.0`. The R6 retrospective named closure-based Lambda handlers as a grammar-gap finding: roughly half the example surface was un-annotatable because `/// @lint.context` / `/// @lint.effect` attached only to `FunctionDeclSyntax`. A ~2-day implementation plan ([`claude_phase_2_closure_handler_annotation_plan.md`](../claude_phase_2_closure_handler_annotation_plan.md)) shipped the closure-binding slice — annotations now attach to single-binding `VariableDeclSyntax` nodes whose initialiser is a closure literal, covering the `let handler: ClosureType = { ... }` form.
+Surfaced during round 6's Phase-0 handler survey on `swift-aws-lambda-runtime` at `2.8.0`. The R6 retrospective named closure-based Lambda handlers as a grammar-gap finding: roughly half the example surface was un-annotatable because `/// @lint.context` / `/// @lint.effect` attached only to `FunctionDeclSyntax`. A ~2-day implementation plan (`claude_phase_2_closure_handler_annotation_plan.md`) shipped the closure-binding slice — annotations now attach to single-binding `VariableDeclSyntax` nodes whose initialiser is a closure literal, covering the `let handler: ClosureType = { ... }` form.
 
 Post-slice coverage on the `Examples/` surface: ~47% → ~63% (9 function handlers + 1 R6-survey-missed private `func handler` + 2 authorizer closures out of 19 examples). The remaining ~37% — seven examples plus one internal function — uses the inline trailing-closure form:
 

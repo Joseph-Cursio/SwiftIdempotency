@@ -308,13 +308,15 @@ struct SwiftIdempotencyMacrosPlugin: CompilerPlugin {
 ///
 /// The original Phase 3 design had `@Idempotent` peer-emit a
 /// `@Test func testIdempotencyOf<Name>()`. Round-7 validation (see
-/// `docs/phase5-round-7/trial-findings.md`, Finding 4) surfaced that
+/// `docs/phase5-round-7/trial-findings.md`, Finding 4 — pruned in `92d1363`;
+/// recover with `git show 92d1363^:docs/phase5-round-7/trial-findings.md`) surfaced that
 /// Swift Testing's `@Test` macro interacts poorly with any outer macro
 /// that emits it at peer or member scope inside a struct — the nested
 /// expansion produces `@used`/`@section` properties referencing `self`
 /// during property initialisation, which the compiler rejects.
 ///
-/// Round 8 (`docs/claude_phase_5_peer_macro_redesign_plan.md`) spiked
+/// Round 8 (`docs/claude_phase_5_peer_macro_redesign_plan.md` — pruned in `8369f74`;
+/// recover with `git show 8369f74^:docs/claude_phase_5_peer_macro_redesign_plan.md`) spiked
 /// three candidate redesigns. Candidate B — an `@attached(extension)`
 /// role on a separate `@IdempotencyTests` attribute attached to the
 /// `@Suite` type — turned out to sidestep Finding 4 because the emitted

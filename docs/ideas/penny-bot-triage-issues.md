@@ -29,7 +29,7 @@ mechanism that exposes it, and the fix pattern.
 
 ### 1. Coin double-grant — `UsersHandler.handleAddUserRequest`
 
-- **Site:** `Lambdas/Users/UsersHandler.swift` →
+- **Site:** `penny-bot/Lambdas/Users/UsersHandler.swift` →
   `InternalUsersService.addCoinEntry`.
 - **Mechanism:** on API-layer retry (API Gateway / async-http-
   client / Lambda async invocation), `addCoinEntry` creates a
