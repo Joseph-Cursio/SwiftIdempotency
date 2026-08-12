@@ -492,7 +492,7 @@ the credibility the caveat exists to build.
 
 **The guard.** `SeedFieldParity` derives the read-field set from the coding keys, and
 `SeedFieldParityTests` compares it to what a *real* producer emits, two arms:
-`fixtures/seed-manifest-parity/seeds.json` (real output at `08a4b09`, one seed per shape, nine
+`SwiftInferProperties/fixtures/seed-manifest-parity/seeds.json` (real output at `08a4b09`, one seed per shape, nine
 shapes covering all eight fields — always runs, and **cannot catch a field added after capture**),
 plus a read of `PBTSeed`'s stored properties out of a sibling `../SwiftProjectLint` checkout (cannot
 go stale, does not run without the sibling). Verified by control: injecting a `confidence` key made
@@ -684,7 +684,7 @@ Worth reading `SwiftInferProperties/Sources/SwiftInferCLI/Discover+Seeds.swift` 
   the `kind`/`rule` requirements guard (a *missing* field). `restriction` sat unread here for three
   days because of it. `SeedFieldParityTests` now fails on an unread field — but **only its
   sibling-checkout arm can catch a field added tomorrow**; the committed fixture arm catches only
-  what was present when it was last regenerated. Regenerate `fixtures/seed-manifest-parity/seeds.json`
+  what was present when it was last regenerated. Regenerate `SwiftInferProperties/fixtures/seed-manifest-parity/seeds.json`
   as part of any producer schema change, and treat "the parity test is green" as evidence about the
   fixture's age, not about the producer.
 - **Only `PureFunctionCandidateVisitor` sets `testReachability`** ([#74](https://github.com/Joseph-Cursio/SwiftProjectLint/issues/74)). Everything else leaves it
@@ -718,8 +718,8 @@ Worth reading `SwiftInferProperties/Sources/SwiftInferCLI/Discover+Seeds.swift` 
 | policing the cure vs detecting the disease | `SwiftProjectLint/Docs/design/primitive-bypassing-domain-type-rule-design.md` |
 | the format wiring and the exit-gate bypass | `SwiftProjectLint/Sources/CLI/OutputFormat.swift`, `SwiftProjectLintCLI.swift` |
 | consumer side of the same hop | `SwiftInferProperties/Sources/SwiftInferCLI/Discover+Seeds.swift`, `SeedManifest.swift`, `SeedRole.swift` |
-| which fields this consumer reads, and the guard that says so | `SwiftInferCore/SeedField.swift` (`SeedFieldParity`) + `SwiftInferProperties/Tests/SwiftInferCoreTests/SeedFieldParityTests.swift` + `fixtures/seed-manifest-parity/` |
-| what `restriction` corrects, and the one disagreement it is allowed to settle | `SwiftInferCore/SeedRestriction.swift`, `SeedRestrictionResolver.swift` |
-| why the declaration's own `private` is **not** tested first | `SwiftInferCore/FunctionScannerVisitor+AccessRestriction.swift`, `RestrictedFunction.swift` |
-| the patch generator that acted on the wrong answer | `SwiftInferCore/SpeculativeWidening.swift` |
+| which fields this consumer reads, and the guard that says so | `SwiftInferProperties/Sources/SwiftInferCore/SeedField.swift` (`SeedFieldParity`) + `SwiftInferProperties/Tests/SwiftInferCoreTests/SeedFieldParityTests.swift` + `SwiftInferProperties/fixtures/seed-manifest-parity/` |
+| what `restriction` corrects, and the one disagreement it is allowed to settle | `SwiftInferProperties/Sources/SwiftInferCore/SeedRestriction.swift`, `SeedRestrictionResolver.swift` |
+| why the declaration's own `private` is **not** tested first | `SwiftInferProperties/Sources/SwiftInferCore/FunctionScannerVisitor+AccessRestriction.swift`, `RestrictedFunction.swift` |
+| the patch generator that acted on the wrong answer | `SwiftInferProperties/Sources/SwiftInferCore/SpeculativeWidening.swift` |
 | the vocabulary, both sides | `docs/design-internal/glossary.md` — *Seed / seed manifest*, *Role-entailed*, *Confident zero* |

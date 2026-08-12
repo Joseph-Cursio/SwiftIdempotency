@@ -19,7 +19,8 @@
 /// `docs/phase5-round-7/trial-findings.md` for the empirical reason the
 /// original peer-macro design couldn't ship, and
 /// `docs/phase5-round-8/trial-findings.md` for the extension-role
-/// redesign that did ship.
+/// redesign that did ship. Both round documents were pruned in `92d1363`;
+/// recover with `git show 92d1363^:docs/phase5-round-7/trial-findings.md`.
 @attached(peer)
 public macro Idempotent() = #externalMacro(
     module: "SwiftIdempotencyMacros",

@@ -227,12 +227,12 @@ whether its inputs are reproducible*. Anything that reaches for `.random` instea
 
 | question | file (in the checkout) |
 |---|---|
-| the generate/shrink split that bounds higher-order support | `Sources/PropertyBased/Generator.swift` |
-| the factory namespace | `Sources/PropertyBased/Gen*.swift` |
-| **the 10-arity ceiling** | `Sources/PropertyBased/Zip.swift` (+ `.gyb`) |
-| the runner, and `count` becoming 1 under a seed | `Sources/PropertyBased/PropertyCheck.swift` |
-| replay semantics and the two-seeds `Issue` | `Sources/PropertyBased/FixedSeedTrait.swift` |
-| the 11 shrinkers | `Sources/PropertyBased/Shrink*.swift` |
+| the generate/shrink split that bounds higher-order support | `swift-property-based/Sources/PropertyBased/Generator.swift` |
+| the factory namespace | `swift-property-based/Sources/PropertyBased/Gen*.swift` |
+| **the 10-arity ceiling** | `swift-property-based/Sources/PropertyBased/Zip.swift` (+ `.gyb`) |
+| the runner, and `count` becoming 1 under a seed | `swift-property-based/Sources/PropertyBased/PropertyCheck.swift` |
+| replay semantics and the two-seeds `Issue` | `swift-property-based/Sources/PropertyBased/FixedSeedTrait.swift` |
+| the 11 shrinkers | `swift-property-based/Sources/PropertyBased/Shrink*.swift` |
 | where the 10-member cap resurfaces | `SwiftPropertyLaws/Sources/PropertyLawCore/DerivationStrategy.swift` |
 | why a trapping assertion costs the counterexample | `docs/design-internal/swiftidempotency.md`, `SwiftInferProperties/docs/design/verify-edge-pass.md` |
 | the curated layer on top of this engine | `docs/design-internal/swiftpropertylaws.md` |

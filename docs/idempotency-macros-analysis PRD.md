@@ -2,6 +2,18 @@
 
 > A design for adding idempotency modeling to SwiftProjectLint via doc-comment annotations, Swift macros, and a phased static analysis engine.
 
+> **The round documents this proposal cites are pruned, not missing.** Findings
+> below rest on trial rounds recorded in `docs/phase1/`, `docs/phase1-round-*/`,
+> `docs/phase2-round-*/` and `docs/claude_phase_*_plan.md`. Those were dropped —
+> the trial results in `92d1363`, ahead of the real-project road-tests that
+> replaced them, and the per-phase plans in `8369f74`, consolidated into
+> `docs/road_test_plan.md`. Every path is still readable:
+> `git show 92d1363^:docs/phase1/trial-findings.md`, and likewise for the rest.
+> The citations are left spelled as they were written, because the claim each
+> one supports is a claim about what that round measured.
+
+<!-- pruned-docs: 92d1363 8369f74 -->
+
 ---
 
 ## Preview: Idempotency in the real (non-computer) world
@@ -1968,7 +1980,7 @@ The closure is an argument expression, not a declaration. Doc comments attach to
 2. **Typed-argument inference.** When a closure argument's declared type matches a known Lambda-handler shape, infer `@lint.context replayable` automatically. Overlaps with receiver-type inference's machinery but for closure-argument types.
 3. **Refactor-to-annotate workaround (currently sanctioned).** Extract the trailing closure to a named `let` binding.
 
-**Status.** Resolved. PR #7 (closure-handler grammar extension) shipped candidate fix #1 (call-argument trivia attachment) for the most common shape — a doc comment immediately above a call-with-trailing-closure. `NonIdempotentInRetryContextVisitor` and `UnannotatedInStrictReplayableContextVisitor` each gained a `visit(_: FunctionCallExprSyntax)` that recognises the annotation and emits an analysis site for the trailing closure body. Verified end-to-end on Vapor's `Sources/Development/routes.swift` and re-measured at adopter-app scale in round 11 (6 closure-based handlers annotated). Multi-closure ambiguity isn't an issue: the annotation attaches to the *call expression*, not to a specific closure argument, so calls with exactly one trailing closure are unambiguous; calls with multiple or no trailing closures don't engage the rule. `OnceContractViolationVisitor`'s closure-grammar extension was deferred — different site-collection architecture (stores `FunctionDeclSyntax`), low adoption value (`@context once` callees are rare on web handlers).
+**Status.** Resolved. PR #7 (closure-handler grammar extension) shipped candidate fix #1 (call-argument trivia attachment) for the most common shape — a doc comment immediately above a call-with-trailing-closure. `NonIdempotentInRetryContextVisitor` and `UnannotatedInStrictReplayableContextVisitor` each gained a `visit(_: FunctionCallExprSyntax)` that recognises the annotation and emits an analysis site for the trailing closure body. Verified end-to-end on Vapor's `vapor/Sources/Development/routes.swift` and re-measured at adopter-app scale in round 11 (6 closure-based handlers annotated). Multi-closure ambiguity isn't an issue: the annotation attaches to the *call expression*, not to a specific closure argument, so calls with exactly one trailing closure are unambiguous; calls with multiple or no trailing closures don't engage the rule. `OnceContractViolationVisitor`'s closure-grammar extension was deferred — different site-collection architecture (stores `FunctionDeclSyntax`), low adoption value (`@context once` callees are rare on web handlers).
 
 ---
 
@@ -2034,7 +2046,7 @@ When choosing an open-source Swift library to validate these ideas against, the 
 - HTTP middleware pipeline, ORM `create` vs. `upsert`, payment webhook handlers — this is where developers write the non-idempotent bugs this linter catches.
 - The `req.db.create()` vs. `req.db.upsert()` distinction maps directly onto the effect lattice.
 - Large enough that real-world variance in the violation patterns can be observed.
-- **Validated in rounds 10-11.** Round 10 scoped single-annotation trial on `TestAsyncMiddleware.respond` (5-hop upward inference, 1.0 yield). Round 11 broadened to 6 annotations across varied closure handlers in `Sources/Development/routes.swift` (2 catches, 0.33 yield) — the yield reflects Vapor-demo-routes being a mix of trivial and mutation-shaped handlers. `strict_replayable` added zero incremental diagnostics on this corpus. See [`docs/phase2-round-10/`](phase2-round-10/) and [`docs/phase2-round-11/`](phase2-round-11/). **The next-step corpus is a real user-facing Vapor application** (controllers, routes, business logic) — Vapor the framework is measured, but an adopter's app is the evidence that turns the measurement into an adoption-cost figure.
+- **Validated in rounds 10-11.** Round 10 scoped single-annotation trial on `TestAsyncMiddleware.respond` (5-hop upward inference, 1.0 yield). Round 11 broadened to 6 annotations across varied closure handlers in `vapor/Sources/Development/routes.swift` (2 catches, 0.33 yield) — the yield reflects Vapor-demo-routes being a mix of trivial and mutation-shaped handlers. `strict_replayable` added zero incremental diagnostics on this corpus. See [`docs/phase2-round-10/`](phase2-round-10/) and [`docs/phase2-round-11/`](phase2-round-11/). **The next-step corpus is a real user-facing Vapor application** (controllers, routes, business logic) — Vapor the framework is measured, but an adopter's app is the evidence that turns the measurement into an adoption-cost figure.
 
 **hummingbird-project/hummingbird** is the Vapor-family alternative framework:
 

@@ -17,7 +17,9 @@ import Testing
 ///    within 'try' expression" warnings on adoption.
 ///
 /// See `docs/phase5-round-8/trial-findings.md` for the empirical reason
-/// the extension role was chosen over member and peer.
+/// the extension role was chosen over member and peer. That round document
+/// was pruned in `92d1363`; recover with
+/// `git show 92d1363^:docs/phase5-round-8/trial-findings.md`.
 struct IdempotencyTestsMacroTests {
     private let macros: [String: Macro.Type] = [
         "IdempotencyTests": IdempotencyTestsMacro.self,

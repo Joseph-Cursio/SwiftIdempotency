@@ -46,7 +46,7 @@ Pinned to the exact commit analysed during slot 7
 (pointfreeco @ `06ebaa5`). The filed issue should stay narrow:
 
 - **One finding only.** `sendGiftEmail` in `handlePaymentIntent`,
-  `Sources/PointFree/Webhooks/PaymentIntentsWebhook.swift`
+  `pointfreeco/Sources/PointFree/Webhooks/PaymentIntentsWebhook.swift`
   (see §2 of the slot-7 doc for the exact file/line reference).
 - **One-line fix sketch.** Guard the email-send on
   `!gift.delivered`. Set `gift.delivered = true` either before the
