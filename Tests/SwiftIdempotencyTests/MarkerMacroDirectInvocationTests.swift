@@ -24,31 +24,6 @@ import Testing
 /// through normal Swift syntax because `by:` is the only declared
 /// argument label, but defensible-by-construction).
 struct MarkerMacroDirectInvocationTests {
-    /// Synthesises a `func compute() {}` decl + a parsed attribute,
-    /// returning both ready to feed to a `PeerMacro.expansion(...)`
-    /// call. Threads `SourceLocation` so a fixture-parsing regression
-    /// points at the calling test rather than this helper.
-    private func makeAttributedFunction(
-        attribute attributeSource: String,
-        sourceLocation: Testing.SourceLocation = #_sourceLocation
-    ) throws -> (AttributeSyntax, FunctionDeclSyntax) {
-        let attributeFile = Parser.parse(source: "\(attributeSource)\nfunc compute() {}")
-        // Locate the FunctionDeclSyntax — it's the first FunctionDecl in the file.
-        // The attribute is also attached to it via Swift syntax's normal
-        // parsing of `@Foo \n func compute()`.
-        let funcDecl = try #require(
-            attributeFile.statements.first?.item.as(FunctionDeclSyntax.self),
-            "test fixture failed to parse",
-            sourceLocation: sourceLocation
-        )
-        let attribute = try #require(
-            funcDecl.attributes.first?.as(AttributeSyntax.self),
-            "test fixture has no attribute",
-            sourceLocation: sourceLocation
-        )
-        return (attribute, funcDecl)
-    }
-
     @Test
     func idempotent_expansion_returnsEmpty() throws {
         let (attribute, funcDecl) = try makeAttributedFunction(attribute: "@Idempotent")

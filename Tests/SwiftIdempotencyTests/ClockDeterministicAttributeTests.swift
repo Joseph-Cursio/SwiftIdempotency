@@ -1,6 +1,4 @@
 import SwiftIdempotency
-import SwiftParser
-import SwiftSyntax
 import SwiftSyntaxMacroExpansion
 import SwiftSyntaxMacros
 import Testing
@@ -43,14 +41,9 @@ struct ClockDeterministicAttributeTests {
 
     @Test
     func clockDeterministic_expansion_returnsEmpty() throws {
-        let file = Parser.parse(source: "@ClockDeterministic\nfunc refresh() async {}")
-        let funcDecl = try #require(
-            file.statements.first?.item.as(FunctionDeclSyntax.self),
-            "test fixture failed to parse"
-        )
-        let attribute = try #require(
-            funcDecl.attributes.first?.as(AttributeSyntax.self),
-            "test fixture has no attribute"
+        let (attribute, funcDecl) = try makeAttributedFunction(
+            attribute: "@ClockDeterministic",
+            declaration: "func refresh() async {}"
         )
         let context = BasicMacroExpansionContext()
         let result = try ClockDeterministicMacro.expansion(
