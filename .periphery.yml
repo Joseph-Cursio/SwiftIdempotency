@@ -1,0 +1,36 @@
+# Periphery configuration — `periphery scan` with no flags is the supported run.
+#
+# Two settings, and both are about the same fact: this package's callers are not
+# in this package. It ships a macro surface and a small runtime, and everything
+# public here exists to be used by an adopter the scan cannot see.
+
+# This is a library. Its public API *is* the deliverable, so an unreferenced
+# public declaration is the product working as intended, not dead weight.
+#
+# Without this, a default scan reports 15 findings and 13 of them are
+# "redundant public accessibility" on the macro implementation structs
+# (`IdempotentMacro`, `PureMacro`, `AssertIdempotentMacro`, …). Those are wrong
+# twice over: the types are reached from `@attached(...)` declarations by
+# *string* — `#externalMacro(module: "SwiftIdempotencyMacros", type: "IdempotentMacro")`
+# — which no static analysis can follow, and demoting them to internal would
+# break macro resolution at expansion time rather than at build time.
+retain_public: true
+
+# The public macro *declarations* live here, and Periphery counts a macro as
+# used only where it is applied. Every application of these lives outside the
+# scanned graph: an adopter's source, or `examples/idempotency-tests-sample`,
+# which is a separate SwiftPM package.
+#
+# `@IdempotencyTests` is the one that surfaces, and it is worth understanding
+# rather than muting. The root suite exercises it only through
+# `assertMacroExpansion`, which hands the macro **source text** and compares
+# output — the compiler never expands it there, so nothing in this package
+# applies it. It is genuinely live: `examples/idempotency-tests-sample`
+# expands it into three generated tests that pass. Periphery is reporting the
+# truth about a graph that stops short of the only real call site.
+#
+# Retaining the file rather than baselining the single finding, because the
+# same argument covers every declaration in it — and a baseline would go stale
+# silently the first time one of these macros really did fall out of use.
+retain_files:
+  - "**/Sources/SwiftIdempotency/Idempotent.swift"
