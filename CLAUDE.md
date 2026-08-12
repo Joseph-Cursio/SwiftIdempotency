@@ -15,9 +15,10 @@ This repo contains both the `SwiftIdempotency` Swift package (macros + `Idempote
 
 **Design documents** under `docs/`:
 
-- `docs/idempotency-macros-analysis.md` (~1850 lines) — the primary design proposal: adding idempotency modeling to SwiftProjectLint via doc-comment annotations, a phased static analyzer, Swift macros, and protocol-based type safety. **This is the authoritative document.**
+- `docs/idempotency-macros-analysis PRD.md` (~2225 lines) — the primary design proposal: adding idempotency modeling to SwiftProjectLint via doc-comment annotations, a phased static analyzer, Swift macros, and protocol-based type safety. **This is the authoritative document.** (Renamed from `idempotency-macros-analysis.md` in `4446a06`; the space in the filename is deliberate and must be quoted in shell.)
 - `docs/idempotency_updated_critique.md` — a ChatGPT-generated critique of the proposal. Useful as external perspective, not as a spec. Some of its points are already resolved in the proposal body or explicitly rebutted in the Q&A section; evaluate each on its own merits and feel free to disagree. When the two docs conflict, the proposal wins.
-- `docs/claude_phase_*_plan.md` + `docs/phase*-round-*/` — round-by-round implementation plans that tracked the package's build-out. Historical context only; the README and shipped source are authoritative for the current shape.
+- `docs/road_test_plan.md` — how to run a road-test round against a real adopter: what to capture, and when to stop. Paired with `docs/swift_idempotency_targets.md` (the prioritised target list) and the per-adopter `docs/<adopter>/` directories that record rounds actually run.
+- The round-by-round implementation plans that tracked the build-out are **pruned, not moved.** The 12 `docs/claude_phase_*_plan.md` files were consolidated into `road_test_plan.md` in `8369f74` — each drove one already-shipped slice and went stale the moment it shipped — and the `docs/phase*-round-*/` trial results were dropped in `92d1363` ahead of the real-project road-tests. Recover either with `git show 8369f74^:docs/` / `git show 92d1363^:docs/`. The README and shipped source are authoritative for the current shape.
 
 ## The Split This Repo Is Designing
 
