@@ -183,32 +183,35 @@ struct IdempotencyTestsMacroTests {
 
     // MARK: - Effect-aware expansion (four combinations)
 
-    /// Non-throwing, non-async target — the case that motivated the fix.
-    /// Pre-fix the expansion unconditionally carried `try await`, which
-    /// Swift flagged with "no calls to throwing functions occur within
-    /// 'try' expression". Post-fix the outer call emits only `await`,
-    /// the helper being async, and the inner body is bare — the whole
-    /// expansion is warning-clean on adoption.
-    @Test
-    func syncNonThrowingTarget_emitsAwaitOnly() {
+    /// The matrix exists because the expansion once carried `try await`
+    /// unconditionally, which Swift flags on a non-throwing target with "no calls
+    /// to throwing functions occur within 'try' expression". The sync/non-throwing
+    /// row is the case that motivated the fix; the other three pin the tokens that
+    /// were already right, so a future simplification cannot quietly take them out.
+    ///
+    /// The test method stays `async throws` in every row regardless — Swift does
+    /// not warn on a declared-but-unused `throws`, only on `try` over a
+    /// non-throwing expression.
+    @Test("effect specifiers survive expansion", arguments: EffectMatrixCase.all)
+    func effectSpecifiersSurviveExpansion(_ effect: EffectMatrixCase) {
         assertMacroExpansion(
             """
             @IdempotencyTests
             struct Checks {
                 @Idempotent
-                func plain() -> Int { 1 }
+                \(effect.target)
             }
             """,
             expandedSource: """
             struct Checks {
-                func plain() -> Int { 1 }
+                \(effect.target)
             }
 
             extension Checks {
                 @Test
-                func testIdempotencyOfPlain() async throws {
-                    let (__first, __second) = await SwiftIdempotency.__idempotencyInvokeTwice {
-                        plain()
+                func \(effect.testName)() async throws {
+                    let (__first, __second) = \(effect.outerPrefix)SwiftIdempotency.__idempotencyInvokeTwice {
+                        \(effect.innerPrefix)\(effect.functionName)()
                     }
                     #expect(__first == __second)
                 }
@@ -217,91 +220,58 @@ struct IdempotencyTestsMacroTests {
             macros: macros
         )
     }
+}
 
-    @Test
-    func throwingTarget_emitsTryAwaitOutsideAndTryInside() {
-        assertMacroExpansion(
-            """
-            @IdempotencyTests
-            struct Checks {
-                @Idempotent
-                func throwing() throws -> Int { 1 }
-            }
-            """,
-            expandedSource: """
-            struct Checks {
-                func throwing() throws -> Int { 1 }
-            }
+/// One row of the effect matrix: a target's effect specifiers, and the exact
+/// `try` / `await` tokens the expansion must carry outside and inside.
+///
+/// **Both prefixes are written out, not derived.** `generateTestMember` computes
+/// them from `(isAsync, isThrowing)`; a table that computed them the same way
+/// would assert only that the macro agrees with itself, and would have passed
+/// just as happily before the fix this matrix exists to pin. Spelling them as
+/// literals is what makes the row an independent claim about the output.
+struct EffectMatrixCase: Sendable, CustomTestStringConvertible {
+    /// The annotated declaration, verbatim — it appears in both the input and,
+    /// unchanged, in the expanded source, since `@Idempotent` is marker-only.
+    let target: String
+    let functionName: String
+    let testName: String
+    /// Before `__idempotencyInvokeTwice`. The helper is `async`, so `await` is
+    /// always present; `try` is present iff the closure body can throw.
+    let outerPrefix: String
+    /// Before the call to the target.
+    let innerPrefix: String
 
-            extension Checks {
-                @Test
-                func testIdempotencyOfThrowing() async throws {
-                    let (__first, __second) = try await SwiftIdempotency.__idempotencyInvokeTwice {
-                        try throwing()
-                    }
-                    #expect(__first == __second)
-                }
-            }
-            """,
-            macros: macros
-        )
-    }
+    var testDescription: String { "\(functionName): \(outerPrefix)/ \(innerPrefix)" }
 
-    @Test
-    func asyncNonThrowingTarget_emitsAwaitOutsideAndInside() {
-        assertMacroExpansion(
-            """
-            @IdempotencyTests
-            struct Checks {
-                @Idempotent
-                func asynchronous() async -> Int { 1 }
-            }
-            """,
-            expandedSource: """
-            struct Checks {
-                func asynchronous() async -> Int { 1 }
-            }
-
-            extension Checks {
-                @Test
-                func testIdempotencyOfAsynchronous() async throws {
-                    let (__first, __second) = await SwiftIdempotency.__idempotencyInvokeTwice {
-                        await asynchronous()
-                    }
-                    #expect(__first == __second)
-                }
-            }
-            """,
-            macros: macros
-        )
-    }
-
-    @Test
-    func asyncThrowingTarget_emitsTryAwaitOutsideAndInside() {
-        assertMacroExpansion(
-            """
-            @IdempotencyTests
-            struct Checks {
-                @Idempotent
-                func asyncThrowing() async throws -> Int { 1 }
-            }
-            """,
-            expandedSource: """
-            struct Checks {
-                func asyncThrowing() async throws -> Int { 1 }
-            }
-
-            extension Checks {
-                @Test
-                func testIdempotencyOfAsyncThrowing() async throws {
-                    let (__first, __second) = try await SwiftIdempotency.__idempotencyInvokeTwice {
-                        try await asyncThrowing()
-                    }
-                    #expect(__first == __second)
-                }
-            }
-            """,
-            macros: macros
-        )
-    }
+    static let all: [EffectMatrixCase] = [
+        EffectMatrixCase(
+            target: "func plain() -> Int { 1 }",
+            functionName: "plain",
+            testName: "testIdempotencyOfPlain",
+            outerPrefix: "await ",
+            innerPrefix: ""
+        ),
+        EffectMatrixCase(
+            target: "func throwing() throws -> Int { 1 }",
+            functionName: "throwing",
+            testName: "testIdempotencyOfThrowing",
+            outerPrefix: "try await ",
+            innerPrefix: "try "
+        ),
+        EffectMatrixCase(
+            target: "func asynchronous() async -> Int { 1 }",
+            functionName: "asynchronous",
+            testName: "testIdempotencyOfAsynchronous",
+            outerPrefix: "await ",
+            innerPrefix: "await "
+        ),
+        EffectMatrixCase(
+            target: "func asyncThrowing() async throws -> Int { 1 }",
+            functionName: "asyncThrowing",
+            testName: "testIdempotencyOfAsyncThrowing",
+            outerPrefix: "try await ",
+            innerPrefix: "try await "
+        ),
+    ]
 }
