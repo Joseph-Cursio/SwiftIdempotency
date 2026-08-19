@@ -74,7 +74,7 @@ let package = Package(
         // by the opt-in `SwiftIdempotencyPropertyBased` product (v0.4.0) for
         // generated-input, shrinking retry-idempotence assertions. Adopters
         // pay this cost only if they depend on `SwiftIdempotencyPropertyBased`.
-        .package(url: "https://github.com/x-sheep/swift-property-based.git", from: "1.0.0"),
+        .package(url: "https://github.com/x-sheep/swift-property-based.git", from: "2.0.0"),
     ],
     targets: [
         /// Public API declarations. Contains the `@macro` declarations that
