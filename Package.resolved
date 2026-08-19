@@ -1,5 +1,5 @@
 {
-  "originHash" : "d6b8eb70ba77f74c892c44b981d2539f63a05102555aef89daf866e58f5010bf",
+  "originHash" : "12488ae665d2416e36cfa86be6389d4ff971825ee790015c2dd73d2f167c7bb4",
   "pins" : [
     {
       "identity" : "fluent-kit",
@@ -78,8 +78,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/x-sheep/swift-property-based.git",
       "state" : {
-        "revision" : "edaffedcd90339544fefb2f045f3fa988d94c794",
-        "version" : "1.2.0"
+        "revision" : "f5b24d3a0468d688934405a9cba9516cb17be2ec",
+        "version" : "2.0.0"
       }
     },
     {
