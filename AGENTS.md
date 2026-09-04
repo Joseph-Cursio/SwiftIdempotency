@@ -1,0 +1,72 @@
+# AGENTS.md
+
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+
+## Repository Status
+
+This repo contains both the `SwiftIdempotency` Swift package (macros + `IdempotencyKey`) and the design documents that drove its shape. The global "clean + test on session start" rule applies — run `swift package clean && swift test` at session start.
+
+**Package layout** (see `Package.swift` for full target graph):
+
+- `Sources/SwiftIdempotency` — public API: `@Idempotent`, `@NonIdempotent`, `@Observational`, `@ExternallyIdempotent`, `@IdempotencyTests`, `#assertIdempotent`, `IdempotencyKey`
+- `Sources/SwiftIdempotencyMacros` — compiler plugin implementing the above
+- `Sources/SwiftIdempotencyTestSupport` — runtime helpers for `#assertIdempotent` (linked only from test targets)
+- `Tests/SwiftIdempotencyTests` — macro expansion + runtime tests
+
+**Design documents** under `docs/`:
+
+- `docs/idempotency-macros-analysis PRD.md` (~2225 lines) — the primary design proposal: adding idempotency modeling to SwiftProjectLint via doc-comment annotations, a phased static analyzer, Swift macros, and protocol-based type safety. **This is the authoritative document.** (Renamed from `idempotency-macros-analysis.md` in `4446a06`; the space in the filename is deliberate and must be quoted in shell.)
+- `docs/idempotency_updated_critique.md` — a ChatGPT-generated critique of the proposal. Useful as external perspective, not as a spec. Some of its points are already resolved in the proposal body or explicitly rebutted in the Q&A section; evaluate each on its own merits and feel free to disagree. When the two docs conflict, the proposal wins.
+- `docs/road_test_plan.md` — how to run a road-test round against a real adopter: what to capture, and when to stop. Paired with `docs/swift_idempotency_targets.md` (the prioritised target list) and the per-adopter `docs/<adopter>/` directories that record rounds actually run.
+- The round-by-round implementation plans that tracked the build-out are **pruned, not moved.** The 12 `docs/claude_phase_*_plan.md` files were consolidated into `road_test_plan.md` in `8369f74` — each drove one already-shipped slice and went stale the moment it shipped — and the `docs/phase*-round-*/` trial results were dropped in `92d1363` ahead of the real-project road-tests. Recover either with `git show 8369f74^:docs/` / `git show 92d1363^:docs/`. The README and shipped source are authoritative for the current shape.
+
+## The Split This Repo Is Designing
+
+The proposal explicitly splits into **two deliverables** (see "Scope: What Belongs in This Repo"). Keep this split intact in any implementation work:
+
+1. **`SwiftIdempotency` package** (this repo): defines the `@Idempotent` / `@NonIdempotent` / `@Observational` / `@ExternallyIdempotent` attribute macros, the `@IdempotencyTests` extension macro, the `#assertIdempotent` freestanding expression macro, and the `IdempotencyKey` strong type.
+2. **SwiftProjectLint rules** (in a separate repo): consumes the annotations and enforces them. Ships as `IdempotencyVisitor` + rule identifiers (`idempotencyViolation`, `nonIdempotentInRetryContext`, `actorReentrancyIdempotencyHazard`, etc.) plugged into `CrossFileAnalysisEngine`.
+
+A linter is a *consumer* of contracts, not a *definer* of them. Do not bundle the macro library into the lint rules.
+
+## Core Design Concepts (needed to edit either doc coherently)
+
+**Effect lattice** — five positions, not binary:
+```
+pure < idempotent < { transactional_idempotent, externallyIdempotent } < non_idempotent
+                                                                  unknown (incomparable)
+```
+`transactional_idempotent` and `externallyIdempotent` sit at the same tier — both are conditionally idempotent via different mechanisms (transaction boundary vs. idempotency key). Neither is strictly stronger than the other. `unknown` is treated conservatively as `non_idempotent` in strict mode.
+
+**Annotation surface** — doc comments are deliberately the shared interoperability surface between humans, the linter, and macros. All three consumers read the same token. This is why the proposal rejects protocol-only modeling.
+
+- `/// @lint.effect <tier>` — declared effect (with optional `(by: <param>)` or `reason:`)
+- `/// @lint.context <replayable|retry_safe|once|dedup_guarded>` — execution context
+- `/// @lint.assume <symbol> is <effect>` — auditable third-party claims
+- `/// @lint.unsafe reason: "..."` — *semantic* escape hatch
+- `// swift-idempotency:disable[-next-line|-file] <rule>` — *mechanical* suppression (distinct from `@lint.unsafe`; do not conflate)
+
+**Minimum viable system** — per the critique and the "Start With Two Effects" section, the recommended Phase 1 is just `@lint.effect idempotent` + `@lint.effect non_idempotent` + basic call-graph validation. Treat the rest of the document as a menu, not a checklist. New design work that expands surface area before Phase 1 has shipped is the main failure mode the critique warns against.
+
+**Branch-sensitive inference** — a function's inferred effect is the lattice *join* of its branches (usually the weakest). The distinct diagnostic `effectVariesByBranch` surfaces disagreement rather than silently collapsing to `non_idempotent`.
+
+**Actor reentrancy rule** — `actorReentrancyIdempotencyHazard` is the highest-value original contribution. It's AST-detectable (guard on stored-property membership → `await` → insert into same property, inside an actor method) and fires on structural grounds independent of any annotation. It's the one rule that delivers value before any team has annotated anything.
+
+## Validation Target
+
+When the proposal gets validated against a real codebase, event-driven AWS Lambda handlers are the recommended shape — every Lambda invocation runs in an objectively replayable retry context by the runtime's at-least-once contract, so `/// @lint.context replayable` is unambiguous without judgement calls about what the context should be.
+
+**Target-path drift** (recorded here so future sessions don't repeat the search). The originally-recommended `apple/swift-aws-lambda-runtime` has migrated: apple → swift-server → `awslabs/swift-aws-lambda-runtime`. Use the current path.
+
+**Corpus caveat** (April 2026 road-test, `docs/swift-aws-lambda-runtime/`). The v2.x awslabs example corpus has **no SQS/SNS examples** despite the original recommendation calling them out. Available examples are dominated by `S3EventNotifier` (at-least-once S3 events — the cleanest positive-control substitute), `APIGatewayV2`, `BackgroundTasks`, streaming handlers, and a Hummingbird integration. The demo-shaped bodies (logging + echo + base64 decode + one AWS SDK read) produce a zero-Run-A yield on the default `@lint.context replayable` tier; only strict mode surfaces useful diagnostics.
+
+**For FP-rate evidence** on Lambda specifically, a production Lambda app (real side effects — DB writes, webhook delivery, third-party API calls) is a stronger target than awslabs' demos. The awslabs examples are better understood as an "infrastructure smoke test" — does the visitor walk Lambda-shaped handler placements correctly? — than as a business-logic validation corpus. See `docs/swift-aws-lambda-runtime/trial-findings.md` for the yield data.
+
+SwiftNIO is explicitly called out as the wrong target (reference-type handlers, runtime enforcement already in place, below the business-logic layer).
+
+## Editing Conventions
+
+- Rule identifiers are defined alongside the rules that introduce them. When adding a new lint rule to the proposal, also add its `case name` at the end of the section (see existing examples: `effectVariesByBranch`, `closureArgumentFailsEffectRequirement`, `unusedSuppression`, `unknownAnnotationVersion`).
+- The proposal uses em-dashes and occasional non-ASCII characters (⸻, ✅, ❌, ⚠️). Preserve them.
+- Grammar versioning is via `.swift-idempotency.yml` `grammar_version: <n>`. A new annotation tier is a grammar bump, not a silent extension.
+- The document is dated "April 2026" in its footer. Update if the proposal is substantively revised.
