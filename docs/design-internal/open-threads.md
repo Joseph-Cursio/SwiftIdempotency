@@ -1289,7 +1289,7 @@ answered a different question from the one being asked.**
 ### A doc that characterises a set by a property its newest member lacks
 
 It does not go out of date — it **argues against the code**. `PBTSeed.role`'s comment said *"every
-rule but the two **candidate** rules"*, and `extractablePureKernel` is a kernel rule, so a reader
+rule but the two **candidate** rules"*, and `extractableTotalKernel` is a kernel rule, so a reader
 checking the sentence against the classifier would have read the correct behaviour they found there
 as a bug. The count was stale *and* the wording ruled the third out by name, which is why it was not
 a one-line fix ([SPL#65](https://github.com/Joseph-Cursio/SwiftProjectLint/pull/65)). Name the
