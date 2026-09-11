@@ -182,9 +182,9 @@ Three rules find pure logic, and they differ by **whether the logic already has 
 |---|---|---|---|
 | `Pure Function Property-Test Candidate` | a `func` | `pure-function` | yes — index it, propose laws |
 | `Pure Closure Property-Test Candidate` | a closure passed to `sorted`/`filter`/`map`/`reduce` | `extractable-kernel` | **no** — extract it first |
-| `Extractable Pure Kernel` | statements in the middle of an impure method | `extractable-kernel` | **no** — extract it first |
+| `Extractable Total Kernel` | statements in the middle of an impure method | `extractable-kernel` | **no** — extract it first |
 
-The third is the valuable one and the reason this family exists. `SwiftProjectLint/Docs/rules/extractable-pure-kernel.md`
+The third is the valuable one and the reason this family exists. `SwiftProjectLint/Docs/rules/extractable-total-kernel.md`
 carries the motivating case verbatim: `uploadRemainingChunks` is `private async throws`, does network
 I/O, and has chunk arithmetic inlined in it that is a function of `(data.count, chunkSize, index)`
 and nothing else. Two real bugs lived there — an unclamped resume counter that completes a partial
@@ -198,7 +198,7 @@ So the refactoring is not a style preference. It is the act of **creating a call
 there was none** — and the linter's advice ("name this arithmetic") is exactly the precondition
 `swift-infer` needs before it can do anything at all.
 
-`ExtractablePureKernelVisitor` and `PureClosureCandidateVisitor` both hold a
+`ExtractableTotalKernelVisitor` and `PureClosureCandidateVisitor` both hold a
 `SwiftEffectInference.PurityInferrer` directly; `PureFunctionCandidateVisitor` reaches it through
 `PropertyTestCandidacy`. That is why the linter and `swift-infer` can never disagree about what is
 pure — same oracle, one instance each.
@@ -509,7 +509,7 @@ the rule tells them which half of the producer moved.
 static let seedKinds: [RuleIdentifier: PBTSeedKind] = [
     .pureFunctionCandidate:  .pureFunction,
     .idempotencyViolation:   .idempotency,
-    .extractablePureKernel:  .extractableKernel,
+    .extractableTotalKernel:  .extractableKernel,
     .pureClosureCandidate:   .extractableKernel
 ]
 ```
@@ -539,7 +539,7 @@ code.
 | `pure-function` | `.pureFunctionCandidate` | ✅ | pure and total; index it, propose laws |
 | `idempotency` | `.idempotencyViolation` | ✅ | arrives with a ready-made property to verify |
 | `restricted-function` | *demotion* of `pure-function` | ✅ | named and analysable; `private`, so not *verifiable* cross-module |
-| `extractable-kernel` | `.extractablePureKernel`, `.pureClosureCandidate` | ❌ | the logic has no name yet; `symbol` is the **enclosing** function |
+| `extractable-kernel` | `.extractableTotalKernel`, `.pureClosureCandidate` | ❌ | the logic has no name yet; `symbol` is the **enclosing** function |
 | `unrecognised(_)` | — *consumer-side only* | ❌ | a spelling this consumer does not know; fails loudly, never silently |
 
 `restricted-function` has no rule of its own — it is `pure-function` demoted in
@@ -617,7 +617,7 @@ are just not printed one per line. Only `text` collapses — JSON/CSV stay compl
 exists precisely to carry them. `--categories testability` is itself the opt-in and turns collapsing
 off.
 
-**`.extractablePureKernel` stays listed**, and the rule is worth generalising: *a candidate rule
+**`.extractableTotalKernel` stays listed**, and the rule is worth generalising: *a candidate rule
 **nominates** ("this is pure, it could be property-tested") — there is nothing to do per item. A
 kernel rule **diagnoses** ("pure logic is trapped here, and here is the refactor") — that is a claim
 about a specific place, it can be wrong, and it is worth reading each time.*
@@ -675,7 +675,7 @@ Worth reading `SwiftInferProperties/Sources/SwiftInferCLI/Discover+Seeds.swift` 
 - ~~**`PBTSeed.role`'s doc comment is stale.**~~ **Fixed upstream 2026-08-06** (`0d56d982`, *"Say how
   many rules classify a seed role, and name them"*). The standing fact it recorded still holds and is
   the thing to remember: **three of the four seeding rules classify a role** — the two candidate
-  rules and `ExtractablePureKernelVisitor` — and `.idempotencyViolation` is the only one that does
+  rules and `ExtractableTotalKernelVisitor` — and `.idempotencyViolation` is the only one that does
   not. Kept struck-through rather than deleted because the *count* is what a reader needs and the
   trap is where they will look for it.
 - **A producer-side field ADDITION is silent on the consumer, and always will be.** `Codable`
@@ -714,7 +714,7 @@ Worth reading `SwiftInferProperties/Sources/SwiftInferCLI/Discover+Seeds.swift` 
 | reachability's three values | `SwiftProjectLint/Packages/SwiftProjectLintModels/…/TestReachability.swift` |
 | why the report collapses candidates but the manifest does not | `SwiftProjectLint/Sources/Core/Export/CandidateInventory.swift` |
 | what counts as a pure-function candidate | `SwiftProjectLint/Packages/SwiftProjectLintVisitors/…/PropertyTestCandidacy.swift` |
-| the kernel motivating case, with its two real bugs | `SwiftProjectLint/Docs/rules/extractable-pure-kernel.md` |
+| the kernel motivating case, with its two real bugs | `SwiftProjectLint/Docs/rules/extractable-total-kernel.md` |
 | policing the cure vs detecting the disease | `SwiftProjectLint/Docs/design/primitive-bypassing-domain-type-rule-design.md` |
 | the format wiring and the exit-gate bypass | `SwiftProjectLint/Sources/CLI/OutputFormat.swift`, `SwiftProjectLintCLI.swift` |
 | consumer side of the same hop | `SwiftInferProperties/Sources/SwiftInferCLI/Discover+Seeds.swift`, `SeedManifest.swift`, `SeedRole.swift` |
