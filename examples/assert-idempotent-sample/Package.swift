@@ -18,12 +18,8 @@ let package = Package(
         .package(path: "../.."),
     ],
     targets: [
-        .target(
-            name: "AssertIdempotentSample",
-            dependencies: [
-                .product(name: "SwiftIdempotency", package: "SwiftIdempotency"),
-            ]
-        ),
+        // The sample's production code is plain Swift; only its test target uses the macros.
+        .target(name: "AssertIdempotentSample"),
         .testTarget(
             name: "AssertIdempotentSampleTests",
             dependencies: [
