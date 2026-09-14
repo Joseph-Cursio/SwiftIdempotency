@@ -26,7 +26,10 @@ let package = Package(
         ),
         .testTarget(
             name: "WebhookHandlerSampleTests",
-            dependencies: ["WebhookHandlerSample"]
+            dependencies: [
+                "WebhookHandlerSample",
+                .product(name: "SwiftIdempotency", package: "SwiftIdempotency"),
+            ]
         ),
     ]
 )
