@@ -143,6 +143,7 @@ let package = Package(
             name: "SwiftIdempotencyFluentTests",
             dependencies: [
                 "SwiftIdempotencyFluent",
+                "SwiftIdempotency",
                 .product(name: "FluentKit", package: "fluent-kit"),
             ]
         ),
@@ -150,6 +151,7 @@ let package = Package(
             name: "SwiftIdempotencyPropertyBasedTests",
             dependencies: [
                 "SwiftIdempotencyPropertyBased",
+                "SwiftIdempotency",
                 .product(name: "PropertyBased", package: "swift-property-based"),
             ]
         ),
