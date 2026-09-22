@@ -113,7 +113,7 @@ public struct IdempotencyTestsMacro: ExtensionMacro {
     /// variadic may be passed nothing, so `func status(verbose: Bool = false)` and
     /// `func tally(_ counts: Int...)` are both callable as `status()` and `tally()`. Testing
     /// `parameters.isEmpty` instead silently drops them.
-    private static func isCallableWithNoArguments(_ function: FunctionDeclSyntax) -> Bool {
+    static func isCallableWithNoArguments(_ function: FunctionDeclSyntax) -> Bool {
         function.signature.parameterClause.parameters.allSatisfy { parameter in
             parameter.defaultValue != nil || parameter.ellipsis != nil
         }
@@ -121,7 +121,7 @@ public struct IdempotencyTestsMacro: ExtensionMacro {
 
     /// Returns `true` if the function declaration has `@Idempotent` in
     /// its attribute list. Matches by trailing identifier segment.
-    private static func hasIdempotentAttribute(_ function: FunctionDeclSyntax) -> Bool {
+    static func hasIdempotentAttribute(_ function: FunctionDeclSyntax) -> Bool {
         function.attributes.contains { attribute in
             guard
                 let attr = attribute.as(AttributeSyntax.self),
