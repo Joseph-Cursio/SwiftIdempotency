@@ -133,7 +133,10 @@ opt_in_rules:
   - extension_access_modifier
   - file_name
   - no_grouping_extension
-  - sorted_enum_cases
+  # sorted_enum_cases: OFF by default — the re-order destroys ordinal ranks
+  # (a Tier / SyncSessionResponse.Phase / FileOperation order); a style
+  # rule can't tell ordinal from nominal. See SwiftLint Never Autofix /
+  # sorted_enum_cases.
   - async_without_await
   - strict_fileprivate
   - switch_case_on_newline
