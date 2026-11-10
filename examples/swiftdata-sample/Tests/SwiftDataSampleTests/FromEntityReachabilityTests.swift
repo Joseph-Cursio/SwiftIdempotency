@@ -1,8 +1,8 @@
 import Foundation
-import Testing
 import SwiftData
-import SwiftIdempotency
 @testable import SwiftDataSample
+import SwiftIdempotency
+import Testing
 
 /// The deciding-question test set for the `swiftIdempotency` v0.1.0
 /// pre-release API decision on `IdempotencyKey(fromEntity:)`.

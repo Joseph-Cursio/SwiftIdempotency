@@ -23,7 +23,7 @@ Core files:
 
 - `Sources/IdempotencyTestsSample/PricingCalculator.swift` — a tiny
   pure-function library the test suite exercises.
-- `Tests/IdempotencyTestsSampleTests/IdempotencyContractTests.swift` —
+- `Tests/IdempotencyTestsSampleTests/IdempotencyContract.swift` —
   the `@Suite @IdempotencyTests` type with three `@Idempotent` members
   covering the sync, async, and throwing-return effect-matrix branches.
 

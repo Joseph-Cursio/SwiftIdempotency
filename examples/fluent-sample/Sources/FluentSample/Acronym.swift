@@ -1,5 +1,5 @@
-import Foundation
 import FluentKit
+import Foundation
 
 /// Sample Fluent `Model` mirroring the shape of hellovapor's Acronym:
 /// UUID primary key, two String fields. Intentionally minimal — the
@@ -22,9 +22,11 @@ public final class Acronym: Model, @unchecked Sendable {
     @Field(key: "long")
     public var long: String
 
-    public init() {}
+    public init() {
+        // Fluent creates an empty model, then decodes each stored field into it.
+    }
 
-    public init(id: UUID? = nil, short: String, long: String) {
+    public init(short: String, long: String, id: UUID? = nil) {
         self.id = id
         self.short = short
         self.long = long

@@ -1,7 +1,24 @@
-import Testing
+@testable import OptionBSample
 import SwiftIdempotency
 import SwiftIdempotencyTestSupport
-@testable import OptionBSample
+import Testing
+
+/// Opts into a richer `Snapshot` type — an ordered list of insert
+/// descriptions. Detects non-idempotency invisible to `effectCount`
+/// alone (e.g. retries that re-order operations with the same
+/// total count).
+private final class CallLogOrderRepository: OrderRepository, IdempotentEffectRecorder, @unchecked Sendable {
+    typealias Snapshot = [String]
+
+    private(set) var insertedOrders: [String] = []
+    var effectCount: Int { insertedOrders.count }
+
+    func insert(_ order: Order) throws {
+        insertedOrders.append("\(order.id)@\(order.totalCents)")
+    }
+
+    func snapshot() -> [String] { insertedOrders }
+}
 
 /// End-to-end consumer validation of the Option B surface
 /// (`IdempotentEffectRecorder` + `assertIdempotentEffects`) shipped in
@@ -21,7 +38,7 @@ struct OptionBSampleTests {
         private(set) var effectCount = 0
         private(set) var inserted: [Order] = []
 
-        func insert(_ order: Order) async throws {
+        func insert(_ order: Order) throws {
             inserted.append(order)
             effectCount += 1
         }
@@ -91,23 +108,6 @@ struct OptionBSampleTests {
     }
 
     // MARK: - Custom Snapshot: ordered call log
-
-    /// Opts into a richer `Snapshot` type — an ordered list of insert
-    /// descriptions. Detects non-idempotency invisible to `effectCount`
-    /// alone (e.g. retries that re-order operations with the same
-    /// total count).
-    final class CallLogOrderRepository: OrderRepository, IdempotentEffectRecorder, @unchecked Sendable {
-        typealias Snapshot = [String]
-
-        private(set) var insertedOrders: [String] = []
-        var effectCount: Int { insertedOrders.count }
-
-        func insert(_ order: Order) async throws {
-            insertedOrders.append("\(order.id)@\(order.totalCents)")
-        }
-
-        func snapshot() -> [String] { insertedOrders }
-    }
 
     @Test("Custom Snapshot ([String]): dedup-guarded handler still passes")
     func customSnapshotRecorder_dedupGuardedHandler_passes() async throws {

@@ -1,5 +1,4 @@
 @testable import SwiftIdempotencyMacros
-import SwiftSyntax
 import SwiftSyntaxMacros
 import SwiftSyntaxMacrosTestSupport
 import Testing
@@ -43,7 +42,7 @@ struct OmittableKeyParameterTests {
                     message: Self.omittableMessage(value: "idempotencyKey", cause: "has a default value"),
                     line: 2,
                     column: 26
-                )
+                ),
             ],
             macros: testMacros
         )
@@ -66,7 +65,7 @@ struct OmittableKeyParameterTests {
                     message: Self.omittableMessage(value: "key", cause: "has a default value"),
                     line: 2,
                     column: 26
-                )
+                ),
             ],
             macros: testMacros
         )
@@ -91,7 +90,7 @@ struct OmittableKeyParameterTests {
                     ),
                     line: 2,
                     column: 26
-                )
+                ),
             ],
             macros: testMacros
         )

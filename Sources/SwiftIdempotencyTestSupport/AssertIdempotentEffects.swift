@@ -1,9 +1,3 @@
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
-
 @_spi(Internals)
 import SwiftIdempotency
 import Testing

@@ -1,5 +1,3 @@
-import Foundation
-
 /// A deduplication key for externally-idempotent operations (Stripe charges,
 /// Mailgun deliveries, SNS publishes, and similar APIs that accept a
 /// client-provided idempotency token).

@@ -58,8 +58,6 @@ public macro assertIdempotent<Result: Equatable>(
     type: "AssertIdempotentAsyncMacro"
 )
 
-// swiftlint:disable identifier_name
-
 /// Runtime helper the `#assertIdempotent` macro expansion calls into.
 /// Not intended for direct use — the underscore prefix marks it as a
 /// macro-only implementation detail. Lives in the public library rather
@@ -72,6 +70,7 @@ public macro assertIdempotent<Result: Equatable>(
 /// closures require `try` at the macro-expansion call site. The Swift
 /// compiler handles the effect inference at the macro's type boundary.
 @inlinable
+// swiftlint:disable:next identifier_name - called by macro expansions in adopters' code; renaming breaks them
 public func __idempotencyAssertRunTwice<Result: Equatable>(
     _ body: () throws -> Result,
     file: StaticString = #file,
@@ -95,6 +94,7 @@ public func __idempotencyAssertRunTwice<Result: Equatable>(
 /// compiles as `await #assertIdempotent { ... }` with no `try`; a
 /// throwing async closure requires `try await`.
 @inlinable
+// swiftlint:disable:next identifier_name - called by macro expansions in adopters' code; renaming breaks them
 public func __idempotencyAssertRunTwiceAsync<Result: Equatable>(
     _ body: () async throws -> Result,
     file: StaticString = #file,
@@ -120,6 +120,7 @@ public func __idempotencyAssertRunTwiceAsync<Result: Equatable>(
 ///
 /// Not intended for direct use.
 @inlinable
+// swiftlint:disable:next identifier_name - called by macro expansions in adopters' code; renaming breaks them
 public func __idempotencyInvokeTwice<Result: Equatable>(
     _ body: () async throws -> Result
 ) async rethrows -> (Result, Result) {
@@ -127,5 +128,3 @@ public func __idempotencyInvokeTwice<Result: Equatable>(
     let second = try await body()
     return (first, second)
 }
-
-// swiftlint:enable identifier_name

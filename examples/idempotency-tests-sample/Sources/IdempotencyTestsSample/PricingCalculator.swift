@@ -12,8 +12,8 @@ public enum PricingCalculator {
     /// No I/O, no time-dependent state — calling this twice with the same
     /// arguments is the definition of idempotent. That's the contract the
     /// test-suite wrapper asserts at the function level.
-    public static func priceInCents(kg: Int, ratePerKgCents: Int) -> Int {
-        kg * ratePerKgCents
+    public static func priceInCents(kilograms: Int, ratePerKgCents: Int) -> Int {
+        kilograms * ratePerKgCents
     }
 
     /// Observable system status — a placeholder stand-in for something a

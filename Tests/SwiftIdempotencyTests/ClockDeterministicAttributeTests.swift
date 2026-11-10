@@ -1,8 +1,7 @@
 import SwiftIdempotency
-import SwiftSyntaxMacroExpansion
-import SwiftSyntaxMacros
-import Testing
 @testable import SwiftIdempotencyMacros
+import SwiftSyntaxMacroExpansion
+import Testing
 
 /// `@ClockDeterministic` — the clock-determinism marker (the attribute
 /// spelling of `/// @lint.determinism clock_deterministic`). Marker-only,
@@ -28,9 +27,9 @@ struct ClockDeterministicAttributeTests {
     @Test
     func clockDeterministic_onAsyncThrowsFunction_compiles() async throws {
         @ClockDeterministic
-        func fetchLabel(_ n: Int) async throws -> String {
+        func fetchLabel(_ number: Int) async throws -> String {
             await Task.yield()
-            return "#\(n)"
+            return "#\(number)"
         }
         let label = try await fetchLabel(7)
         #expect(label == "#7")

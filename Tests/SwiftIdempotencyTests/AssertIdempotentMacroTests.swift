@@ -1,6 +1,5 @@
 import SwiftIdempotency
 @testable import SwiftIdempotencyMacros
-import SwiftSyntax
 import SwiftSyntaxMacros
 import SwiftSyntaxMacrosTestSupport
 import Testing
@@ -81,7 +80,7 @@ struct AssertIdempotentMacroTests {
                         "e.g. `#assertIdempotent { ... }`",
                     line: 2,
                     column: 9
-                )
+                ),
             ],
             macros: testMacros
         )
@@ -184,7 +183,7 @@ struct AssertIdempotentMacroTests {
                         "e.g. `#assertIdempotent { ... }`",
                     line: 2,
                     column: 9
-                )
+                ),
             ],
             macros: testMacrosAsync
         )

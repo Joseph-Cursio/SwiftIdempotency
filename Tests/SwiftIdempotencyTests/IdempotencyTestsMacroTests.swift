@@ -1,8 +1,61 @@
 @testable import SwiftIdempotencyMacros
-import SwiftSyntax
 import SwiftSyntaxMacros
 import SwiftSyntaxMacrosTestSupport
 import Testing
+
+/// One row of the effect matrix: a target's effect specifiers, and the exact
+/// `try` / `await` tokens the expansion must carry outside and inside.
+///
+/// **Both prefixes are written out, not derived.** `generateTestMember` computes
+/// them from `(isAsync, isThrowing)`; a table that computed them the same way
+/// would assert only that the macro agrees with itself, and would have passed
+/// just as happily before the fix this matrix exists to pin. Spelling them as
+/// literals is what makes the row an independent claim about the output.
+struct EffectMatrixCase: Sendable, CustomTestStringConvertible {
+    /// The annotated declaration, verbatim — it appears in both the input and,
+    /// unchanged, in the expanded source, since `@Idempotent` is marker-only.
+    let target: String
+    let functionName: String
+    let testName: String
+    /// Before `__idempotencyInvokeTwice`. The helper is `async`, so `await` is
+    /// always present; `try` is present iff the closure body can throw.
+    let outerPrefix: String
+    /// Before the call to the target.
+    let innerPrefix: String
+
+    var testDescription: String { "\(functionName): \(outerPrefix)/ \(innerPrefix)" }
+
+    static let all: [Self] = [
+        Self(
+            target: "func plain() -> Int { 1 }",
+            functionName: "plain",
+            testName: "testIdempotencyOfPlain",
+            outerPrefix: "await ",
+            innerPrefix: ""
+        ),
+        Self(
+            target: "func throwing() throws -> Int { 1 }",
+            functionName: "throwing",
+            testName: "testIdempotencyOfThrowing",
+            outerPrefix: "try await ",
+            innerPrefix: "try "
+        ),
+        Self(
+            target: "func asynchronous() async -> Int { 1 }",
+            functionName: "asynchronous",
+            testName: "testIdempotencyOfAsynchronous",
+            outerPrefix: "await ",
+            innerPrefix: "await "
+        ),
+        Self(
+            target: "func asyncThrowing() async throws -> Int { 1 }",
+            functionName: "asyncThrowing",
+            testName: "testIdempotencyOfAsyncThrowing",
+            outerPrefix: "try await ",
+            innerPrefix: "try await "
+        ),
+    ]
+}
 
 /// Expansion-verification tests for `@IdempotencyTests` — the
 /// extension-role macro that landed in the round-8 spike.
@@ -23,7 +76,7 @@ import Testing
 struct IdempotencyTestsMacroTests {
     private let macros: [String: Macro.Type] = [
         "IdempotencyTests": IdempotencyTestsMacro.self,
-        "Idempotent": IdempotentMacro.self
+        "Idempotent": IdempotentMacro.self,
     ]
 
     // MARK: - Member selection
@@ -149,7 +202,7 @@ struct IdempotencyTestsMacroTests {
                     line: 4,
                     column: 10,
                     severity: .warning
-                )
+                ),
             ],
             macros: macros
         )
@@ -175,7 +228,7 @@ struct IdempotencyTestsMacroTests {
                     line: 1,
                     column: 1,
                     severity: .warning
-                )
+                ),
             ],
             macros: macros
         )
@@ -220,58 +273,4 @@ struct IdempotencyTestsMacroTests {
             macros: macros
         )
     }
-}
-
-/// One row of the effect matrix: a target's effect specifiers, and the exact
-/// `try` / `await` tokens the expansion must carry outside and inside.
-///
-/// **Both prefixes are written out, not derived.** `generateTestMember` computes
-/// them from `(isAsync, isThrowing)`; a table that computed them the same way
-/// would assert only that the macro agrees with itself, and would have passed
-/// just as happily before the fix this matrix exists to pin. Spelling them as
-/// literals is what makes the row an independent claim about the output.
-struct EffectMatrixCase: Sendable, CustomTestStringConvertible {
-    /// The annotated declaration, verbatim — it appears in both the input and,
-    /// unchanged, in the expanded source, since `@Idempotent` is marker-only.
-    let target: String
-    let functionName: String
-    let testName: String
-    /// Before `__idempotencyInvokeTwice`. The helper is `async`, so `await` is
-    /// always present; `try` is present iff the closure body can throw.
-    let outerPrefix: String
-    /// Before the call to the target.
-    let innerPrefix: String
-
-    var testDescription: String { "\(functionName): \(outerPrefix)/ \(innerPrefix)" }
-
-    static let all: [EffectMatrixCase] = [
-        EffectMatrixCase(
-            target: "func plain() -> Int { 1 }",
-            functionName: "plain",
-            testName: "testIdempotencyOfPlain",
-            outerPrefix: "await ",
-            innerPrefix: ""
-        ),
-        EffectMatrixCase(
-            target: "func throwing() throws -> Int { 1 }",
-            functionName: "throwing",
-            testName: "testIdempotencyOfThrowing",
-            outerPrefix: "try await ",
-            innerPrefix: "try "
-        ),
-        EffectMatrixCase(
-            target: "func asynchronous() async -> Int { 1 }",
-            functionName: "asynchronous",
-            testName: "testIdempotencyOfAsynchronous",
-            outerPrefix: "await ",
-            innerPrefix: "await "
-        ),
-        EffectMatrixCase(
-            target: "func asyncThrowing() async throws -> Int { 1 }",
-            functionName: "asyncThrowing",
-            testName: "testIdempotencyOfAsyncThrowing",
-            outerPrefix: "try await ",
-            innerPrefix: "try await "
-        ),
-    ]
 }

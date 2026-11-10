@@ -81,7 +81,7 @@ struct IdempotencyKeyTypeTests {
         let keys: Set<IdempotencyKey> = [
             IdempotencyKey(fromAuditedString: "k1"),
             IdempotencyKey(fromAuditedString: "k1"),
-            IdempotencyKey(fromAuditedString: "k2")
+            IdempotencyKey(fromAuditedString: "k2"),
         ]
         #expect(keys.count == 2)
     }

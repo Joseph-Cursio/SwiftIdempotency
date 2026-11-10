@@ -49,6 +49,7 @@ public struct ChargeRequest: Sendable, Equatable {
 /// a Stripe client; the sample omits the network leg so the tests can
 /// assert shape without side effects.
 public enum StripeWebhookHandler {
+    /// Builds the charge request for `event`, keyed by the event's stable id.
     public static func makeChargeRequest(for event: PaymentIntent) -> ChargeRequest {
         ChargeRequest(
             amountMinorUnits: event.amountMinorUnits,

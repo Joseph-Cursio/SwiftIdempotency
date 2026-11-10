@@ -52,7 +52,7 @@ public enum OfflineManager {
     @ExternallyIdempotent(by: "idempotencyKey")
     public static func download(
         album: Album,
-        idempotencyKey: IdempotencyKey,
+        idempotencyKey _: IdempotencyKey,
         in container: ModelContainer
     ) throws -> OfflineAlbum {
         let context = ModelContext(container)

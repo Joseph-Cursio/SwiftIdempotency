@@ -1,5 +1,4 @@
 @testable import SwiftIdempotencyMacros
-import SwiftSyntax
 import SwiftSyntaxMacros
 import SwiftSyntaxMacrosTestSupport
 import Testing
@@ -128,7 +127,7 @@ struct ExternallyIdempotentMacroTests {
                         + "attach @ExternallyIdempotent there.",
                     line: 1,
                     column: 27
-                )
+                ),
             ],
             macros: testMacros
         )
@@ -151,7 +150,7 @@ struct ExternallyIdempotentMacroTests {
                         + "available parameter labels: \"amount\", \"key\".",
                     line: 1,
                     column: 27
-                )
+                ),
             ],
             macros: testMacros
         )
@@ -177,7 +176,7 @@ struct ExternallyIdempotentMacroTests {
                         + "available parameter labels: \"amount\".",
                     line: 1,
                     column: 27
-                )
+                ),
             ],
             macros: testMacros
         )
@@ -200,7 +199,7 @@ struct ExternallyIdempotentMacroTests {
                         + "the annotated function has no externally-labelled parameters.",
                     line: 1,
                     column: 27
-                )
+                ),
             ],
             macros: testMacros
         )
@@ -227,7 +226,7 @@ struct ExternallyIdempotentMacroTests {
                         + "annotated function's parameter labels.",
                     line: 2,
                     column: 27
-                )
+                ),
             ],
             macros: testMacros
         )
@@ -252,7 +251,7 @@ struct ExternallyIdempotentMacroTests {
                         + "annotated function's parameter labels.",
                     line: 2,
                     column: 27
-                )
+                ),
             ],
             macros: testMacros
         )

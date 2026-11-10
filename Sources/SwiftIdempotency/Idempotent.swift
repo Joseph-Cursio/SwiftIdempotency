@@ -80,6 +80,7 @@ public macro ExternallyIdempotent(by keyParameterName: String = "") =
 /// See `IdempotencyTestsMacro` for the empirical constraints this shape
 /// was redesigned around (round-8 spike).
 @attached(extension, names: arbitrary)
+// swiftlint:disable:next unused_declaration - public API; adopters use it, and this package only in strings
 public macro IdempotencyTests() = #externalMacro(
     module: "SwiftIdempotencyMacros",
     type: "IdempotencyTestsMacro"
