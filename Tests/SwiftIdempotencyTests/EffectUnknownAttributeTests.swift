@@ -1,10 +1,20 @@
 import SwiftIdempotency
+@testable import SwiftIdempotencyMacros
 import SwiftParser
 import SwiftSyntax
 import SwiftSyntaxMacroExpansion
 import SwiftSyntaxMacros
 import Testing
-@testable import SwiftIdempotencyMacros
+
+// MARK: - Fixtures
+
+private enum OpaqueLedger {
+    static func post(_ amount: Int) { _ = amount }
+}
+
+private enum SettlementError: Error {
+    case negative
+}
 
 /// `@EffectUnknown` — the `unknown` tier, given a spelling. Marker-only, so the
 /// test surface is the same as `@ClockDeterministic`'s: it compiles on the
@@ -45,6 +55,7 @@ struct EffectUnknownAttributeTests {
     @Test
     func effectUnknown_onAsyncFunction_compiles() async {
         @EffectUnknown
+        // swiftlint:disable:next async_without_await - the test is that the marker compiles on an async function
         func settle(_ amount: Int) async -> Int { amount }
         let result = await settle(5)
         #expect(result == 5)
@@ -76,14 +87,4 @@ struct EffectUnknownAttributeTests {
         // be READ — by the linter and by a human — not to generate anything.
         #expect(context.diagnostics.isEmpty)
     }
-}
-
-// MARK: - Fixtures
-
-private enum OpaqueLedger {
-    static func post(_ amount: Int) { _ = amount }
-}
-
-private enum SettlementError: Error {
-    case negative
 }

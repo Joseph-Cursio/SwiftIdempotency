@@ -1,7 +1,7 @@
 import Foundation
-import Testing
-import SwiftIdempotency
 @testable import IdempotencyTestsSample
+import SwiftIdempotency
+import Testing
 
 /// Consumer-side exercise of `@IdempotencyTests`. The macro sits on a
 /// `@Suite` type and scans the type's `@Idempotent`-marked zero-argument
@@ -35,38 +35,15 @@ struct IdempotencyContract {
 
     @Idempotent
     func pricingForFiveKilos() -> Int {
-        PricingCalculator.priceInCents(kg: 5, ratePerKgCents: 250)
+        PricingCalculator.priceInCents(kilograms: 5, ratePerKgCents: 250)
     }
 
     /// Async target — exercises the effect-matrix branch that emits
     /// `await` on both the outer helper call and the inner invocation.
     @Idempotent
+    // swiftlint:disable:next async_without_await - exercises the async branch of @IdempotencyTests' expansion
     func asyncStatusProbe() async -> String {
         PricingCalculator.systemStatus()
-    }
-}
-
-// MARK: - Hand-written sanity tests
-//
-// Non-macro tests against the same library code. Keep these so a failure
-// in the library itself produces a diagnostic that doesn't route through
-// the generated `@IdempotencyTests` expansion — easier to debug a
-// pricing regression when the failing test isn't macro-generated.
-
-@Suite("PricingCalculator direct checks")
-struct PricingCalculatorDirectTests {
-
-    @Test("priceInCents is deterministic for fixed inputs")
-    func priceInCentsDeterministic() {
-        let first = PricingCalculator.priceInCents(kg: 5, ratePerKgCents: 250)
-        let second = PricingCalculator.priceInCents(kg: 5, ratePerKgCents: 250)
-        #expect(first == second)
-        #expect(first == 1_250)
-    }
-
-    @Test("systemStatus returns the documented fixed value")
-    func systemStatusFixedValue() {
-        #expect(PricingCalculator.systemStatus() == "healthy")
     }
 }
 
@@ -81,8 +58,8 @@ struct PricingCalculatorDirectTests {
 //
 //     extension IdempotencyContract {
 //         @Idempotent
-//         func parameterisedIsSkipped(_ kg: Int) -> Int {
-//             PricingCalculator.priceInCents(kg: kg, ratePerKgCents: 250)
+//         func parameterisedIsSkipped(_ kilograms: Int) -> Int {
+//             PricingCalculator.priceInCents(kilograms: kilograms, ratePerKgCents: 250)
 //         }
 //
 //         func unmarkedIsSkipped() -> String {

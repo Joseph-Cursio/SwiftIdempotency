@@ -103,7 +103,7 @@ struct IdempotencyTestsArgumentlessTests {
                     line: 4,
                     column: 10,
                     severity: .warning
-                )
+                ),
             ],
             macros: testMacros
         )
@@ -129,7 +129,7 @@ struct IdempotencyTestsArgumentlessTests {
                     line: 1,
                     column: 1,
                     severity: .warning
-                )
+                ),
             ],
             macros: testMacros
         )

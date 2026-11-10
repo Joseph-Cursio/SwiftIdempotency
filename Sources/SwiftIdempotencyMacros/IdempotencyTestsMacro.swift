@@ -3,6 +3,41 @@ import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros
 
+// MARK: - Diagnostics
+
+/// Why `@IdempotencyTests` generated nothing for a declaration.
+///
+/// These are warnings, not errors. The code is legal Swift and the author's intent is clear;
+/// what they need to know is that their intent did not take effect. An expansion that quietly
+/// produces no test is the failure mode worth shouting about — the build is green, both
+/// annotations are present, and nothing is being checked.
+struct IdempotencyTestsDiagnostic: DiagnosticMessage {
+    let message: String
+    let identifier: String
+
+    var severity: DiagnosticSeverity { .warning }
+    var diagnosticID: MessageID {
+        MessageID(domain: "SwiftIdempotencyMacros", id: identifier)
+    }
+
+    static let noIdempotentFunctions = Self(
+        message: "@IdempotencyTests generated no tests: this type has no @Idempotent functions.",
+        identifier: "idempotencyTests.noIdempotentFunctions"
+    )
+
+    static func functionNeedsArguments(name: String) -> Self {
+        Self(
+            message: "@IdempotencyTests generated no test for `\(name)`: the generated test "
+                + "calls it with no arguments, and `\(name)` has at least one parameter that "
+                + "must be supplied. Give the parameters defaults, or test it by hand with "
+                + "`#assertIdempotent` or `assertIdempotentProperty`.",
+            identifier: "idempotencyTests.functionNeedsArguments"
+        )
+    }
+}
+
+// MARK: - Macro
+
 /// `@IdempotencyTests` — attached to a `@Suite` type; emits a `@Test`
 /// method per `@Idempotent`-marked zero-argument member in an extension
 /// of the type.
@@ -185,38 +220,5 @@ public struct IdempotencyTestsMacro: ExtensionMacro {
                 #expect(__first == __second)
             }
             """
-    }
-}
-
-// MARK: - Diagnostics
-
-/// Why `@IdempotencyTests` generated nothing for a declaration.
-///
-/// These are warnings, not errors. The code is legal Swift and the author's intent is clear;
-/// what they need to know is that their intent did not take effect. An expansion that quietly
-/// produces no test is the failure mode worth shouting about — the build is green, both
-/// annotations are present, and nothing is being checked.
-struct IdempotencyTestsDiagnostic: DiagnosticMessage {
-    let message: String
-    let identifier: String
-
-    var severity: DiagnosticSeverity { .warning }
-    var diagnosticID: MessageID {
-        MessageID(domain: "SwiftIdempotencyMacros", id: identifier)
-    }
-
-    static let noIdempotentFunctions = Self(
-        message: "@IdempotencyTests generated no tests: this type has no @Idempotent functions.",
-        identifier: "idempotencyTests.noIdempotentFunctions"
-    )
-
-    static func functionNeedsArguments(name: String) -> Self {
-        Self(
-            message: "@IdempotencyTests generated no test for `\(name)`: the generated test "
-                + "calls it with no arguments, and `\(name)` has at least one parameter that "
-                + "must be supplied. Give the parameters defaults, or test it by hand with "
-                + "`#assertIdempotent` or `assertIdempotentProperty`.",
-            identifier: "idempotencyTests.functionNeedsArguments"
-        )
     }
 }

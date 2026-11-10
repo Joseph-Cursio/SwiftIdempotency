@@ -4,8 +4,6 @@ import FoundationEssentials
 import Foundation
 #endif
 
-// swiftlint:disable type_name
-
 /// Type-erased snapshot + comparer pair. Captured inside a generic
 /// extension so the concrete `Snapshot` type is known statically, then
 /// returned via `Any` so heterogeneous recorders (each with their own
@@ -14,9 +12,10 @@ import Foundation
 ///
 /// Not part of the public API. Exposed to `SwiftIdempotencyTestSupport`
 /// via `@_spi(Internals)`. The leading underscore is the Swift SPI
-/// convention; SwiftLint's `identifier_name` / `type_name` rules are
-/// suppressed at file scope because the marker is load-bearing.
+/// convention; SwiftLint's `type_name` rule is suppressed on the
+/// declaration because the marker is load-bearing.
 @_spi(Internals)
+// swiftlint:disable:next type_name - SPI type; the leading underscore marks it as not public API
 public struct _IdempotencySnapshotBox {
     /// Describes the snapshot for diagnostic messages. Derived from
     /// `String(describing:)` at capture time so we don't need to keep
@@ -43,8 +42,6 @@ public struct _IdempotencySnapshotBox {
         }
     }
 }
-
-// swiftlint:enable type_name
 
 /// How `assertIdempotentEffects` reports a detected non-idempotency.
 ///
@@ -176,17 +173,13 @@ public extension IdempotentEffectRecorder where Snapshot == Int {
     func snapshot() -> Int { effectCount }
 }
 
-// swiftlint:disable identifier_name
-
 @_spi(Internals)
 public extension IdempotentEffectRecorder {
     /// Captures the current snapshot into a type-erased box.
     /// Implementation is specialized per conforming type (so `Snapshot`
     /// is known), but the return type is erased for cross-recorder
     /// storage. Consumed by `assertIdempotentEffects`.
-    func _snapshotBox() -> _IdempotencySnapshotBox {
+    func _snapshotBox() -> _IdempotencySnapshotBox { // swiftlint:disable:this identifier_name - SPI underscore
         _IdempotencySnapshotBox(snapshot())
     }
 }
-
-// swiftlint:enable identifier_name

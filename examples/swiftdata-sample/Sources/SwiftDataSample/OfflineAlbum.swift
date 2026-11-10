@@ -25,11 +25,16 @@ import SwiftData
 /// encounter it.
 @Model
 public final class OfflineAlbum {
+    /// The album's stable identifier; unique in the store, so a replayed
+    /// download cannot insert a second row.
     @Attribute(.unique)
     public var id: String
+    /// The album's display name.
     public var name: String
+    /// Whether the user marked the album as a favorite.
     public var favorite: Bool
 
+    /// Creates an offline copy of an album with the given fields.
     public init(id: String, name: String, favorite: Bool) {
         self.id = id
         self.name = name

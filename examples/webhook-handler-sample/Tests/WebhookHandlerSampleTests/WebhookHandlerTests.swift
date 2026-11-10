@@ -1,6 +1,6 @@
 import Foundation
-import Testing
 import SwiftIdempotency
+import Testing
 @testable import WebhookHandlerSample
 
 @Suite("IdempotencyKey type safety on a webhook handler")

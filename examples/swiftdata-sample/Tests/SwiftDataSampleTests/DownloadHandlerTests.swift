@@ -1,8 +1,8 @@
 import Foundation
-import Testing
 import SwiftData
-import SwiftIdempotency
 @testable import SwiftDataSample
+import SwiftIdempotency
+import Testing
 
 /// Exercises the `@ExternallyIdempotent(by: "idempotencyKey")` annotation
 /// on `OfflineManager.download(album:idempotencyKey:in:)`. The handler

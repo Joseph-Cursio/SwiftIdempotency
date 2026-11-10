@@ -6,36 +6,6 @@ import FoundationEssentials
 import Foundation
 #endif
 
-/// A handler with a **trivial return type** (`Bool`) that makes
-/// return-equality checks (`#assertIdempotent` / Option C) silent on
-/// the non-idempotent path. Both invocations return `true`; the only
-/// way to see the bug is to observe the side effects.
-///
-/// Option B (`IdempotentEffectRecorder` + `assertIdempotentEffects`)
-/// is the right tool for this shape.
-public struct OrderCreatedHandler: Sendable {
-    private let repo: any OrderRepository
-    private let dedup: any OrderDedupStore
-
-    public init(repo: any OrderRepository, dedup: any OrderDedupStore) {
-        self.repo = repo
-        self.dedup = dedup
-    }
-
-    /// Persists an order and marks it as handled. Returns `true` when a
-    /// persist actually happened, `false` when the dedup gate skipped
-    /// it. The **dedup gate is what makes this idempotent** — remove it
-    /// and you get duplicate rows on retry.
-    public func handle(_ order: Order) async throws -> Bool {
-        if await dedup.hasHandled(orderID: order.id) {
-            return false
-        }
-        try await repo.insert(order)
-        await dedup.markHandled(orderID: order.id)
-        return true
-    }
-}
-
 /// A deliberately broken variant — no dedup gate. Every invocation
 /// writes. Ships with the sample purely so the test suite can
 /// demonstrate what `assertIdempotentEffects` catches that
@@ -79,4 +49,34 @@ public protocol OrderRepository: Sendable {
 public protocol OrderDedupStore: Sendable {
     func hasHandled(orderID: String) async -> Bool
     func markHandled(orderID: String) async
+}
+
+/// A handler with a **trivial return type** (`Bool`) that makes
+/// return-equality checks (`#assertIdempotent` / Option C) silent on
+/// the non-idempotent path. Both invocations return `true`; the only
+/// way to see the bug is to observe the side effects.
+///
+/// Option B (`IdempotentEffectRecorder` + `assertIdempotentEffects`)
+/// is the right tool for this shape.
+public struct OrderCreatedHandler: Sendable {
+    private let repo: any OrderRepository
+    private let dedup: any OrderDedupStore
+
+    public init(repo: any OrderRepository, dedup: any OrderDedupStore) {
+        self.repo = repo
+        self.dedup = dedup
+    }
+
+    /// Persists an order and marks it as handled. Returns `true` when a
+    /// persist actually happened, `false` when the dedup gate skipped
+    /// it. The **dedup gate is what makes this idempotent** — remove it
+    /// and you get duplicate rows on retry.
+    public func handle(_ order: Order) async throws -> Bool {
+        if await dedup.hasHandled(orderID: order.id) {
+            return false
+        }
+        try await repo.insert(order)
+        await dedup.markHandled(orderID: order.id)
+        return true
+    }
 }

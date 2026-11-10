@@ -29,7 +29,9 @@ public enum OrderTotaliser {
     /// pricing service." The point the sample makes is that
     /// `#assertIdempotent`'s async overload passes `try await` through
     /// the closure transparently.
-    public static func totalCentsAsync(for items: [LineItem]) async -> Int {
+    public static func totalCentsAsync(
+        for items: [LineItem]
+    ) async -> Int { // swiftlint:disable:this async_without_await - shows the async overload
         totalCents(for: items)
     }
 

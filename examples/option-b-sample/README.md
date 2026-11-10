@@ -30,7 +30,7 @@ Core files:
 - `Sources/OptionBSample/OrderCreatedHandler.swift` — two handlers
   sharing the same trivial `Bool` return type: one dedup-guarded
   (correct), one ungated (the bug Option B catches).
-- `Tests/OptionBSampleTests/OptionBTests.swift` — three `@Test` calls
+- `Tests/OptionBSampleTests/OptionBSampleTests.swift` — three `@Test` calls
   exercising the matrix above. Mocks conform to
   `IdempotentEffectRecorder` directly on the repository protocol.
 

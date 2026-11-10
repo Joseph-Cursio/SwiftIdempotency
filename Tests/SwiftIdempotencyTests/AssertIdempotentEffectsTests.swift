@@ -145,7 +145,12 @@ struct AssertIdempotentEffectsTests {
     func issueRecordFailureMode_nonIdempotentBody_recordsIssueAndContinues() async {
         let recorder = CountingRecorder()
 
-        await withKnownIssue("negative control — the assertion is EXPECTED to record non-idempotency here; a pass without this issue would mean the detector went blind") {
+        await withKnownIssue(
+            """
+            negative control — the assertion is EXPECTED to record non-idempotency here; \
+            a pass without this issue would mean the detector went blind
+            """
+        ) {
             await assertIdempotentEffects(
                 recorders: [recorder],
                 failureMode: .issueRecord
@@ -166,7 +171,12 @@ struct AssertIdempotentEffectsTests {
         let alpha = CountingRecorder()
         let beta = CountingRecorder()
 
-        await withKnownIssue("negative control — the assertion is EXPECTED to record non-idempotency here; a pass without this issue would mean the detector went blind") {
+        await withKnownIssue(
+            """
+            negative control — the assertion is EXPECTED to record non-idempotency here; \
+            a pass without this issue would mean the detector went blind
+            """
+        ) {
             await assertIdempotentEffects(
                 recorders: [alpha, beta],
                 failureMode: .issueRecord
@@ -206,7 +216,12 @@ struct AssertIdempotentEffectsTests {
         let recorder = CallLogRecorder()
         var invocation = 0
 
-        await withKnownIssue("negative control — the assertion is EXPECTED to record non-idempotency here; a pass without this issue would mean the detector went blind") {
+        await withKnownIssue(
+            """
+            negative control — the assertion is EXPECTED to record non-idempotency here; \
+            a pass without this issue would mean the detector went blind
+            """
+        ) {
             await assertIdempotentEffects(
                 recorders: [recorder],
                 failureMode: .issueRecord

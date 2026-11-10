@@ -1,8 +1,8 @@
 import SwiftIdempotency
+@testable import SwiftIdempotencyMacros
 import SwiftSyntaxMacroExpansion
 import SwiftSyntaxMacros
 import Testing
-@testable import SwiftIdempotencyMacros
 
 /// `@Pure` — the lattice-bottom marker (attribute spelling of
 /// `/// @lint.effect pure`). Marker-only, so the test surface is: the
@@ -25,10 +25,10 @@ struct PureAttributeTests {
     @Test
     func pure_onGenericFunction_compiles() {
         @Pure
-        func firstSorted<Element: Comparable>(_ values: [Element]) -> Element? {
-            values.sorted().first
+        func smallest<Element: Comparable>(_ values: [Element]) -> Element? {
+            values.min()
         }
-        #expect(firstSorted([3, 1, 2]) == 1)
+        #expect(smallest([3, 1, 2]) == 1)
     }
 
     // MARK: - Direct invocation (coverage attribution, mirrors
