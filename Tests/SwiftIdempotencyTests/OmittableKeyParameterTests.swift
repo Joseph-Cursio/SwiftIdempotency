@@ -1,5 +1,4 @@
 @testable import SwiftIdempotencyMacros
-import SwiftSyntax
 import SwiftSyntaxMacros
 import SwiftSyntaxMacrosTestSupport
 import Testing

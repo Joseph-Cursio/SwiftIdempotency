@@ -1,7 +1,6 @@
 import SwiftIdempotency
 @testable import SwiftIdempotencyMacros
 import SwiftSyntaxMacroExpansion
-import SwiftSyntaxMacros
 import Testing
 
 /// `@Pure` — the lattice-bottom marker (attribute spelling of

@@ -1,4 +1,3 @@
-import SwiftCompilerPlugin
 import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros

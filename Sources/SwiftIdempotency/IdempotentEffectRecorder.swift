@@ -1,9 +1,3 @@
-#if canImport(FoundationEssentials)
-import FoundationEssentials
-#else
-import Foundation
-#endif
-
 /// Type-erased snapshot + comparer pair. Captured inside a generic
 /// extension so the concrete `Snapshot` type is known statically, then
 /// returned via `Any` so heterogeneous recorders (each with their own

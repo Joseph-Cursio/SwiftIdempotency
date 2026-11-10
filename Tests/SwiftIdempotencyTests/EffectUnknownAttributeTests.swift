@@ -3,7 +3,6 @@ import SwiftIdempotency
 import SwiftParser
 import SwiftSyntax
 import SwiftSyntaxMacroExpansion
-import SwiftSyntaxMacros
 import Testing
 
 // MARK: - Fixtures

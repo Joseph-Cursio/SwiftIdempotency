@@ -1,10 +1,6 @@
 import SwiftDiagnostics
 @testable import SwiftIdempotencyMacros
-import SwiftParser
-import SwiftSyntax
 import SwiftSyntaxMacroExpansion
-import SwiftSyntaxMacros
-import SwiftSyntaxMacrosTestSupport
 import Testing
 
 /// Direct-invocation tests for the marker peer macros.

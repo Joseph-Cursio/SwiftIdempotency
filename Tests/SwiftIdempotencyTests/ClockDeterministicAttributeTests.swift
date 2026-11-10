@@ -1,7 +1,6 @@
 import SwiftIdempotency
 @testable import SwiftIdempotencyMacros
 import SwiftSyntaxMacroExpansion
-import SwiftSyntaxMacros
 import Testing
 
 /// `@ClockDeterministic` — the clock-determinism marker (the attribute
