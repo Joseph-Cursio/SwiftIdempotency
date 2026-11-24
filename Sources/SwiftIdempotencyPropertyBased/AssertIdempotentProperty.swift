@@ -90,12 +90,15 @@ public func assertIdempotentProperty<Input, Result: Equatable, Shrinker: Sequenc
 /// (x-sheep/swift-property-based#29). Both wrappers therefore catch inside the body and record the
 /// error here, which keeps the failure visible to the shrinker on every release and toolchain.
 ///
-/// Two kinds of error are control flow, not failures, as they are to Swift Testing itself:
+/// Two kinds of error are not recorded:
 /// - `ExpectationFailedError`: `#require` records its own issue before it throws one, so recording
 ///   it again would report one failure twice.
 /// - anything thrown once the task is cancelled (a `CancellationError`, `Test.cancel()`, a
 ///   `.timeLimit` expiry): recording it would turn a cancelled test into a failure pinned on
-///   whatever input was running.
+///   whatever input was running. This is broader than Swift Testing, which skips only a
+///   `CancellationError` (or `Test.cancel()`'s internal error) and still records anything else
+///   thrown after a cancel. `Test.cancel()`'s error cannot be matched by type outside the
+///   framework, and the test is reported cancelled either way, so this drops it all.
 func recordThrown(_ error: any Error, during step: String, sourceLocation: SourceLocation) {
     guard !(error is ExpectationFailedError), !Task.isCancelled else { return }
     Issue.record(error, "the operation threw during \(step)", sourceLocation: sourceLocation)
