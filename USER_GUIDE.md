@@ -704,6 +704,10 @@ Variants of this shape appear across frameworks: Fluent's
 already-seen-message-id. The recipe is the same: swallow the
 expected throw inside the helper body, assert `effectCount`
 separately, write a sibling test for the throwing return contract.
+The property wrappers (`assertIdempotentProperty`,
+`assertIdempotentEffectsProperty`) follow the same rule: an error the
+operation or `apply` throws fails the property, so catch the expected
+collision inside the closure there too.
 
 ### Failure modes
 
