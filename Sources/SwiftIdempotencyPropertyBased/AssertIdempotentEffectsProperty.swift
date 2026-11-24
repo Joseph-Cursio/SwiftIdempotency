@@ -38,7 +38,10 @@ import Testing
 ///   - count: Trial count (default 100). Ignored under a fixed seed.
 ///   - makeRun: Builds a **fresh** system per trial, returning the effect
 ///     recorders to observe and an `apply` closure that runs one action against
-///     that system. Freshness per trial keeps trials independent.
+///     that system. Freshness per trial keeps trials independent. An error
+///     `apply` throws in either pass fails the property and is reported with
+///     that sequence. A handler that throws on a duplicate by design should
+///     catch that error inside `apply` (USER_GUIDE, "Throw-on-retry handlers").
 public func assertIdempotentEffectsProperty<Action, Shrinker: Sequence>(
     over actions: Generator<[Action], Shrinker>,
     count: Int = 100,
@@ -50,9 +53,20 @@ public func assertIdempotentEffectsProperty<Action, Shrinker: Sequence>(
         input: actions,
         perform: { sequence in
             let run = makeRun()
-            for action in sequence { try await run.apply(action) }
+            // Catch here: swift-property-based drops what a `propertyCheck` body throws (#29).
+            do {
+                for action in sequence { try await run.apply(action) }
+            } catch {
+                recordThrown(error, during: "the first pass", sourceLocation: sourceLocation)
+                return
+            }
             let afterFirst = run.recorders.map { $0._snapshotBox() }
-            for action in sequence { try await run.apply(action) }
+            do {
+                for action in sequence { try await run.apply(action) }
+            } catch {
+                recordThrown(error, during: "the retry pass", sourceLocation: sourceLocation)
+                return
+            }
             let afterSecond = run.recorders.map { $0._snapshotBox() }
             for index in afterFirst.indices {
                 #expect(

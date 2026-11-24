@@ -43,7 +43,11 @@ import Testing
 ///   - generator: Produces the inputs the operation is exercised over.
 ///   - count: Trial count (default 100). Ignored under a fixed seed.
 ///   - operation: The operation under test. Run twice per generated input;
-///     its two `Equatable` results must be equal.
+///     its two `Equatable` results must be equal. An error it throws on either
+///     call fails the property and is reported with that input. The shrinker
+///     replays inputs, so an operation that keeps state across calls (like the
+///     shared `service` above) can have a retry failure reported as a failure of
+///     the first call.
 public func assertIdempotentProperty<Input, Result: Equatable, Shrinker: Sequence>(
     over generator: Generator<Input, Shrinker>,
     count: Int = 100,
@@ -54,8 +58,21 @@ public func assertIdempotentProperty<Input, Result: Equatable, Shrinker: Sequenc
         count: count,
         input: generator,
         perform: { input in
-            let first = try await operation(input)
-            let second = try await operation(input)
+            // Catch here: swift-property-based drops what a `propertyCheck` body throws (#29).
+            let first: Result
+            do {
+                first = try await operation(input)
+            } catch {
+                recordThrown(error, during: "the first call", sourceLocation: sourceLocation)
+                return
+            }
+            let second: Result
+            do {
+                second = try await operation(input)
+            } catch {
+                recordThrown(error, during: "the second call with the same input", sourceLocation: sourceLocation)
+                return
+            }
             #expect(
                 first == second,
                 "operation is not retry-idempotent: a second call with the same input returned \(second), not \(first)",
@@ -64,4 +81,22 @@ public func assertIdempotentProperty<Input, Result: Equatable, Shrinker: Sequenc
         },
         sourceLocation: sourceLocation
     )
+}
+
+/// Records an error the operation under test threw as a failure of the property.
+///
+/// swift-property-based 1.0.0 through 2.0.1, on Swift 6.2 and later, runs a `propertyCheck` body
+/// under `try?`, so an error that escapes the body is dropped and the property passes
+/// (x-sheep/swift-property-based#29). Both wrappers therefore catch inside the body and record the
+/// error here, which keeps the failure visible to the shrinker on every release and toolchain.
+///
+/// Two kinds of error are control flow, not failures, as they are to Swift Testing itself:
+/// - `ExpectationFailedError`: `#require` records its own issue before it throws one, so recording
+///   it again would report one failure twice.
+/// - anything thrown once the task is cancelled (a `CancellationError`, `Test.cancel()`, a
+///   `.timeLimit` expiry): recording it would turn a cancelled test into a failure pinned on
+///   whatever input was running.
+func recordThrown(_ error: any Error, during step: String, sourceLocation: SourceLocation) {
+    guard !(error is ExpectationFailedError), !Task.isCancelled else { return }
+    Issue.record(error, "the operation threw during \(step)", sourceLocation: sourceLocation)
 }
